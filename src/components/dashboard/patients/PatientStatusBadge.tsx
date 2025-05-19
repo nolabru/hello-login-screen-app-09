@@ -1,23 +1,29 @@
 
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
 
 interface PatientStatusBadgeProps {
   status: string;
 }
 
 const PatientStatusBadge: React.FC<PatientStatusBadgeProps> = ({ status }) => {
-  switch (status) {
-    case 'approved':
-      return <Badge variant="default" className="bg-green-500">Ativo</Badge>;
+  let badgeClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
+  
+  switch (status.toLowerCase()) {
     case 'active':
-      return <Badge variant="default" className="bg-green-500">Ativo</Badge>;
+      badgeClasses += ' bg-green-100 text-green-800 border border-green-200';
+      return <span className={badgeClasses}>Ativo</span>;
     case 'pending':
-      return <Badge variant="default" className="bg-yellow-500">Pendente</Badge>;
+      badgeClasses += ' bg-yellow-100 text-yellow-800 border border-yellow-200';
+      return <span className={badgeClasses}>Pendente</span>;
     case 'inactive':
-      return <Badge variant="default" className="bg-gray-500">Inativo</Badge>;
+      badgeClasses += ' bg-gray-100 text-gray-800 border border-gray-200';
+      return <span className={badgeClasses}>Inativo</span>;
+    case 'blocked':
+      badgeClasses += ' bg-red-100 text-red-800 border border-red-200';
+      return <span className={badgeClasses}>Bloqueado</span>;
     default:
-      return <Badge variant="default" className="bg-gray-400">{status}</Badge>;
+      badgeClasses += ' bg-blue-100 text-blue-800 border border-blue-200';
+      return <span className={badgeClasses}>{status}</span>;
   }
 };
 

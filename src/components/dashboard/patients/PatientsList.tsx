@@ -25,10 +25,7 @@ const PatientsList: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    fetchPacientes();
-  }, []);
-
+  // Use effect for search filtering
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredPatients(patients);
@@ -41,10 +38,15 @@ const PatientsList: React.FC = () => {
     }
   }, [searchQuery, patients]);
 
+  // Function to fetch patients
   const fetchPacientes = async () => {
+    setLoading(true);
     try {
       const psychologistId = localStorage.getItem('psychologistId');
-      if (!psychologistId) return;
+      if (!psychologistId) {
+        setLoading(false);
+        return;
+      }
       
       const psychologistIdNumber = parseInt(psychologistId, 10);
       
@@ -108,20 +110,38 @@ const PatientsList: React.FC = () => {
     }
   };
 
+  // Initially load patients
+  useEffect(() => {
+    fetchPacientes();
+  }, []);
+
+  // Handler for when a patient is removed
+  const handlePatientRemoved = () => {
+    fetchPacientes(); // Refresh the list
+  };
+
   return (
-    <div className="space-y-4">
-      <h1 className="text-3xl font-serif">Seus Pacientes</h1>
+    <div className="space-y-6">
+      <div className="flex flex-col">
+        <h1 className="text-3xl font-serif bg-clip-text text-transparent bg-gradient-to-r from-portal-purple to-portal-purple-dark">
+          Seus Pacientes
+        </h1>
+        <p className="text-gray-500 mt-1">
+          Gerencie seus pacientes e visualize seus históricos de interação com a AIA
+        </p>
+      </div>
       
       <PatientSearchBar 
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       />
 
-      <Card className="shadow-sm">
-        <CardContent className="p-6">
+      <Card className="shadow-sm overflow-hidden border border-gray-200">
+        <CardContent className="p-0">
           <PatientsTable 
             patients={filteredPatients}
             loading={loading}
+            onPatientRemoved={handlePatientRemoved}
           />
         </CardContent>
       </Card>
