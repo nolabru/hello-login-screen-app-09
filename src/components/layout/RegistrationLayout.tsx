@@ -15,7 +15,7 @@ const RegistrationLayout: React.FC<RegistrationLayoutProps> = ({ children }) => 
       <Helmet>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=Quicksand:wght@300..700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&display=swap" rel="stylesheet" />
       </Helmet>
       <div className="min-h-screen bg-gradient-portal">
         <div className="w-full p-6">
@@ -25,7 +25,7 @@ const RegistrationLayout: React.FC<RegistrationLayoutProps> = ({ children }) => 
           </Link>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center -mt-8">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 -mt-8">
           {/* Logo with spacing */}
           <div className="mb-8">
             <Logo showTextLogo={true} size="lg" />
