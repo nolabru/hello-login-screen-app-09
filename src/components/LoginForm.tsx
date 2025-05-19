@@ -52,24 +52,42 @@ const LoginForm: React.FC = () => {
           return;
         }
 
-        // Se o psicólogo foi encontrado, fazer login com supabase auth
-        // (ou criar uma sessão personalizada se preferir)
+        // Se o psicólogo foi encontrado, criar uma sessão com Supabase auth
+        // Use o email e senha para fazer login através do sistema de autenticação
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) {
-          // Se não existe na auth, criar um novo usuário
-          const { error: signUpError } = await supabase.auth.signUp({
+          // Se o login falhar (porque o usuário não existe no auth), criar um novo usuário
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email,
             password,
           });
 
           if (signUpError) {
+            console.error('Erro ao criar usuário:', signUpError);
             toast({
               title: "Erro ao criar sessão",
               description: "Não foi possível criar sua sessão. Contate o administrador.",
+              variant: "destructive"
+            });
+            setLoading(false);
+            return;
+          }
+          
+          // Se o registro foi bem-sucedido, tente fazer login novamente
+          const { error: secondLoginError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          
+          if (secondLoginError) {
+            console.error('Erro ao fazer login após cadastro:', secondLoginError);
+            toast({
+              title: "Erro ao criar sessão",
+              description: "Não foi possível criar sua sessão. Tente novamente mais tarde.",
               variant: "destructive"
             });
             setLoading(false);
@@ -79,11 +97,11 @@ const LoginForm: React.FC = () => {
 
         // Login bem-sucedido - salvar ID do psicólogo na sessão
         localStorage.setItem('psychologistId', psychologist.id.toString());
-        localStorage.setItem('psychologistName', psychologist.nome || psychologist.name);
+        localStorage.setItem('psychologistName', psychologist.nome || psychologist.name || 'Psicólogo');
 
         toast({
           title: "Login bem-sucedido",
-          description: `Bem-vindo(a) de volta, ${psychologist.nome || psychologist.name}!`
+          description: `Bem-vindo(a) de volta, ${psychologist.nome || psychologist.name || 'Psicólogo'}!`
         });
 
         navigate('/dashboard');
