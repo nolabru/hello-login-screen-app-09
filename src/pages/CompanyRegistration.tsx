@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -43,7 +42,7 @@ const CompanyRegistration = () => {
         <Card className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
           <CardContent className="p-8">
             <div className="flex justify-center mb-6">
-              <Logo />
+              <Logo showTextLogo={false} />
             </div>
 
             <div className="flex items-center justify-center gap-3 mb-6">

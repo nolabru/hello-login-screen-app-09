@@ -51,7 +51,7 @@ const PsychologistRegistration = () => {
         <div className="container mx-auto py-8">
           <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-8">
             <div className="flex justify-center mb-6">
-              <Logo />
+              <Logo showTextLogo={false} />
             </div>
 
             <div className="flex items-center justify-center gap-3 mb-4">
