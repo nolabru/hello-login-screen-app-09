@@ -14,11 +14,11 @@ const Logo: React.FC<LogoProps> = ({ showTextLogo = true, size = 'md' }) => {
   };
 
   return (
-    <div className="flex flex-col items-center mb-8">
+    <div className="flex flex-col items-center mb-2">
       <img 
         src="/lovable-uploads/d0782692-3dfe-4b96-8a00-34b22396d341.png" 
         alt="Portal Calma Logo" 
-        className={`${sizeClasses[size]} mb-4`}
+        className={`${sizeClasses[size]} mb-2`}
       />
       {showTextLogo && (
         <>

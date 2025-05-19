@@ -48,12 +48,12 @@ const PsychologistRegistration = () => {
           </Link>
         </div>
 
-        {/* Logo moved outside the card */}
-        <div className="flex justify-center mb-4">
+        {/* Logo positioned closer to the form */}
+        <div className="flex justify-center">
           <Logo showTextLogo={false} size="lg" />
         </div>
 
-        <div className="container mx-auto py-4">
+        <div className="container mx-auto">
           <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-8">
             <div className="flex items-center justify-center gap-3 mb-4">
               <UserRound size={32} className="text-portal-purple" />
