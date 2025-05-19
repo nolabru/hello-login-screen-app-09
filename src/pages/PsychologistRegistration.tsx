@@ -41,29 +41,29 @@ const PsychologistRegistration = () => {
         <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=Quicksand:wght@300..700&display=swap" rel="stylesheet" />
       </Helmet>
       <div className="min-h-screen bg-gradient-portal">
-        <div className="w-full p-4">
+        <div className="w-full p-6">
           <Link to="/" className="text-gray-700 flex items-center hover:underline">
-            <ArrowLeft size={20} className="mr-1" />
+            <ArrowLeft size={20} className="mr-2" />
             Voltar
           </Link>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center -mt-12">
-          {/* Logo with text positioned close to the form */}
-          <div className="mb-4">
+        <div className="flex-1 flex flex-col items-center justify-center -mt-8">
+          {/* Logo with more spacing */}
+          <div className="mb-8">
             <Logo showTextLogo={true} size="lg" />
           </div>
 
-          <div className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-md p-8">
-            <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-md p-10 mb-8">
+            <div className="flex items-center justify-center gap-4 mb-6">
               <UserRound size={32} className="text-portal-purple" />
               <h1 className="text-2xl font-display font-bold text-gray-800">Registro de Psicólogo</h1>
             </div>
-            <p className="text-gray-600 mb-6 font-sans text-center">Preencha seus dados para criar uma conta profissional</p>
+            <p className="text-gray-600 mb-8 font-sans text-center">Preencha seus dados para criar uma conta profissional</p>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                     Nome <span className="text-red-500">*</span>
                   </label>
@@ -82,7 +82,7 @@ const PsychologistRegistration = () => {
                   {errors.name && <p className="text-red-500 text-xs mt-1">Nome é obrigatório</p>}
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                     Email <span className="text-red-500">*</span>
                   </label>
@@ -101,7 +101,7 @@ const PsychologistRegistration = () => {
                   {errors.email && <p className="text-red-500 text-xs mt-1">Email válido é obrigatório</p>}
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                     Telefone
                   </label>
@@ -119,7 +119,7 @@ const PsychologistRegistration = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <label htmlFor="crp" className="block text-sm font-medium text-gray-700">
                     CRP <span className="text-red-500">*</span>
                   </label>
@@ -139,7 +139,7 @@ const PsychologistRegistration = () => {
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <label htmlFor="specialization" className="block text-sm font-medium text-gray-700">
                   Especialização <span className="text-red-500">*</span>
                 </label>
@@ -153,7 +153,7 @@ const PsychologistRegistration = () => {
                 {errors.specialization && <p className="text-red-500 text-xs mt-1">Especialização é obrigatória</p>}
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <label htmlFor="biography" className="block text-sm font-medium text-gray-700">
                   Biografia
                 </label>
@@ -161,12 +161,12 @@ const PsychologistRegistration = () => {
                   id="biography"
                   placeholder="Breve biografia profissional (opcional)"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent"
-                  rows={4}
+                  rows={3}
                   {...register('biography')}
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Senha <span className="text-red-500">*</span>
                 </label>
@@ -190,7 +190,7 @@ const PsychologistRegistration = () => {
                 )}
               </div>
 
-              <div className="flex justify-end space-x-4 pt-4">
+              <div className="flex justify-end space-x-6 pt-6">
                 <button
                   type="button"
                   onClick={() => navigate('/')}
@@ -207,7 +207,7 @@ const PsychologistRegistration = () => {
               </div>
             </form>
 
-            <div className="mt-8 text-center">
+            <div className="mt-10 pt-6 text-center border-t border-gray-200">
               <p className="text-sm text-gray-600">
                 Já possui uma conta? <Link to="/" className="text-portal-purple hover:text-portal-purple-dark font-medium">Faça login</Link>
               </p>

@@ -32,37 +32,37 @@ const CompanyRegistration = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-portal">
-      <div className="w-full p-4">
+      <div className="w-full p-6">
         <Link to="/" className="text-gray-700 flex items-center hover:underline">
-          <ArrowLeft size={20} className="mr-1" />
+          <ArrowLeft size={20} className="mr-2" />
           Voltar
         </Link>
       </div>
       
-      <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-12">
-        {/* Logo with text positioned close to the form */}
-        <div className="mb-4">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 -mt-8">
+        {/* Logo with more spacing */}
+        <div className="mb-8">
           <Logo showTextLogo={true} size="lg" />
         </div>
         
         <Card className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
-          <CardContent className="p-8">
-            <div className="flex items-center justify-center gap-3 mb-6">
+          <CardContent className="p-10">
+            <div className="flex items-center justify-center gap-4 mb-8">
               <Building size={32} className="text-portal-purple" />
               <h1 className="text-2xl font-bold">Registro de Empresa</h1>
             </div>
             
-            <p className="text-gray-600 mb-8 text-center">Preencha os dados para criar uma conta empresarial</p>
+            <p className="text-gray-600 mb-10 text-center">Preencha os dados para criar uma conta empresarial</p>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="space-y-6">
-                <h2 className="flex items-center gap-2 text-xl font-semibold text-gray-800">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+              <div className="space-y-8">
+                <h2 className="flex items-center gap-3 text-xl font-semibold text-gray-800">
                   <Building size={20} className="text-portal-purple" />
                   Informações da Empresa
                 </h2>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                       <Building size={16} />
                       Nome da Empresa
@@ -75,7 +75,7 @@ const CompanyRegistration = () => {
                     {errors.companyName && <p className="text-red-500 text-sm">Nome da empresa é obrigatório</p>}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                       <Building size={16} />
                       Razão Social
@@ -88,7 +88,7 @@ const CompanyRegistration = () => {
                     {errors.legalName && <p className="text-red-500 text-sm">Razão social é obrigatória</p>}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                       <Mail size={16} />
                       Email Corporativo
@@ -101,7 +101,7 @@ const CompanyRegistration = () => {
                     {errors.corporateEmail && <p className="text-red-500 text-sm">Email corporativo válido é obrigatório</p>}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                       <Building size={16} />
                       CNPJ
@@ -114,7 +114,7 @@ const CompanyRegistration = () => {
                     {errors.cnpj && <p className="text-red-500 text-sm">CNPJ é obrigatório</p>}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                       <Mail size={16} />
                       Email de Contato
@@ -127,7 +127,7 @@ const CompanyRegistration = () => {
                     {errors.contactEmail && <p className="text-red-500 text-sm">Email de contato válido é obrigatório</p>}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                       <Phone size={16} />
                       Telefone de Contato
@@ -142,7 +142,7 @@ const CompanyRegistration = () => {
                 </div>
               </div>
 
-              <div className="flex justify-end pt-6">
+              <div className="flex justify-end pt-8">
                 <button
                   type="submit"
                   className="px-6 py-3 bg-gradient-button text-white rounded-lg hover:opacity-90 transition"
@@ -152,7 +152,7 @@ const CompanyRegistration = () => {
               </div>
             </form>
 
-            <div className="text-center mt-8 pt-4 border-t border-gray-200">
+            <div className="text-center mt-10 pt-6 border-t border-gray-200">
               <p className="text-gray-600">
                 Já possui uma conta? <Link to="/" className="text-portal-purple hover:underline font-medium">Faça login</Link>
               </p>
