@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,16 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				portal: {
+					purple: '#9b87f5',
+					'purple-dark': '#7E69AB',
+					'purple-light': '#E5DEFF',
 				}
+			},
+			backgroundImage: {
+				'gradient-portal': 'linear-gradient(135deg, #f5f7ff 0%, #e0e6ff 100%)',
+				'gradient-button': 'linear-gradient(90deg, #9b87f5 0%, #7E69AB 100%)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
