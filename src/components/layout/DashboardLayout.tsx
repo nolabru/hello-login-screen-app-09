@@ -1,8 +1,10 @@
 
 import React, { ReactNode, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '@/components/Logo';
 import { Home, Users, Building2, Settings, LogOut } from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from '@/components/ui/use-toast';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -10,6 +12,8 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [userName, setUserName] = useState('Dr. Ana Silva');
 
   const navItems = [
@@ -18,6 +22,38 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     { path: '/empresas', label: 'Empresas', icon: Building2 },
     { path: '/configuracoes', label: 'Configurações', icon: Settings },
   ];
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Erro ao fazer logout:', error);
+        toast({
+          variant: 'destructive',
+          title: "Erro ao fazer logout",
+          description: "Não foi possível encerrar sua sessão. Tente novamente.",
+        });
+        return;
+      }
+      
+      // Logout successful
+      toast({
+        title: "Logout realizado",
+        description: "Sua sessão foi encerrada com sucesso.",
+      });
+      
+      // Redirect to login page
+      navigate('/');
+    } catch (err) {
+      console.error('Erro inesperado ao fazer logout:', err);
+      toast({
+        variant: 'destructive',
+        title: "Erro ao fazer logout",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+      });
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans">
@@ -61,10 +97,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         </div>
         
         <div className="absolute bottom-0 w-64 p-4 border-t">
-          <Link to="/" className="flex items-center px-4 py-3 text-sm text-purple-600 hover:bg-purple-50">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-4 py-3 text-sm text-purple-600 hover:bg-purple-50 rounded-md"
+          >
             <LogOut className="h-5 w-5 mr-3" />
-            Fazer Login
-          </Link>
+            Fazer Logout
+          </button>
         </div>
       </div>
 
