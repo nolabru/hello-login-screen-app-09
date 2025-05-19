@@ -2,8 +2,8 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import PatientStatsCard from '@/components/dashboard/PatientStatsCard';
-import SessionsStatsCard from '@/components/dashboard/SessionsStatsCard';
+import PatientStatsCard from '@/components/dashboard/patients/PatientStatsCard';
+import SessionsStatsCard from '@/components/dashboard/sessions/SessionsStatsCard';
 import SentimentChart from '@/components/dashboard/SentimentChart';
 import RecentPatientActivity from '@/components/dashboard/RecentPatientActivity';
 
