@@ -26,15 +26,12 @@ const RegistrationLayout: React.FC<RegistrationLayoutProps> = ({ children }) => 
         </div>
 
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 -mt-8">
-          {/* Logo with spacing */}
+          {/* Logo com espaçamento */}
           <div className="mb-8">
             <Logo showTextLogo={true} size="lg" />
           </div>
           
-          {/* Portal Calma title with special font */}
-          <div className="mb-8">
-            <h1 className="font-display text-3xl text-center text-purple-700">Portal Calma</h1>
-          </div>
+          {/* Removido o título "Portal Calma" em roxo que estava aqui */}
 
           {children}
         </div>
