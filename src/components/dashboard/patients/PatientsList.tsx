@@ -139,21 +139,14 @@ const PatientsList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col">
-        <h1 className="text-3xl font-serif bg-clip-text text-transparent bg-gradient-to-r from-portal-purple to-portal-purple-dark">
-          Seus Pacientes
-        </h1>
-        <p className="text-gray-500 mt-1">
-          Gerencie seus pacientes e visualize seus históricos de interação com a AIA
-        </p>
-      </div>
-      
       <div className="flex justify-between items-center">
-        <div className="flex-1 mr-4">
-          <PatientSearchBar 
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-          />
+        <div className="flex flex-col">
+          <h1 className="text-3xl font-serif bg-clip-text text-transparent bg-gradient-to-r from-portal-purple to-portal-purple-dark">
+            Seus Pacientes
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Gerencie seus pacientes e visualize seus históricos de interação com a AIA
+          </p>
         </div>
         <Button 
           onClick={() => setIsSearchDialogOpen(true)}
@@ -161,6 +154,13 @@ const PatientsList: React.FC = () => {
         >
           <Search className="h-5 w-5 mr-2" /> Procurar Paciente
         </Button>
+      </div>
+      
+      <div className="w-full">
+        <PatientSearchBar 
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+        />
       </div>
 
       <Tabs defaultValue="active" value={activeTab} onValueChange={setActiveTab} className="w-full">
