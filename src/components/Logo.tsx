@@ -21,10 +21,7 @@ const Logo: React.FC<LogoProps> = ({ showTextLogo = true, size = 'md' }) => {
         className={`${sizeClasses[size]} mb-2`}
       />
       {showTextLogo && (
-        <>
-          <h1 className="text-3xl font-display font-bold text-gray-800">Portal Calma</h1>
-          <p className="font-sans text-gray-600 mt-1">Acesso para profissionais e empresas</p>
-        </>
+        <h1 className="text-3xl font-display font-bold text-gray-800">Portal Calma</h1>
       )}
     </div>
   );
