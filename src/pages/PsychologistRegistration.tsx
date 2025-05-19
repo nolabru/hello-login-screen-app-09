@@ -40,175 +40,178 @@ const PsychologistRegistration = () => {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=Quicksand:wght@300..700&display=swap" rel="stylesheet" />
       </Helmet>
-      <div className="h-screen bg-gradient-portal overflow-hidden">
-        <div className="absolute top-4 left-4">
+      <div className="min-h-screen bg-gradient-portal">
+        <div className="w-full p-4">
           <Link to="/" className="text-gray-700 flex items-center hover:underline">
             <ArrowLeft size={20} className="mr-1" />
             Voltar
           </Link>
         </div>
 
-        <div className="flex h-full flex-col items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center -mt-12">
+          {/* Logo with text positioned close to the form */}
           <div className="mb-4">
-            <Logo showTextLogo={true} size="md" />
+            <Logo showTextLogo={true} size="lg" />
           </div>
 
-          <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-md p-5">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <UserRound size={24} className="text-portal-purple" />
-              <h1 className="text-xl font-display font-bold text-gray-800">Registro de Psicólogo</h1>
+          <div className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-md p-8">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <UserRound size={32} className="text-portal-purple" />
+              <h1 className="text-2xl font-display font-bold text-gray-800">Registro de Psicólogo</h1>
             </div>
+            <p className="text-gray-600 mb-6 font-sans text-center">Preencha seus dados para criar uma conta profissional</p>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                  <label htmlFor="name" className="block text-xs font-medium text-gray-700">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
                     Nome <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                      <UserRound size={14} className="text-gray-400" />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <UserRound size={18} className="text-gray-400" />
                     </div>
                     <input
                       type="text"
                       id="name"
                       placeholder="Nome do psicólogo"
-                      className={`w-full pl-7 pr-2 py-1 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-portal-purple focus:border-transparent text-sm`}
+                      className={`w-full pl-10 pr-3 py-2 border ${errors.name ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent`}
                       {...register('name', { required: true })}
                     />
                   </div>
-                  {errors.name && <p className="text-red-500 text-xs">Nome é obrigatório</p>}
+                  {errors.name && <p className="text-red-500 text-xs mt-1">Nome é obrigatório</p>}
                 </div>
 
-                <div className="space-y-1">
-                  <label htmlFor="email" className="block text-xs font-medium text-gray-700">
+                <div className="space-y-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                     Email <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                      <Mail size={14} className="text-gray-400" />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Mail size={18} className="text-gray-400" />
                     </div>
                     <input
                       type="email"
                       id="email"
-                      placeholder="Email"
-                      className={`w-full pl-7 pr-2 py-1 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-portal-purple focus:border-transparent text-sm`}
+                      placeholder="Email do psicólogo"
+                      className={`w-full pl-10 pr-3 py-2 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent`}
                       {...register('email', { required: true, pattern: /^\S+@\S+$/i })}
                     />
                   </div>
-                  {errors.email && <p className="text-red-500 text-xs">Email válido é obrigatório</p>}
+                  {errors.email && <p className="text-red-500 text-xs mt-1">Email válido é obrigatório</p>}
                 </div>
 
-                <div className="space-y-1">
-                  <label htmlFor="phone" className="block text-xs font-medium text-gray-700">
+                <div className="space-y-2">
+                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
                     Telefone
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                      <Phone size={14} className="text-gray-400" />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Phone size={18} className="text-gray-400" />
                     </div>
                     <input
                       type="text"
                       id="phone"
                       placeholder="(00) 00000-0000"
-                      className="w-full pl-7 pr-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-portal-purple focus:border-transparent text-sm"
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent"
                       {...register('phone')}
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label htmlFor="crp" className="block text-xs font-medium text-gray-700">
+                <div className="space-y-2">
+                  <label htmlFor="crp" className="block text-sm font-medium text-gray-700">
                     CRP <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                      <FileText size={14} className="text-gray-400" />
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <FileText size={18} className="text-gray-400" />
                     </div>
                     <input
                       type="text"
                       id="crp"
                       placeholder="Número do CRP"
-                      className={`w-full pl-7 pr-2 py-1 border ${errors.crp ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-portal-purple focus:border-transparent text-sm`}
+                      className={`w-full pl-10 pr-3 py-2 border ${errors.crp ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent`}
                       {...register('crp', { required: true })}
                     />
                   </div>
-                  {errors.crp && <p className="text-red-500 text-xs">CRP é obrigatório</p>}
-                </div>
-
-                <div className="space-y-1">
-                  <label htmlFor="specialization" className="block text-xs font-medium text-gray-700">
-                    Especialização <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    id="specialization"
-                    placeholder="Área de especialização"
-                    className={`w-full px-3 py-1 border ${errors.specialization ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-portal-purple focus:border-transparent text-sm`}
-                    {...register('specialization', { required: true })}
-                  />
-                  {errors.specialization && <p className="text-red-500 text-xs">Especialização é obrigatória</p>}
-                </div>
-
-                <div className="space-y-1">
-                  <label htmlFor="password" className="block text-xs font-medium text-gray-700">
-                    Senha <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-2 flex items-center pointer-events-none">
-                      <Lock size={14} className="text-gray-400" />
-                    </div>
-                    <input
-                      type="password"
-                      id="password"
-                      placeholder="Senha (mínimo 6 caracteres)"
-                      className={`w-full pl-7 pr-2 py-1 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-1 focus:ring-portal-purple focus:border-transparent text-sm`}
-                      {...register('password', { required: true, minLength: 6 })}
-                    />
-                  </div>
-                  {errors.password && errors.password.type === 'required' && (
-                    <p className="text-red-500 text-xs">Senha é obrigatória</p>
-                  )}
-                  {errors.password && errors.password.type === 'minLength' && (
-                    <p className="text-red-500 text-xs">Senha deve ter pelo menos 6 caracteres</p>
-                  )}
+                  {errors.crp && <p className="text-red-500 text-xs mt-1">CRP é obrigatório</p>}
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label htmlFor="biography" className="block text-xs font-medium text-gray-700">
+              <div className="space-y-2">
+                <label htmlFor="specialization" className="block text-sm font-medium text-gray-700">
+                  Especialização <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="specialization"
+                  placeholder="Área de especialização"
+                  className={`w-full px-3 py-2 border ${errors.specialization ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent`}
+                  {...register('specialization', { required: true })}
+                />
+                {errors.specialization && <p className="text-red-500 text-xs mt-1">Especialização é obrigatória</p>}
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="biography" className="block text-sm font-medium text-gray-700">
                   Biografia
                 </label>
                 <Textarea
                   id="biography"
                   placeholder="Breve biografia profissional (opcional)"
-                  className="w-full px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-portal-purple focus:border-transparent text-sm"
-                  rows={2}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent"
+                  rows={4}
                   {...register('biography')}
                 />
               </div>
 
-              <div className="flex justify-between items-center pt-2">
-                <p className="text-xs text-gray-600">
-                  Já possui uma conta? <Link to="/" className="text-portal-purple hover:text-portal-purple-dark font-medium">Faça login</Link>
-                </p>
-                <div className="flex space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/')}
-                    className="px-4 py-1.5 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 text-sm"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-1.5 bg-gradient-button rounded-md text-white font-medium hover:opacity-90 transition-opacity text-sm"
-                  >
-                    Salvar
-                  </button>
+              <div className="space-y-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Senha <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock size={18} className="text-gray-400" />
+                  </div>
+                  <input
+                    type="password"
+                    id="password"
+                    placeholder="Senha (mínimo 6 caracteres)"
+                    className={`w-full pl-10 pr-3 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent`}
+                    {...register('password', { required: true, minLength: 6 })}
+                  />
                 </div>
+                {errors.password && errors.password.type === 'required' && (
+                  <p className="text-red-500 text-xs mt-1">Senha é obrigatória</p>
+                )}
+                {errors.password && errors.password.type === 'minLength' && (
+                  <p className="text-red-500 text-xs mt-1">Senha deve ter pelo menos 6 caracteres</p>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-gradient-button rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
+                >
+                  Salvar
+                </button>
               </div>
             </form>
+
+            <div className="mt-8 text-center">
+              <p className="text-sm text-gray-600">
+                Já possui uma conta? <Link to="/" className="text-portal-purple hover:text-portal-purple-dark font-medium">Faça login</Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>
