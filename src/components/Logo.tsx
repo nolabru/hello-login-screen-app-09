@@ -9,8 +9,8 @@ const Logo: React.FC = () => {
         alt="Portal C'alma Logo" 
         className="w-16 h-16 mb-4"
       />
-      <h1 className="text-3xl font-bold text-gray-800">Portal C'alma</h1>
-      <p className="text-gray-600 mt-1">Acesso para profissionais e empresas</p>
+      <h1 className="text-3xl font-display font-bold text-gray-800">Portal C'alma</h1>
+      <p className="font-sans text-gray-600 mt-1">Acesso para profissionais e empresas</p>
     </div>
   );
 };

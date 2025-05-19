@@ -40,7 +40,7 @@ const LoginForm: React.FC = () => {
   ];
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md font-sans">
       <TabsCustom
         options={tabOptions}
         selectedTab={userType}
