@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import TabsCustom from './ui/tabs-custom';
 import CheckboxCustom from './ui/checkbox-custom';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
@@ -12,6 +13,7 @@ const LoginForm: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -32,6 +34,17 @@ const LoginForm: React.FC = () => {
     
     // In a real application, we would make an API call here
     console.log('Login attempt:', { userType, email, password, rememberMe });
+    
+    // For demo purposes, navigate to the dashboard
+    if (userType === 'psychologists') {
+      navigate('/dashboard');
+    } else {
+      // We could navigate to a company dashboard in the future
+      toast({
+        title: "Funcionalidade em desenvolvimento",
+        description: "O acesso para empresas ainda está sendo implementado."
+      });
+    }
   };
 
   const tabOptions = [

@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -49,6 +50,9 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    --portal-purple: 255 84% 75%;
+    --portal-purple-dark: 255 84% 65%;
   }
 
   .dark {
@@ -98,4 +102,32 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.bg-gradient-portal {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.bg-gradient-button {
+  background: linear-gradient(90deg, #9b87f5 0%, #7e69ab 100%);
+}
+
+.text-portal-purple {
+  color: #9b87f5;
+}
+
+.bg-portal-purple {
+  background-color: #9b87f5;
+}
+
+.border-portal-purple {
+  border-color: #9b87f5;
+}
+
+.hover\:bg-portal-purple:hover {
+  background-color: #9b87f5;
+}
+
+.focus\:ring-portal-purple:focus {
+  --tw-ring-color: #9b87f5;
 }
