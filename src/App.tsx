@@ -11,6 +11,7 @@ import CompanyRegistration from "./pages/CompanyRegistration";
 import PsychologistDashboard from "./pages/PsychologistDashboard";
 import PsychologistPatients from "./pages/PsychologistPatients";
 import PsychologistSettings from "./pages/PsychologistSettings";
+import CompanyDashboard from "./pages/CompanyDashboard";
 
 const App = () => {
   // Create a new QueryClient instance inside the component
@@ -27,6 +28,7 @@ const App = () => {
             <Route path="/register/psychologist" element={<PsychologistRegistration />} />
             <Route path="/register/company" element={<CompanyRegistration />} />
             <Route path="/dashboard" element={<PsychologistDashboard />} />
+            <Route path="/company/dashboard" element={<CompanyDashboard />} />
             <Route path="/pacientes" element={<PsychologistPatients />} />
             <Route path="/configuracoes" element={<PsychologistSettings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

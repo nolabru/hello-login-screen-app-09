@@ -30,6 +30,11 @@ const RegistrationLayout: React.FC<RegistrationLayoutProps> = ({ children }) => 
           <div className="mb-8">
             <Logo showTextLogo={true} size="lg" />
           </div>
+          
+          {/* Portal Calma title with special font */}
+          <div className="mb-8">
+            <h1 className="font-display text-3xl text-center text-purple-700">Portal Calma</h1>
+          </div>
 
           {children}
         </div>

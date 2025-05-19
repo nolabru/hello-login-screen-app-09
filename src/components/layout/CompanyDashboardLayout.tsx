@@ -1,0 +1,158 @@
+
+import React, { ReactNode, useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import Logo from '@/components/Logo';
+import { Home, Users, LogOut, Search } from 'lucide-react';
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from '@/components/ui/use-toast';
+
+interface CompanyDashboardLayoutProps {
+  children: ReactNode;
+}
+
+const CompanyDashboardLayout: React.FC<CompanyDashboardLayoutProps> = ({ children }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [companyName, setCompanyName] = useState('');
+  const [companyEmail, setCompanyEmail] = useState('');
+
+  useEffect(() => {
+    // Verificar se há uma empresa logada
+    const checkAuth = async () => {
+      const companyId = localStorage.getItem('companyId');
+      const savedCompanyName = localStorage.getItem('companyName');
+      const savedCompanyEmail = localStorage.getItem('companyEmail');
+      
+      if (!companyId) {
+        // Se não houver id da empresa, redirecionar para a página de login
+        toast({
+          title: "Sessão expirada",
+          description: "Por favor, faça login novamente.",
+          variant: "destructive"
+        });
+        navigate('/');
+        return;
+      }
+      
+      // Se houver dados salvos, use-os
+      if (savedCompanyName && savedCompanyEmail) {
+        setCompanyName(savedCompanyName);
+        setCompanyEmail(savedCompanyEmail);
+      } else {
+        // Caso contrário, busque do banco de dados
+        const companyIdNumber = parseInt(companyId, 10);
+        
+        const { data: company } = await supabase
+          .from('companies')
+          .select('name, email, contact_email')
+          .eq('id', companyIdNumber)
+          .single();
+          
+        if (company) {
+          setCompanyName(company.name);
+          setCompanyEmail(company.email || company.contact_email);
+          localStorage.setItem('companyName', company.name);
+          localStorage.setItem('companyEmail', company.email || company.contact_email);
+        }
+      }
+    };
+    
+    checkAuth();
+  }, [navigate, toast]);
+
+  const navItems = [
+    { path: '/company/dashboard', label: 'Dashboard', icon: Home },
+    { path: '/company/funcionarios', label: 'Funcionários', icon: Users },
+    { path: '/company/psicologos', label: 'Psicólogos', icon: Search },
+  ];
+
+  const handleLogout = () => {
+    try {
+      // Limpar localStorage
+      localStorage.removeItem('companyId');
+      localStorage.removeItem('companyName');
+      localStorage.removeItem('companyEmail');
+      
+      toast({
+        title: "Logout realizado",
+        description: "Sua sessão foi encerrada com sucesso.",
+      });
+      
+      // Redirect to login page
+      navigate('/');
+    } catch (err) {
+      console.error('Erro inesperado ao fazer logout:', err);
+      toast({
+        variant: 'destructive',
+        title: "Erro ao fazer logout",
+        description: "Ocorreu um erro inesperado. Tente novamente.",
+      });
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-gray-50 font-sans">
+      {/* Sidebar */}
+      <div className="w-64 bg-white shadow-md">
+        <div className="p-4 border-b">
+          <Link to="/company/dashboard" className="flex items-center space-x-2">
+            <Logo showTextLogo={false} size="sm" />
+            <span className="font-medium text-lg">Área da Empresa</span>
+          </Link>
+        </div>
+        
+        <div className="p-4 border-b">
+          <p className="text-sm text-gray-500">Bem-vindo(a),</p>
+          <h2 className="font-medium text-xl">{companyName}</h2>
+          <p className="text-sm text-gray-500 mt-1">{companyEmail}</p>
+        </div>
+        
+        <div className="py-4">
+          <nav>
+            <ul>
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <li key={item.path}>
+                    <Link
+                      to={item.path}
+                      className={`flex items-center px-4 py-3 text-sm ${
+                        isActive
+                          ? 'bg-purple-50 text-portal-purple border-l-4 border-portal-purple'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <item.icon className={`h-5 w-5 mr-3 ${isActive ? 'text-portal-purple' : 'text-gray-500'}`} />
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+        </div>
+        
+        <div className="absolute bottom-0 w-64 p-4 border-t">
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-4 py-3 text-sm text-purple-600 hover:bg-purple-50 rounded-md"
+          >
+            <LogOut className="h-5 w-5 mr-3" />
+            Sair
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Main content area */}
+        <main className="flex-1 overflow-y-auto bg-gray-50">
+          {children}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default CompanyDashboardLayout;
