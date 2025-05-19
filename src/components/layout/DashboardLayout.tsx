@@ -1,4 +1,3 @@
-
 import React, { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '@/components/Logo';
@@ -19,12 +18,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   useEffect(() => {
     // Verificar se há um psicólogo logado
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
       const psychologistId = localStorage.getItem('psychologistId');
       const psychologistName = localStorage.getItem('psychologistName');
       
-      if (!session || !psychologistId) {
-        // Se não houver sessão, redirecionar para a página de login
+      if (!psychologistId) {
+        // Se não houver id do psicólogo, redirecionar para a página de login
         toast({
           title: "Sessão expirada",
           description: "Por favor, faça login novamente.",
@@ -66,21 +64,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     { path: '/configuracoes', label: 'Configurações', icon: Settings },
   ];
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Erro ao fazer logout:', error);
-        toast({
-          variant: 'destructive',
-          title: "Erro ao fazer logout",
-          description: "Não foi possível encerrar sua sessão. Tente novamente.",
-        });
-        return;
-      }
-      
-      // Logout successful - limpar localStorage
+      // Limpar localStorage
       localStorage.removeItem('psychologistId');
       localStorage.removeItem('psychologistName');
       

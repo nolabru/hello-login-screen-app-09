@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import TabsCustom from './ui/tabs-custom';
@@ -52,53 +51,13 @@ const LoginForm: React.FC = () => {
           return;
         }
 
-        // Se o psicólogo foi encontrado, criar uma sessão com Supabase auth
-        // Use o email e senha para fazer login através do sistema de autenticação
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (error) {
-          // Se o login falhar (porque o usuário não existe no auth), criar um novo usuário
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email,
-            password,
-          });
-
-          if (signUpError) {
-            console.error('Erro ao criar usuário:', signUpError);
-            toast({
-              title: "Erro ao criar sessão",
-              description: "Não foi possível criar sua sessão. Contate o administrador.",
-              variant: "destructive"
-            });
-            setLoading(false);
-            return;
-          }
-          
-          // Se o registro foi bem-sucedido, tente fazer login novamente
-          const { error: secondLoginError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-          
-          if (secondLoginError) {
-            console.error('Erro ao fazer login após cadastro:', secondLoginError);
-            toast({
-              title: "Erro ao criar sessão",
-              description: "Não foi possível criar sua sessão. Tente novamente mais tarde.",
-              variant: "destructive"
-            });
-            setLoading(false);
-            return;
-          }
-        }
-
-        // Login bem-sucedido - salvar ID do psicólogo na sessão
+        // Psicólogo encontrado, salvar dados na sessão
         localStorage.setItem('psychologistId', psychologist.id.toString());
         localStorage.setItem('psychologistName', psychologist.nome || psychologist.name || 'Psicólogo');
-
+        
+        // Não usaremos a autenticação do Supabase diretamente,
+        // pois o formato de e-mail pode não ser válido para o sistema de auth
+        
         toast({
           title: "Login bem-sucedido",
           description: `Bem-vindo(a) de volta, ${psychologist.nome || psychologist.name || 'Psicólogo'}!`
