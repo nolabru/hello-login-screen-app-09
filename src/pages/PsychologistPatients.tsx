@@ -2,7 +2,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import PatientsList from '@/components/dashboard/PatientsList';
+import PatientsList from '@/components/dashboard/patients';
 
 const PsychologistPatients: React.FC = () => {
   return (
