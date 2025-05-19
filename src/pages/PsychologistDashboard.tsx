@@ -29,7 +29,7 @@ const PsychologistDashboard: React.FC = () => {
             <SessionsStatsCard />
           </div>
           
-          <div className="grid md:grid-cols-1 gap-6 mb-6">
+          <div className="w-full mb-6">
             <SentimentChart />
           </div>
           

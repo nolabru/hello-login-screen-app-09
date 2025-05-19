@@ -18,23 +18,17 @@ const SentimentChart: React.FC = () => {
     <Card className="w-full">
       <CardContent className="p-6">
         <h3 className="text-lg font-medium mb-6">Análise de Sentimentos</h3>
-        <div className="h-80">
-          <ChartContainer
-            config={{
-              positivo: { color: '#9b87f5' },
-              neutro: { color: '#e5deff' },
-              negativo: { color: '#ffdee2' },
-            }}
-          >
-            <BarChart data={sentimentData}>
+        <div className="w-full h-80">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={sentimentData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="positivo" stackId="a" fill="var(--color-positivo)" name="Positivo" />
-              <Bar dataKey="neutro" stackId="a" fill="var(--color-neutro)" name="Neutro" />
-              <Bar dataKey="negativo" stackId="a" fill="var(--color-negativo)" name="Negativo" />
+              <Bar dataKey="positivo" stackId="a" fill="#9b87f5" name="Positivo" />
+              <Bar dataKey="neutro" stackId="a" fill="#e5deff" name="Neutro" />
+              <Bar dataKey="negativo" stackId="a" fill="#ffdee2" name="Negativo" />
             </BarChart>
-          </ChartContainer>
+          </ResponsiveContainer>
         </div>
       </CardContent>
     </Card>
