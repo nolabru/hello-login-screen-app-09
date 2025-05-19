@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MessageCircle, Loader2, CalendarClock, Bot } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface PatientChatHistoryProps {
   patientId: number;
@@ -119,7 +119,6 @@ const PatientChatHistory: React.FC<PatientChatHistoryProps> = ({ patientId }) =>
   if (interactions.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <MessageCircle className="h-16 w-16 text-gray-300 mb-4" />
         <p className="text-gray-500 text-lg">Nenhuma interação encontrada para este paciente</p>
       </div>
     );
@@ -141,7 +140,6 @@ const PatientChatHistory: React.FC<PatientChatHistoryProps> = ({ patientId }) =>
       {Object.entries(groupedInteractions).map(([date, dateInteractions]) => (
         <div key={date} className="space-y-3">
           <div className="flex items-center gap-2 mb-2">
-            <CalendarClock className="h-4 w-4 text-portal-purple" />
             <h3 className="text-sm font-medium text-portal-purple">{date}</h3>
           </div>
           
@@ -153,7 +151,6 @@ const PatientChatHistory: React.FC<PatientChatHistoryProps> = ({ patientId }) =>
               <div className="flex justify-between items-start">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Bot className="h-5 w-5 text-portal-purple" />
                     <p className="font-medium text-portal-purple">Interação com AIA</p>
                     {interaction.sentiment && (
                       <span className={`text-xs px-2 py-0.5 rounded-full ${

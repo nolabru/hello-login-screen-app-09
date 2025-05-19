@@ -1,12 +1,11 @@
 
 import React, { useState } from 'react';
 import { TableRow, TableCell } from '@/components/ui/table';
-import { Eye, Calendar, Trash2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import PatientStatusBadge from './PatientStatusBadge';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -107,25 +106,25 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
           <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
             <Button 
               variant="outline" 
-              size="icon" 
+              size="sm"
               title="Ver detalhes"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsChatHistoryOpen(true);
               }}
             >
-              <Eye className="h-4 w-4" />
+              Ver
             </Button>
             <Button 
               variant="outline" 
-              size="icon" 
+              size="sm"
               title="Agendar sessão"
             >
-              <Calendar className="h-4 w-4" />
+              Agendar
             </Button>
             <Button 
               variant="outline" 
-              size="icon" 
+              size="sm" 
               title="Remover vínculo" 
               className="text-red-500 hover:bg-red-50 hover:text-red-600"
               onClick={(e) => {
@@ -133,7 +132,7 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
                 setIsDeleteDialogOpen(true);
               }}
             >
-              <Trash2 className="h-4 w-4" />
+              Remover
             </Button>
           </div>
         </TableCell>
