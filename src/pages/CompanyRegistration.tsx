@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Building, Mail, Phone, Lock } from 'lucide-react';
+import { Building, Mail, Phone } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import RegistrationLayout from '@/components/layout/RegistrationLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,7 +27,6 @@ const companyFormSchema = z.object({
   cnpj: z.string().min(14, { message: 'CNPJ válido é obrigatório' }),
   contactEmail: z.string().email({ message: 'Email de contato válido é obrigatório' }),
   contactPhone: z.string().min(10, { message: 'Telefone de contato válido é obrigatório' }),
-  password: z.string().min(6, { message: 'Senha deve ter pelo menos 6 caracteres' }),
 });
 
 type CompanyFormValues = z.infer<typeof companyFormSchema>;
@@ -46,7 +45,6 @@ const CompanyRegistration = () => {
       cnpj: '',
       contactEmail: '',
       contactPhone: '',
-      password: '',
     },
   });
 
@@ -59,7 +57,7 @@ const CompanyRegistration = () => {
         email: data.corporateEmail,
         cnpj: data.cnpj,
         contact_email: data.contactEmail,
-        senha: data.password // Use the password from form
+        senha: 'temporary_password' // In a real app, you would implement proper password handling
       });
 
       if (error) throw error;
@@ -216,30 +214,6 @@ const CompanyRegistration = () => {
                         <FormControl>
                           <Input 
                             placeholder="(XX) XXXXX-XXXX" 
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* New Password Field */}
-                <div>
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                          <Lock size={16} />
-                          Senha
-                        </FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Digite sua senha" 
-                            type="password"
                             {...field}
                           />
                         </FormControl>
