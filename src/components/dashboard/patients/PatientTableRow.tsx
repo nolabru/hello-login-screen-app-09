@@ -113,14 +113,7 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
                 setIsChatHistoryOpen(true);
               }}
             >
-              Ver
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              title="Agendar sessão"
-            >
-              Agendar
+              Ver Mais
             </Button>
             <Button 
               variant="outline" 
