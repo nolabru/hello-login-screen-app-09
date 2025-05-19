@@ -24,7 +24,7 @@ const PsychologistForm: React.FC = () => {
           email: data.email,
           phone: data.phone,
           crp: data.crp,
-          specialization: data.specialization,
+          especialidade: data.specialization, // Use 'especialidade' instead of 'specialization'
           bio: data.biography,
           senha: data.password,
           status: true
