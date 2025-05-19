@@ -5,20 +5,73 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { UserRound } from 'lucide-react';
 import PsychologistFormFields, { PsychologistFormData } from './PsychologistFormFields';
+import { supabase } from "@/integrations/supabase/client";
 
 const PsychologistForm: React.FC = () => {
-  const { register, handleSubmit, formState: { errors } } = useForm<PsychologistFormData>();
+  const { register, handleSubmit, formState: { errors }, setError } = useForm<PsychologistFormData>();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const onSubmit = (data: PsychologistFormData) => {
+  const onSubmit = async (data: PsychologistFormData) => {
     console.log('Form data:', data);
-    toast({
-      title: "Cadastro enviado!",
-      description: "Seus dados foram enviados com sucesso.",
-    });
-    // Em uma aplicação real, enviaria os dados para uma API
-    setTimeout(() => navigate('/'), 2000);
+    
+    try {
+      // Insert the psychologist data into the database
+      const { data: insertedData, error } = await supabase
+        .from('psychologists')
+        .insert({
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          crp: data.crp,
+          specialization: data.specialization,
+          bio: data.biography,
+          senha: data.password,
+          status: true
+        })
+        .select();
+      
+      if (error) {
+        console.error('Error inserting data:', error);
+        
+        // Handle duplicate email error
+        if (error.code === '23505' && error.message.includes('email')) {
+          setError('email', { 
+            type: 'manual', 
+            message: 'Este email já está cadastrado' 
+          });
+          toast({
+            variant: 'destructive',
+            title: "Erro no cadastro",
+            description: "Este email já está em uso.",
+          });
+          return;
+        }
+        
+        toast({
+          variant: 'destructive',
+          title: "Erro no cadastro",
+          description: "Houve um problema ao registrar seus dados. Por favor, tente novamente.",
+        });
+        return;
+      }
+
+      // Success message
+      toast({
+        title: "Cadastro enviado!",
+        description: "Seus dados foram enviados com sucesso.",
+      });
+      
+      // Navigate to home after successful registration
+      setTimeout(() => navigate('/'), 2000);
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast({
+        variant: 'destructive',
+        title: "Erro no cadastro",
+        description: "Houve um problema ao registrar seus dados. Por favor, tente novamente.",
+      });
+    }
   };
 
   return (
