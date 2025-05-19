@@ -39,10 +39,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         setUserName(psychologistName);
       } else {
         // Caso contrário, busque do banco de dados
+        // Converting string to number with parseInt
+        const psychologistIdNumber = parseInt(psychologistId, 10);
+        
         const { data: psychologist } = await supabase
           .from('psychologists')
           .select('nome, name')
-          .eq('id', psychologistId)
+          .eq('id', psychologistIdNumber)
           .single();
           
         if (psychologist) {
