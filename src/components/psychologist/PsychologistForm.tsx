@@ -20,7 +20,7 @@ const PsychologistForm: React.FC = () => {
       const { data: insertedData, error } = await supabase
         .from('psychologists')
         .insert({
-          name: data.name,
+          nome: data.name, // Changed from name to nome to match the database schema
           email: data.email,
           phone: data.phone,
           crp: data.crp,
