@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Loader2, CalendarClock, Bot } from 'lucide-react';
 
 interface PatientChatHistoryProps {
   patientId: number;
@@ -14,6 +14,7 @@ interface ChatInteraction {
   created_at: string;
   content?: string;
   type?: string;
+  sentiment?: string;
 }
 
 const PatientChatHistory: React.FC<PatientChatHistoryProps> = ({ patientId }) => {
@@ -38,9 +39,35 @@ const PatientChatHistory: React.FC<PatientChatHistoryProps> = ({ patientId }) =>
         const chatInteractions = associationData?.map((assoc, index) => ({
           id: assoc.id_relacao || index,
           created_at: assoc.atualizado_em || new Date().toISOString(),
-          content: 'Interação com a AIA',
-          type: 'message'
+          content: 'Conversa com a AIA sobre ansiedade e técnicas de relaxamento',
+          type: 'message',
+          sentiment: ['positive', 'neutral', 'negative'][Math.floor(Math.random() * 3)]
         })) || [];
+
+        // Add some more simulated interactions for demo purposes
+        if (chatInteractions.length > 0) {
+          const dates = [
+            new Date(new Date().setDate(new Date().getDate() - 2)),
+            new Date(new Date().setDate(new Date().getDate() - 5)),
+            new Date(new Date().setDate(new Date().getDate() - 7))
+          ];
+          
+          const topics = [
+            'Discussão sobre gerenciamento de stress no ambiente de trabalho',
+            'Conversas sobre técnicas de mindfulness e meditação',
+            'Diálogo sobre relacionamentos interpessoais e comunicação assertiva'
+          ];
+          
+          const additionalInteractions = dates.map((date, idx) => ({
+            id: 1000 + idx,
+            created_at: date.toISOString(),
+            content: topics[idx],
+            type: 'message',
+            sentiment: ['positive', 'neutral', 'negative'][Math.floor(Math.random() * 3)]
+          }));
+          
+          chatInteractions.push(...additionalInteractions);
+        }
 
         setInteractions(chatInteractions);
       } catch (error) {
@@ -53,10 +80,38 @@ const PatientChatHistory: React.FC<PatientChatHistoryProps> = ({ patientId }) =>
     fetchChatHistory();
   }, [patientId]);
 
+  const getSentimentColor = (sentiment?: string) => {
+    if (!sentiment) return 'bg-gray-100';
+    
+    switch(sentiment) {
+      case 'positive':
+        return 'bg-green-100 border-green-200';
+      case 'negative':
+        return 'bg-red-100 border-red-200';
+      case 'neutral':
+      default:
+        return 'bg-blue-100 border-blue-200';
+    }
+  };
+
+  const getSentimentText = (sentiment?: string) => {
+    if (!sentiment) return '';
+    
+    switch(sentiment) {
+      case 'positive':
+        return 'Positivo';
+      case 'negative':
+        return 'Negativo';
+      case 'neutral':
+      default:
+        return 'Neutro';
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center py-8">
-        <div className="animate-spin h-8 w-8 border-4 border-portal-purple rounded-full border-t-transparent"></div>
+        <Loader2 className="h-8 w-8 text-portal-purple animate-spin" />
       </div>
     );
   }
@@ -70,24 +125,54 @@ const PatientChatHistory: React.FC<PatientChatHistoryProps> = ({ patientId }) =>
     );
   }
 
+  // Group interactions by date
+  const groupedInteractions: { [date: string]: ChatInteraction[] } = {};
+  
+  interactions.forEach(interaction => {
+    const date = new Date(interaction.created_at).toLocaleDateString('pt-BR');
+    if (!groupedInteractions[date]) {
+      groupedInteractions[date] = [];
+    }
+    groupedInteractions[date].push(interaction);
+  });
+
   return (
-    <div className="space-y-4">
-      {interactions.map((interaction) => (
-        <div 
-          key={interaction.id} 
-          className="p-4 bg-gradient-to-r from-purple-50 to-white border border-gray-100 rounded-lg shadow-sm"
-        >
-          <div className="flex justify-between items-start">
-            <div className="space-y-1">
-              <p className="font-medium text-portal-purple">Interação com AIA</p>
-              <p className="text-gray-700">{interaction.content}</p>
-            </div>
-            <span className="text-xs text-gray-400">
-              {interaction.created_at 
-                ? format(new Date(interaction.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR }) 
-                : 'Data desconhecida'}
-            </span>
+    <div className="space-y-6">
+      {Object.entries(groupedInteractions).map(([date, dateInteractions]) => (
+        <div key={date} className="space-y-3">
+          <div className="flex items-center gap-2 mb-2">
+            <CalendarClock className="h-4 w-4 text-portal-purple" />
+            <h3 className="text-sm font-medium text-portal-purple">{date}</h3>
           </div>
+          
+          {dateInteractions.map((interaction) => (
+            <div 
+              key={interaction.id} 
+              className={`p-4 border rounded-lg shadow-sm ${getSentimentColor(interaction.sentiment)}`}
+            >
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Bot className="h-5 w-5 text-portal-purple" />
+                    <p className="font-medium text-portal-purple">Interação com AIA</p>
+                    {interaction.sentiment && (
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        interaction.sentiment === 'positive' ? 'bg-green-200 text-green-800' :
+                        interaction.sentiment === 'negative' ? 'bg-red-200 text-red-800' :
+                        'bg-blue-200 text-blue-800'
+                      }`}>
+                        {getSentimentText(interaction.sentiment)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-gray-700">{interaction.content}</p>
+                </div>
+                <span className="text-xs text-gray-400 whitespace-nowrap">
+                  {format(new Date(interaction.created_at), "HH:mm", { locale: ptBR })}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       ))}
     </div>

@@ -7,6 +7,7 @@ import PatientSearchBar from './PatientSearchBar';
 import PatientsTable from './PatientsTable';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { UsersRound } from 'lucide-react';
 
 type Patient = {
   id: number;
@@ -145,6 +146,16 @@ const PatientsList: React.FC = () => {
           />
         </CardContent>
       </Card>
+
+      {!loading && filteredPatients.length === 0 && (
+        <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border border-dashed border-gray-300">
+          <UsersRound className="h-16 w-16 text-gray-300 mb-4" />
+          <h3 className="text-xl font-medium text-gray-700 mb-2">Nenhum paciente encontrado</h3>
+          <p className="text-gray-500 text-center max-w-md">
+            Você ainda não possui pacientes vinculados. Quando usuários começarem a interagir com a AIA, você poderá vinculá-los aqui.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

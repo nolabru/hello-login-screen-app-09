@@ -9,6 +9,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import PatientTableRow from './PatientTableRow';
+import { Loader2 } from 'lucide-react';
 
 interface Patient {
   id: number;
@@ -34,14 +35,14 @@ const PatientsTable: React.FC<PatientsTableProps> = ({
   if (loading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-spin h-8 w-8 border-4 border-portal-purple rounded-full border-t-transparent"></div>
+        <Loader2 className="h-8 w-8 text-portal-purple animate-spin" />
       </div>
     );
   }
 
   if (patients.length === 0) {
     return (
-      <div className="text-center py-24">
+      <div className="text-center py-16">
         <p className="text-gray-500 text-xl font-serif">Nenhum paciente encontrado.</p>
         <p className="text-gray-400 mt-2">Adicione pacientes para começar a acompanhá-los.</p>
       </div>
@@ -52,12 +53,12 @@ const PatientsTable: React.FC<PatientsTableProps> = ({
     <div className="rounded-md overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="bg-gray-50">
+          <TableRow className="bg-purple-50/50">
             <TableHead className="font-medium">Nome</TableHead>
             <TableHead className="font-medium">Email</TableHead>
             <TableHead className="font-medium">Telefone</TableHead>
             <TableHead className="font-medium">Status</TableHead>
-            <TableHead className="font-medium">Última Sessão</TableHead>
+            <TableHead className="font-medium">Última Interação</TableHead>
             <TableHead className="text-right font-medium">Ações</TableHead>
           </TableRow>
         </TableHeader>

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { TableRow, TableCell } from '@/components/ui/table';
 import { Eye, Calendar, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import PatientStatusBadge from './PatientStatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -36,6 +37,16 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
   const [isDeleting, setIsDeleting] = useState(false);
   const [isChatHistoryOpen, setIsChatHistoryOpen] = useState(false);
   const { toast } = useToast();
+
+  // Get initials for avatar
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
 
   const handleDeleteAssociation = async () => {
     setIsDeleting(true);
@@ -78,7 +89,14 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
         className="cursor-pointer hover:bg-purple-50/50 transition-colors"
         onClick={() => setIsChatHistoryOpen(true)}
       >
-        <TableCell className="font-medium">{patient.nome}</TableCell>
+        <TableCell>
+          <div className="flex items-center space-x-3">
+            <Avatar className="bg-gradient-to-br from-portal-purple/70 to-portal-purple-dark/70 text-white">
+              <AvatarFallback>{getInitials(patient.nome)}</AvatarFallback>
+            </Avatar>
+            <span className="font-medium">{patient.nome}</span>
+          </div>
+        </TableCell>
         <TableCell>{patient.email}</TableCell>
         <TableCell>{patient.phone}</TableCell>
         <TableCell>
@@ -154,7 +172,12 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
       <Dialog open={isChatHistoryOpen} onOpenChange={setIsChatHistoryOpen}>
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Histórico de Interações - {patient.nome}</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Avatar className="h-8 w-8 bg-gradient-to-br from-portal-purple/70 to-portal-purple-dark/70 text-white">
+                <AvatarFallback>{getInitials(patient.nome)}</AvatarFallback>
+              </Avatar>
+              Histórico de Interações - {patient.nome}
+            </DialogTitle>
             <DialogDescription>
               Histórico completo de interações do paciente com a AIA
             </DialogDescription>
