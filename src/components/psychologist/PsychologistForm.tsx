@@ -2,112 +2,77 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/components/ui/use-toast';
+import { Link } from 'react-router-dom';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { UserRound } from 'lucide-react';
-import PsychologistFormFields, { PsychologistFormData } from './PsychologistFormFields';
-import { supabase } from "@/integrations/supabase/client";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Form } from '@/components/ui/form';
+import { psychologistFormSchema, PsychologistFormValues } from './PsychologistFormSchema';
+import PsychologistFormFields from './PsychologistFormFields';
+import { usePsychologistRegistration } from '@/hooks/usePsychologistRegistration';
 
 const PsychologistForm: React.FC = () => {
-  const { register, handleSubmit, formState: { errors }, setError } = useForm<PsychologistFormData>();
+  const { handleSubmit: handleRegistrationSubmit, isSubmitting } = usePsychologistRegistration();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  
+  // Initialize form with react-hook-form and zod validation
+  const form = useForm<PsychologistFormValues>({
+    resolver: zodResolver(psychologistFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      phone: '',
+      crp: '',
+      specialization: '',
+      biography: '',
+      password: '',
+    },
+  });
 
-  const onSubmit = async (data: PsychologistFormData) => {
-    console.log('Form data:', data);
-    
-    try {
-      // Insert the psychologist data into the database
-      const { data: insertedData, error } = await supabase
-        .from('psychologists')
-        .insert({
-          nome: data.name, // Changed from name to nome to match the database schema
-          email: data.email,
-          phone: data.phone,
-          crp: data.crp,
-          especialidade: data.specialization, // Use 'especialidade' instead of 'specialization'
-          bio: data.biography,
-          senha: data.password,
-          status: true
-        })
-        .select();
-      
-      if (error) {
-        console.error('Error inserting data:', error);
-        
-        // Handle duplicate email error
-        if (error.code === '23505' && error.message.includes('email')) {
-          setError('email', { 
-            type: 'manual', 
-            message: 'Este email já está cadastrado' 
-          });
-          toast({
-            variant: 'destructive',
-            title: "Erro no cadastro",
-            description: "Este email já está em uso.",
-          });
-          return;
-        }
-        
-        toast({
-          variant: 'destructive',
-          title: "Erro no cadastro",
-          description: "Houve um problema ao registrar seus dados. Por favor, tente novamente.",
-        });
-        return;
-      }
-
-      // Success message
-      toast({
-        title: "Cadastro enviado!",
-        description: "Seus dados foram enviados com sucesso.",
-      });
-      
-      // Navigate to home after successful registration
-      setTimeout(() => navigate('/'), 2000);
-    } catch (err) {
-      console.error('Unexpected error:', err);
-      toast({
-        variant: 'destructive',
-        title: "Erro no cadastro",
-        description: "Houve um problema ao registrar seus dados. Por favor, tente novamente.",
-      });
-    }
+  const onSubmit = (data: PsychologistFormValues) => {
+    handleRegistrationSubmit(data);
   };
 
   return (
-    <div className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-md p-10 mb-8">
-      <div className="flex items-center justify-center gap-4 mb-6">
-        <UserRound size={32} className="text-portal-purple" />
-        <h1 className="text-2xl font-display font-bold text-gray-800">Registro de Psicólogo</h1>
-      </div>
-      <p className="text-gray-600 mb-8 font-sans text-center">Preencha seus dados para criar uma conta profissional</p>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-        <PsychologistFormFields register={register} errors={errors} />
-
-        <div className="flex justify-end space-x-6 pt-6">
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            className="px-6 py-2 bg-gradient-button rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
-          >
-            Salvar
-          </button>
+    <Card className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-md overflow-hidden">
+      <CardContent className="p-10">
+        <div className="flex items-center justify-center gap-4 mb-6">
+          <UserRound size={32} className="text-portal-purple" />
+          <h1 className="text-2xl font-display font-bold text-gray-800">Registro de Psicólogo</h1>
         </div>
-      </form>
+        <p className="text-gray-600 mb-8 font-sans text-center">Preencha seus dados para criar uma conta profissional</p>
 
-      <div className="mt-10 pt-6 text-center border-t border-gray-200">
-        <p className="text-sm text-gray-600">
-          Já possui uma conta? <a href="/" className="text-portal-purple hover:text-portal-purple-dark font-medium">Faça login</a>
-        </p>
-      </div>
-    </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <PsychologistFormFields control={form.control} />
+
+            <div className="flex justify-end space-x-6 pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate('/')}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="bg-gradient-button"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </div>
+          </form>
+        </Form>
+
+        <div className="mt-10 pt-6 text-center border-t border-gray-200">
+          <p className="text-sm text-gray-600">
+            Já possui uma conta? <Link to="/" className="text-portal-purple hover:text-portal-purple-dark font-medium">Faça login</Link>
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
