@@ -5,6 +5,7 @@ import TabsCustom from './ui/tabs-custom';
 import CheckboxCustom from './ui/checkbox-custom';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { supabase } from "@/integrations/supabase/client";
 
 const LoginForm: React.FC = () => {
   const [userType, setUserType] = useState('psychologists');
@@ -12,11 +13,12 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
@@ -27,23 +29,80 @@ const LoginForm: React.FC = () => {
       return;
     }
 
-    toast({
-      title: "Entrando...",
-      description: `Login como ${userType === 'psychologists' ? 'Psicólogo' : 'Empresa'}`
-    });
-    
-    // In a real application, we would make an API call here
-    console.log('Login attempt:', { userType, email, password, rememberMe });
-    
-    // For demo purposes, navigate to the dashboard
-    if (userType === 'psychologists') {
-      navigate('/dashboard');
-    } else {
-      // We could navigate to a company dashboard in the future
+    setLoading(true);
+
+    try {
+      if (userType === 'psychologists') {
+        // Verificar se o psicólogo existe na tabela psychologists
+        const { data: psychologist, error: fetchError } = await supabase
+          .from('psychologists')
+          .select()
+          .eq('email', email)
+          .eq('senha', password)
+          .single();
+
+        if (fetchError || !psychologist) {
+          console.error('Erro ao fazer login:', fetchError);
+          toast({
+            title: "Credenciais inválidas",
+            description: "E-mail ou senha incorretos.",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Se o psicólogo foi encontrado, fazer login com supabase auth
+        // (ou criar uma sessão personalizada se preferir)
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          // Se não existe na auth, criar um novo usuário
+          const { error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+          });
+
+          if (signUpError) {
+            toast({
+              title: "Erro ao criar sessão",
+              description: "Não foi possível criar sua sessão. Contate o administrador.",
+              variant: "destructive"
+            });
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Login bem-sucedido - salvar ID do psicólogo na sessão
+        localStorage.setItem('psychologistId', psychologist.id.toString());
+        localStorage.setItem('psychologistName', psychologist.nome || psychologist.name);
+
+        toast({
+          title: "Login bem-sucedido",
+          description: `Bem-vindo(a) de volta, ${psychologist.nome || psychologist.name}!`
+        });
+
+        navigate('/dashboard');
+      } else {
+        // Lógica para empresas
+        toast({
+          title: "Funcionalidade em desenvolvimento",
+          description: "O acesso para empresas ainda está sendo implementado."
+        });
+      }
+    } catch (err) {
+      console.error('Erro inesperado:', err);
       toast({
-        title: "Funcionalidade em desenvolvimento",
-        description: "O acesso para empresas ainda está sendo implementado."
+        title: "Erro no servidor",
+        description: "Ocorreu um erro ao processar seu login. Tente novamente mais tarde.",
+        variant: "destructive"
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -130,14 +189,19 @@ const LoginForm: React.FC = () => {
 
         <button
           type="submit"
-          className="w-full py-3 px-4 bg-gradient-button rounded-lg text-white font-medium flex justify-center items-center gap-2 hover:opacity-90 transition-opacity"
+          disabled={loading}
+          className="w-full py-3 px-4 bg-gradient-button rounded-lg text-white font-medium flex justify-center items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-70"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transform rotate-180">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-          Entrar como {userType === 'psychologists' ? 'Psicólogo' : 'Empresa'}
+          {loading ? (
+            <span className="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transform rotate-180">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          )}
+          {loading ? "Entrando..." : `Entrar como ${userType === 'psychologists' ? 'Psicólogo' : 'Empresa'}`}
         </button>
 
         <div className="text-center pt-2">

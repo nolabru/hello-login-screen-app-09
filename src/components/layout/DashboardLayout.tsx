@@ -1,5 +1,5 @@
 
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '@/components/Logo';
 import { Home, Users, Building2, Settings, LogOut } from 'lucide-react';
@@ -14,7 +14,47 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [userName, setUserName] = useState('Dr. Ana Silva');
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    // Verificar se há um psicólogo logado
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const psychologistId = localStorage.getItem('psychologistId');
+      const psychologistName = localStorage.getItem('psychologistName');
+      
+      if (!session || !psychologistId) {
+        // Se não houver sessão, redirecionar para a página de login
+        toast({
+          title: "Sessão expirada",
+          description: "Por favor, faça login novamente.",
+          variant: "destructive"
+        });
+        navigate('/');
+        return;
+      }
+      
+      // Se houver um nome salvo, use-o
+      if (psychologistName) {
+        setUserName(psychologistName);
+      } else {
+        // Caso contrário, busque do banco de dados
+        const { data: psychologist } = await supabase
+          .from('psychologists')
+          .select('nome, name')
+          .eq('id', psychologistId)
+          .single();
+          
+        if (psychologist) {
+          const displayName = psychologist.nome || psychologist.name;
+          setUserName(displayName || 'Psicólogo');
+          localStorage.setItem('psychologistName', displayName || 'Psicólogo');
+        }
+      }
+    };
+    
+    checkAuth();
+  }, [navigate, toast]);
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: Home },
@@ -37,7 +77,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         return;
       }
       
-      // Logout successful
+      // Logout successful - limpar localStorage
+      localStorage.removeItem('psychologistId');
+      localStorage.removeItem('psychologistName');
+      
       toast({
         title: "Logout realizado",
         description: "Sua sessão foi encerrada com sucesso.",
