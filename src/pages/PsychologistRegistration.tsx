@@ -48,13 +48,13 @@ const PsychologistRegistration = () => {
           </Link>
         </div>
 
-        {/* Logo positioned closer to the form */}
-        <div className="flex justify-center">
-          <Logo showTextLogo={false} size="lg" />
-        </div>
+        <div className="flex-1 flex flex-col items-center justify-center -mt-8">
+          {/* Logo positioned very close to the form */}
+          <div className="mb-6">
+            <Logo showTextLogo={false} size="lg" />
+          </div>
 
-        <div className="container mx-auto">
-          <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-8">
+          <div className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-md p-8">
             <div className="flex items-center justify-center gap-3 mb-4">
               <UserRound size={32} className="text-portal-purple" />
               <h1 className="text-2xl font-display font-bold text-gray-800">Registro de Psicólogo</h1>
