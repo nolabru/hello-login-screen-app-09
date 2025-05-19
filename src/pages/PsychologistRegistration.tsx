@@ -1,11 +1,12 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { useForm } from 'react-hook-form';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Mail, Phone, User, FileText, Lock } from 'lucide-react';
+import { Mail, Phone, UserRound, FileText, Lock, ArrowLeft } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 type FormData = {
   name: string;
@@ -40,24 +41,24 @@ const PsychologistRegistration = () => {
         <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=Quicksand:wght@300..700&display=swap" rel="stylesheet" />
       </Helmet>
       <div className="min-h-screen bg-gradient-portal">
-        <div className="container mx-auto py-8">
-          <button 
-            onClick={() => navigate('/')}
-            className="flex items-center text-portal-purple mb-6 hover:text-portal-purple-dark"
-          >
-            ← Voltar
-          </button>
+        <div className="w-full p-4">
+          <Link to="/" className="text-gray-700 flex items-center hover:underline">
+            <ArrowLeft size={20} className="mr-1" />
+            Voltar
+          </Link>
+        </div>
 
+        <div className="container mx-auto py-8">
           <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-8">
-            <div className="flex items-center gap-3 mb-4">
-              <img 
-                src="/lovable-uploads/d0782692-3dfe-4b96-8a00-34b22396d341.png" 
-                alt="Portal C'alma Logo" 
-                className="w-10 h-10"
-              />
+            <div className="flex justify-center mb-6">
+              <Logo />
+            </div>
+
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <UserRound size={32} className="text-portal-purple" />
               <h1 className="text-2xl font-display font-bold text-gray-800">Registro de Psicólogo</h1>
             </div>
-            <p className="text-gray-600 mb-6 font-sans">Preencha seus dados para criar uma conta profissional</p>
+            <p className="text-gray-600 mb-6 font-sans text-center">Preencha seus dados para criar uma conta profissional</p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -67,7 +68,7 @@ const PsychologistRegistration = () => {
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <User size={18} className="text-gray-400" />
+                      <UserRound size={18} className="text-gray-400" />
                     </div>
                     <input
                       type="text"
@@ -207,7 +208,7 @@ const PsychologistRegistration = () => {
 
             <div className="mt-8 text-center">
               <p className="text-sm text-gray-600">
-                Já possui uma conta? <a href="/" className="text-portal-purple hover:text-portal-purple-dark font-medium">Faça login</a>
+                Já possui uma conta? <Link to="/" className="text-portal-purple hover:text-portal-purple-dark font-medium">Faça login</Link>
               </p>
             </div>
           </div>
