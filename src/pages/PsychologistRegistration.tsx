@@ -48,10 +48,10 @@ const PsychologistRegistration = () => {
           </Link>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center -mt-8">
-          {/* Logo positioned very close to the form */}
-          <div className="mb-6">
-            <Logo showTextLogo={false} size="lg" />
+        <div className="flex-1 flex flex-col items-center justify-center -mt-12">
+          {/* Logo with text positioned close to the form */}
+          <div className="mb-4">
+            <Logo showTextLogo={true} size="lg" />
           </div>
 
           <div className="max-w-3xl w-full mx-auto bg-white rounded-lg shadow-md p-8">

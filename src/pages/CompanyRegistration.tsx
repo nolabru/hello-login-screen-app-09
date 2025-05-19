@@ -39,10 +39,10 @@ const CompanyRegistration = () => {
         </Link>
       </div>
       
-      <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-8">
-        {/* Logo positioned very close to the form */}
-        <div className="mb-6">
-          <Logo showTextLogo={false} size="lg" />
+      <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-12">
+        {/* Logo with text positioned close to the form */}
+        <div className="mb-4">
+          <Logo showTextLogo={true} size="lg" />
         </div>
         
         <Card className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
