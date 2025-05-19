@@ -10,8 +10,8 @@ const PatientStatsCard: React.FC = () => {
         <div className="flex items-start justify-between">
           <div>
             <p className="text-sm font-medium text-gray-500">Total de Pacientes</p>
-            <h3 className="text-4xl font-bold mt-1">0</h3>
-            <p className="text-sm text-gray-500 mt-1">Pacientes ativos</p>
+            <h3 className="text-4xl font-medium mt-1">28</h3>
+            <p className="text-sm text-gray-500 mt-1">24 pacientes ativos</p>
           </div>
           <div className="bg-purple-100 p-2 rounded-md">
             <Users size={24} className="text-portal-purple" />

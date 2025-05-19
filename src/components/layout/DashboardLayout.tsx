@@ -10,8 +10,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const location = useLocation();
-  const [userName, setUserName] = useState('Visitante');
-  const [isVisitorMode, setIsVisitorMode] = useState(true);
+  const [userName, setUserName] = useState('Dr. Ana Silva');
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: Home },
@@ -21,22 +20,19 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 font-sans">
       {/* Sidebar */}
       <div className="w-64 bg-white shadow-md">
         <div className="p-4 border-b">
           <Link to="/dashboard" className="flex items-center space-x-2">
             <Logo showTextLogo={false} size="sm" />
-            <span className="font-bold text-lg">Área do Psicólogo</span>
+            <span className="font-medium text-lg">Área do Psicólogo</span>
           </Link>
         </div>
         
         <div className="p-4 border-b">
           <p className="text-sm text-gray-500">Bem-vindo(a),</p>
-          <h2 className="font-bold text-xl">{userName}</h2>
-          {isVisitorMode && (
-            <p className="text-sm text-orange-500">Você está no modo visitante</p>
-          )}
+          <h2 className="font-medium text-xl">{userName}</h2>
         </div>
         
         <div className="py-4">
