@@ -18,6 +18,7 @@ interface Patient {
   nome: string;
   email: string;
   phone?: string;
+  cpf: string;
 }
 
 const PatientSearchDialog: React.FC<PatientSearchDialogProps> = ({ isOpen, onClose, onPatientAdded }) => {
@@ -44,11 +45,11 @@ const PatientSearchDialog: React.FC<PatientSearchDialogProps> = ({ isOpen, onClo
         return;
       }
 
-      // Search for users by name or email
+      // Search for users by CPF
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('id, nome, email, phone')
-        .or(`nome.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
+        .select('id, nome, email, phone, cpf')
+        .eq('cpf', searchTerm.trim())
         .limit(10);
         
       if (error) throw error;
@@ -130,14 +131,14 @@ const PatientSearchDialog: React.FC<PatientSearchDialogProps> = ({ isOpen, onClo
         <DialogHeader>
           <DialogTitle>Procurar Paciente</DialogTitle>
           <DialogDescription>
-            Busque por pacientes para solicitar uma conexão. Quando um paciente aceitar sua solicitação, 
+            Busque por pacientes pelo CPF para solicitar uma conexão. Quando um paciente aceitar sua solicitação, 
             ele aparecerá na sua lista de pacientes ativos.
           </DialogDescription>
         </DialogHeader>
         
         <div className="my-4 flex gap-2">
           <Input
-            placeholder="Nome ou email do paciente..."
+            placeholder="CPF do paciente..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={(e) => {
@@ -169,6 +170,7 @@ const PatientSearchDialog: React.FC<PatientSearchDialogProps> = ({ isOpen, onClo
                   <div>
                     <p className="font-medium">{patient.nome}</p>
                     <p className="text-sm text-gray-500">{patient.email}</p>
+                    <p className="text-sm text-gray-500">CPF: {patient.cpf}</p>
                     {patient.phone && <p className="text-sm text-gray-500">{patient.phone}</p>}
                   </div>
                   <Button 
@@ -187,7 +189,7 @@ const PatientSearchDialog: React.FC<PatientSearchDialogProps> = ({ isOpen, onClo
         
         {!isSearching && searchResults.length === 0 && searchTerm && (
           <div className="text-center py-8">
-            <p className="text-gray-500">Nenhum paciente encontrado com os termos informados.</p>
+            <p className="text-gray-500">Nenhum paciente encontrado com o CPF informado.</p>
           </div>
         )}
         
