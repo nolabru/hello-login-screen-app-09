@@ -121,15 +121,15 @@ const PatientsList: React.FC = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'approved':
-        return <Badge className="bg-green-500">Ativo</Badge>;
+        return <Badge variant="default" className="bg-green-500">Ativo</Badge>;
       case 'active':
-        return <Badge className="bg-green-500">Ativo</Badge>;
+        return <Badge variant="default" className="bg-green-500">Ativo</Badge>;
       case 'pending':
-        return <Badge className="bg-yellow-500">Pendente</Badge>;
+        return <Badge variant="default" className="bg-yellow-500">Pendente</Badge>;
       case 'inactive':
-        return <Badge className="bg-gray-500">Inativo</Badge>;
+        return <Badge variant="default" className="bg-gray-500">Inativo</Badge>;
       default:
-        return <Badge className="bg-gray-400">{status}</Badge>;
+        return <Badge variant="default" className="bg-gray-400">{status}</Badge>;
     }
   };
 

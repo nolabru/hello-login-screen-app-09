@@ -52,11 +52,11 @@ const PatientStatsCard: React.FC = () => {
             {loading ? (
               <div className="h-9 w-12 bg-gray-200 animate-pulse rounded"></div>
             ) : (
-              <h3 className="text-4xl font-medium mt-1">{totalPatients}</h3>
+              <div className="text-4xl font-medium mt-1">{totalPatients}</div>
             )}
             <p className="text-sm text-gray-500 mt-1">
               {loading ? (
-                <div className="h-4 w-24 bg-gray-200 animate-pulse rounded"></div>
+                <span className="h-4 w-24 bg-gray-200 animate-pulse rounded inline-block"></span>
               ) : (
                 `${activePatients} pacientes ativos`
               )}
