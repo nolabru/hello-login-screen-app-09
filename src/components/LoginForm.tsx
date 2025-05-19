@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import TabsCustom from './ui/tabs-custom';
 import CheckboxCustom from './ui/checkbox-custom';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
@@ -130,9 +131,15 @@ const LoginForm: React.FC = () => {
         <div className="text-center pt-2">
           <p className="text-sm text-gray-600">
             Não tem uma conta?{' '}
-            <a href="#" className="text-portal-purple hover:text-portal-purple-dark font-medium">
-              Cadastre-se
-            </a>
+            {userType === 'psychologists' ? (
+              <Link to="/register/psychologist" className="text-portal-purple hover:text-portal-purple-dark font-medium">
+                Cadastre-se
+              </Link>
+            ) : (
+              <Link to="/register/company" className="text-portal-purple hover:text-portal-purple-dark font-medium">
+                Cadastre-se
+              </Link>
+            )}
           </p>
         </div>
       </form>
