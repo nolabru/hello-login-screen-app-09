@@ -2,12 +2,10 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import PatientsList from '@/components/dashboard/PatientsList';
 import PatientStatsCard from '@/components/dashboard/PatientStatsCard';
 import SessionsStatsCard from '@/components/dashboard/SessionsStatsCard';
 import SentimentChart from '@/components/dashboard/SentimentChart';
 import RecentPatientActivity from '@/components/dashboard/RecentPatientActivity';
-import { Search } from 'lucide-react';
 
 const PsychologistDashboard: React.FC = () => {
   return (
@@ -33,24 +31,6 @@ const PsychologistDashboard: React.FC = () => {
               <RecentPatientActivity />
             </div>
           </div>
-          
-          <div className="mb-6">
-            <h2 className="text-xl font-medium mb-4">Seus Pacientes</h2>
-            <div className="flex justify-between items-center mb-6">
-              <div className="relative w-full max-w-md">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Buscar pacientes..."
-                  className="pl-10 pr-4 py-2 w-full border rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent"
-                />
-              </div>
-            </div>
-          </div>
-
-          <PatientsList />
         </div>
       </DashboardLayout>
     </>
