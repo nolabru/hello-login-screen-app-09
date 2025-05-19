@@ -21,15 +21,13 @@ const PatientStatsCard: React.FC = () => {
         // Buscar todos os pacientes vinculados
         const { data: allPatients, error: allError } = await supabase
           .from('user_psychologist_associations')
-          .select('id, status')
+          .select('id_relacao, status')
           .eq('id_psicologo', psychologistIdNumber);
         
         if (allError) throw allError;
         
-        // Buscar pacientes ativos (com status 'approved' ou 'active')
-        const activeOnes = allPatients?.filter(p => 
-          p.status === 'approved' || p.status === 'active'
-        ) || [];
+        // Buscar pacientes ativos (com status 'active')
+        const activeOnes = allPatients?.filter(p => p.status === 'active') || [];
         
         setTotalPatients(allPatients?.length || 0);
         setActivePatients(activeOnes.length);
