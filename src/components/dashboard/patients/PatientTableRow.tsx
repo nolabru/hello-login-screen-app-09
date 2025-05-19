@@ -34,6 +34,7 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isChatHistoryOpen, setIsChatHistoryOpen] = useState(false);
+  const [isConfirmingPatient, setIsConfirmingPatient] = useState(false);
   const { toast } = useToast();
 
   const handleDeleteAssociation = async () => {
@@ -70,6 +71,39 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
     }
   };
 
+  const handleConfirmPatient = async () => {
+    setIsConfirmingPatient(true);
+    try {
+      const psychologistId = localStorage.getItem('psychologistId');
+      if (!psychologistId) throw new Error('ID do psicólogo não encontrado');
+
+      // Update the association status to active
+      const { error } = await supabase
+        .from('user_psychologist_associations')
+        .update({ status: 'active' })
+        .eq('id_psicologo', parseInt(psychologistId))
+        .eq('id_usuario', patient.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Paciente confirmado",
+        description: `${patient.nome} agora é seu paciente ativo.`,
+      });
+
+      onPatientRemoved(); // Refresh the patient list
+    } catch (error) {
+      console.error('Erro ao confirmar paciente:', error);
+      toast({
+        title: "Erro ao confirmar paciente",
+        description: "Não foi possível confirmar este paciente. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsConfirmingPatient(false);
+    }
+  };
+
   return (
     <>
       <TableRow 
@@ -101,6 +135,22 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
             >
               Ver Mais
             </Button>
+            
+            {patient.status === 'pending' && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="text-green-600 hover:bg-green-50 hover:text-green-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleConfirmPatient();
+                }}
+                disabled={isConfirmingPatient}
+              >
+                {isConfirmingPatient ? 'Confirmando...' : 'Aceitar'}
+              </Button>
+            )}
+
             <Button 
               variant="outline" 
               size="sm" 
