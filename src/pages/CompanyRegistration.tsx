@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -38,13 +39,14 @@ const CompanyRegistration = () => {
         </Link>
       </div>
       
-      <div className="flex-1 flex items-center justify-center px-4 py-8">
+      {/* Logo moved outside the card */}
+      <div className="flex justify-center mb-4">
+        <Logo showTextLogo={false} size="lg" />
+      </div>
+      
+      <div className="flex-1 flex items-center justify-center px-4 py-4">
         <Card className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
           <CardContent className="p-8">
-            <div className="flex justify-center mb-6">
-              <Logo showTextLogo={false} />
-            </div>
-
             <div className="flex items-center justify-center gap-3 mb-6">
               <Building size={32} className="text-portal-purple" />
               <h1 className="text-2xl font-bold">Registro de Empresa</h1>

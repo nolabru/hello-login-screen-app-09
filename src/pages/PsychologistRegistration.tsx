@@ -48,12 +48,13 @@ const PsychologistRegistration = () => {
           </Link>
         </div>
 
-        <div className="container mx-auto py-8">
-          <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-8">
-            <div className="flex justify-center mb-6">
-              <Logo showTextLogo={false} />
-            </div>
+        {/* Logo moved outside the card */}
+        <div className="flex justify-center mb-4">
+          <Logo showTextLogo={false} size="lg" />
+        </div>
 
+        <div className="container mx-auto py-4">
+          <div className="max-w-3xl mx-auto bg-white rounded-lg shadow-md p-8">
             <div className="flex items-center justify-center gap-3 mb-4">
               <UserRound size={32} className="text-portal-purple" />
               <h1 className="text-2xl font-display font-bold text-gray-800">Registro de Psicólogo</h1>
