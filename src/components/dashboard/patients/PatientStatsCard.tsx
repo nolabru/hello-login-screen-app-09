@@ -6,7 +6,7 @@ import usePatientStats from '@/hooks/usePatientStats';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const PatientStatsCard: React.FC = () => {
-  const { activePatients, loading } = usePatientStats();
+  const { activePatients, loading, totalPatients } = usePatientStats();
 
   return (
     <Card className="w-full max-w-xs hover:shadow-md transition-shadow duration-300">
@@ -19,6 +19,9 @@ const PatientStatsCard: React.FC = () => {
             ) : (
               <div className="text-3xl font-semibold text-gray-800">{activePatients}</div>
             )}
+            <p className="text-xs text-gray-500">
+              Total de pacientes ativos
+            </p>
           </div>
           <div className="bg-portal-purple/10 p-3 rounded-full">
             <Users size={28} className="text-portal-purple" />
