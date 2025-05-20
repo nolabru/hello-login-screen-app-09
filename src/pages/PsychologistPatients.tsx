@@ -11,7 +11,7 @@ const PsychologistPatients: React.FC = () => {
         <title>Pacientes | Portal do Psicólogo</title>
       </Helmet>
       <DashboardLayout>
-        <div className="p-6 bg-gradient-to-b from-purple-50/30 to-white min-h-screen">
+        <div className="p-4 md:p-6 bg-gradient-to-b from-purple-50/30 to-white min-h-screen">
           <div className="max-w-7xl mx-auto">
             <PatientsList />
           </div>

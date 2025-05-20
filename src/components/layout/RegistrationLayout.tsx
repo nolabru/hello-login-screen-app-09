@@ -19,21 +19,19 @@ const RegistrationLayout: React.FC<RegistrationLayoutProps> = ({ children }) => 
         <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=Quicksand:wght@300..700&display=swap" rel="stylesheet" />
       </Helmet>
       <div className="min-h-screen bg-gradient-portal">
-        <div className="w-full p-6">
+        <div className="w-full p-4 sm:p-6">
           <Link to="/" className="text-gray-700 flex items-center hover:underline">
             <ArrowLeft size={20} className="mr-2" />
             Voltar
           </Link>
         </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 -mt-8">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 -mt-8">
           {/* Logo com espaçamento */}
           <div className="mb-8">
             <Logo showTextLogo={true} size="lg" />
           </div>
           
-          {/* Removido o título "Portal Calma" em roxo que estava aqui */}
-
           {children}
         </div>
       </div>

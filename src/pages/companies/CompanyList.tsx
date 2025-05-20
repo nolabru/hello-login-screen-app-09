@@ -8,6 +8,7 @@ import { Eye, UserMinus, UserCheck, UserX } from 'lucide-react';
 import { Company } from './types';
 import { useToast } from '@/components/ui/use-toast';
 import { disconnectFromCompany, acceptCompanyRequest } from './companiesService';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CompanyListProps {
   companies: Company[];
@@ -25,6 +26,7 @@ const CompanyList: React.FC<CompanyListProps> = ({
   listType = 'active'
 }) => {
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   const handleDisconnect = async (companyId: number) => {
     if (!confirm('Tem certeza que deseja se desconectar desta empresa?')) {
@@ -89,14 +91,22 @@ const CompanyList: React.FC<CompanyListProps> = ({
     }
   };
 
-  return (
-    <Card>
-      <CardContent className="p-0">
-        {isLoading ? (
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-4 sm:p-6">
           <div className="p-8 text-center">
             <p className="text-gray-500">Carregando empresas...</p>
           </div>
-        ) : companies.length === 0 ? (
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (companies.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-4 sm:p-6">
           <div className="p-8 text-center">
             <p className="text-gray-500">
               {listType === 'pending' 
@@ -111,65 +121,36 @@ const CompanyList: React.FC<CompanyListProps> = ({
               </p>
             )}
           </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-medium">Empresa</TableHead>
-                <TableHead className="font-medium">Email</TableHead>
-                <TableHead className="font-medium">Status</TableHead>
-                <TableHead className="text-right font-medium">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {companies.map((company) => (
-                <TableRow key={company.id}>
-                  <TableCell className="font-medium">{company.name}</TableCell>
-                  <TableCell>{company.contact_email}</TableCell>
-                  <TableCell>{getStatusBadge(company.connection_status)}</TableCell>
-                  <TableCell className="text-right space-x-2">
-                    {company.connection_status === 'pending' ? (
-                      <>
-                        <Button 
-                          variant="default" 
-                          size="sm" 
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() => handleAcceptRequest(company.id)}
-                        >
-                          <UserCheck size={16} className="mr-1" />
-                          Aceitar
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-red-500 border-red-300 hover:bg-red-50"
-                          onClick={() => handleDisconnect(company.id)}
-                        >
-                          <UserX size={16} className="mr-1" />
-                          Recusar
-                        </Button>
-                      </>
-                    ) : company.connection_status === 'active' ? (
-                      <>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={() => onViewDetails(company)}
-                        >
-                          <Eye size={16} className="mr-1" />
-                          Detalhes
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-red-500 border-red-300 hover:bg-red-50"
-                          onClick={() => handleDisconnect(company.id)}
-                        >
-                          <UserMinus size={16} className="mr-1" />
-                          Desconectar
-                        </Button>
-                      </>
-                    ) : (
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <Card>
+        <CardContent className="p-0">
+          <div className="divide-y">
+            {companies.map((company) => (
+              <div key={company.id} className="p-4">
+                <h3 className="font-medium text-lg">{company.name}</h3>
+                <p className="text-sm text-gray-600 mt-1">{company.contact_email}</p>
+                <div className="mt-2">
+                  {getStatusBadge(company.connection_status)}
+                </div>
+                
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {company.connection_status === 'pending' ? (
+                    <>
+                      <Button 
+                        variant="default" 
+                        size="sm" 
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() => handleAcceptRequest(company.id)}
+                      >
+                        <UserCheck size={16} className="mr-1" />
+                        Aceitar
+                      </Button>
                       <Button 
                         variant="outline" 
                         size="sm" 
@@ -177,15 +158,125 @@ const CompanyList: React.FC<CompanyListProps> = ({
                         onClick={() => handleDisconnect(company.id)}
                       >
                         <UserX size={16} className="mr-1" />
-                        Cancelar
+                        Recusar
                       </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+                    </>
+                  ) : company.connection_status === 'active' ? (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => onViewDetails(company)}
+                      >
+                        <Eye size={16} className="mr-1" />
+                        Detalhes
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-red-500 border-red-300 hover:bg-red-50"
+                        onClick={() => handleDisconnect(company.id)}
+                      >
+                        <UserMinus size={16} className="mr-1" />
+                        Desconectar
+                      </Button>
+                    </>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-red-500 border-red-300 hover:bg-red-50"
+                      onClick={() => handleDisconnect(company.id)}
+                    >
+                      <UserX size={16} className="mr-1" />
+                      Cancelar
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="p-0">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50">
+              <TableHead className="font-medium">Empresa</TableHead>
+              <TableHead className="font-medium">Email</TableHead>
+              <TableHead className="font-medium">Status</TableHead>
+              <TableHead className="text-right font-medium">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {companies.map((company) => (
+              <TableRow key={company.id}>
+                <TableCell className="font-medium">{company.name}</TableCell>
+                <TableCell>{company.contact_email}</TableCell>
+                <TableCell>{getStatusBadge(company.connection_status)}</TableCell>
+                <TableCell className="text-right space-x-2">
+                  {company.connection_status === 'pending' ? (
+                    <>
+                      <Button 
+                        variant="default" 
+                        size="sm" 
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() => handleAcceptRequest(company.id)}
+                      >
+                        <UserCheck size={16} className="mr-1" />
+                        Aceitar
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-red-500 border-red-300 hover:bg-red-50"
+                        onClick={() => handleDisconnect(company.id)}
+                      >
+                        <UserX size={16} className="mr-1" />
+                        Recusar
+                      </Button>
+                    </>
+                  ) : company.connection_status === 'active' ? (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => onViewDetails(company)}
+                      >
+                        <Eye size={16} className="mr-1" />
+                        Detalhes
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-red-500 border-red-300 hover:bg-red-50"
+                        onClick={() => handleDisconnect(company.id)}
+                      >
+                        <UserMinus size={16} className="mr-1" />
+                        Desconectar
+                      </Button>
+                    </>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-red-500 border-red-300 hover:bg-red-50"
+                      onClick={() => handleDisconnect(company.id)}
+                    >
+                      <UserX size={16} className="mr-1" />
+                      Cancelar
+                    </Button>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );

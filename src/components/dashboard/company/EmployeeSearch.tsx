@@ -13,13 +13,15 @@ const EmployeeSearch: React.FC<EmployeeSearchProps> = ({
   onSearchChange 
 }) => {
   return (
-    <Input
-      placeholder="Buscar funcionário por nome ou email..."
-      value={searchQuery}
-      onChange={onSearchChange}
-      className="max-w-md"
-      icon={Search}
-    />
+    <div className="relative w-full max-w-md">
+      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <Input
+        placeholder="Buscar funcionário por nome ou email..."
+        value={searchQuery}
+        onChange={onSearchChange}
+        className="pl-9 w-full"
+      />
+    </div>
   );
 };
 

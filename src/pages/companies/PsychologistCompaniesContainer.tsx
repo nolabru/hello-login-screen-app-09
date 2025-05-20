@@ -9,6 +9,7 @@ import CompanyDetailDialog from './CompanyDetailDialog';
 import { useCompanies } from './hooks/useCompanies';
 import { useCompanySearch } from './hooks/useCompanySearch';
 import { useCompanyDetails } from './hooks/useCompanyDetails';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const PsychologistCompaniesContainer: React.FC = () => {
   // Use our custom hooks
@@ -35,6 +36,8 @@ const PsychologistCompaniesContainer: React.FC = () => {
     handleSearchCompanies,
     handleRequestConnection
   } = useCompanySearch(loadCompanies);
+  
+  const isMobile = useIsMobile();
 
   // Group companies by status
   const pendingCompanies = filteredCompanies.filter(company => company.connection_status === 'pending');
@@ -42,14 +45,14 @@ const PsychologistCompaniesContainer: React.FC = () => {
   const activeCompanies = filteredCompanies.filter(company => company.connection_status === 'active');
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-4 md:p-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-medium">Empresas</h1>
           <p className="text-gray-500">Gerencie suas conexões com empresas</p>
         </div>
         <Button 
-          className="bg-indigo-900 hover:bg-indigo-800"
+          className="bg-indigo-900 hover:bg-indigo-800 w-full md:w-auto"
           onClick={() => setIsSearchDialogOpen(true)}
         >
           <UserPlus size={16} className="mr-2" />
