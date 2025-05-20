@@ -62,7 +62,8 @@ const PsychologistCompaniesContainer: React.FC = () => {
       <CompanyList 
         companies={filteredCompanies} 
         isLoading={isLoading} 
-        onViewDetails={handleViewCompanyDetails} 
+        onViewDetails={handleViewCompanyDetails}
+        refreshCompanies={loadCompanies}
       />
       
       {/* Dialog para buscar e conectar com empresas */}

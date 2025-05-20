@@ -91,6 +91,45 @@ export const requestCompanyConnection = async (companyId: number, psychologistId
   if (error) throw error;
 };
 
+export const disconnectFromCompany = async (companyId: number, psychologistId: string): Promise<void> => {
+  try {
+    const psychologistIdNumber = parseInt(psychologistId, 10);
+    
+    // Remove the association between the psychologist and the company
+    const { error } = await supabase
+      .from('company_psychologist_associations')
+      .delete()
+      .eq('id_empresa', companyId)
+      .eq('id_psicologo', psychologistIdNumber);
+    
+    if (error) throw error;
+    
+    // Also remove associations between the psychologist and the company's employees
+    const { data: employees, error: employeesError } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('id_empresa', companyId);
+      
+    if (employeesError) throw employeesError;
+    
+    if (employees && employees.length > 0) {
+      const employeeIds = employees.map(emp => emp.id);
+      
+      // Remove associations between psychologist and company employees
+      const { error: associationsError } = await supabase
+        .from('user_psychologist_associations')
+        .delete()
+        .eq('id_psicologo', psychologistIdNumber)
+        .in('id_usuario', employeeIds);
+        
+      if (associationsError) throw associationsError;
+    }
+  } catch (error) {
+    console.error('Error disconnecting from company:', error);
+    throw error;
+  }
+};
+
 export const fetchCompanyDetails = async (company: Company, psychologistId: string) => {
   const psychologistIdNumber = parseInt(psychologistId, 10);
 
