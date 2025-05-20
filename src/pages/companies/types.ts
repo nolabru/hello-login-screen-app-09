@@ -24,3 +24,12 @@ export type CompanyDetail = {
   created_at?: string;
   updated_at?: string;
 };
+
+export type Employee = {
+  id: number;
+  nome: string;
+  email: string;
+  status: boolean;
+  connection_status: string;
+  phone?: string;
+};

@@ -7,10 +7,19 @@ import { useToast } from '@/components/ui/use-toast';
 import { User, Plus, UserPlus } from 'lucide-react';
 import AddEmployeeDialog from './AddEmployeeDialog';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+
+type Employee = {
+  id: number;
+  nome: string;
+  email: string;
+  status: boolean;
+  connection_status: string;
+};
 
 const CompanyEmployeesList: React.FC = () => {
-  const [employees, setEmployees] = useState<any[]>([]);
-  const [filteredEmployees, setFilteredEmployees] = useState<any[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -57,8 +66,14 @@ const CompanyEmployeesList: React.FC = () => {
         
       if (error) throw error;
       
-      setEmployees(data || []);
-      setFilteredEmployees(data || []);
+      // Map the data to include connection_status
+      const mappedEmployees = data?.map(employee => ({
+        ...employee,
+        connection_status: employee.status ? 'approved' : 'pending'
+      })) || [];
+      
+      setEmployees(mappedEmployees);
+      setFilteredEmployees(mappedEmployees);
     } catch (error) {
       console.error('Erro ao buscar funcionários:', error);
       toast({
@@ -102,12 +117,28 @@ const CompanyEmployeesList: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: boolean) => {
-    return status ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
-  };
-
-  const getStatusText = (status: boolean) => {
-    return status ? 'Ativo' : 'Pendente';
+  const getStatusBadge = (status: boolean, connection_status: string) => {
+    if (!status) {
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+          Pendente
+        </Badge>
+      );
+    }
+    
+    if (connection_status === 'approved') {
+      return (
+        <Badge className="bg-green-100 text-green-800 border-green-200">
+          Ativo
+        </Badge>
+      );
+    }
+    
+    return (
+      <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+        Aguardando aceitação
+      </Badge>
+    );
   };
 
   return (
@@ -150,11 +181,7 @@ const CompanyEmployeesList: React.FC = () => {
                   <div className="text-sm text-gray-500">{employee.email}</div>
                   
                   <div className="flex justify-between items-center pt-2">
-                    <span 
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(employee.status)}`}
-                    >
-                      {getStatusText(employee.status)}
-                    </span>
+                    {getStatusBadge(employee.status, employee.connection_status)}
                     
                     <Button 
                       variant="outline" 
