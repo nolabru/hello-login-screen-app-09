@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -348,13 +347,42 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
                       nome,email,cpf,senha
                     </code>
                     <div className="mt-3 p-2 bg-gray-100 rounded border border-gray-200">
-                      <h5 className="text-xs font-medium text-gray-700 mb-1">Exemplo:</h5>
-                      <pre className="text-xs text-gray-600 overflow-x-auto whitespace-pre-wrap">
-nome,email,cpf,senha
-João Silva,joao.silva@email.com,12345678900,senha123
-Maria Oliveira,maria@email.com,98765432100,senha456
-Carlos Pereira,carlos@email.com,11122233344,senha789
-                      </pre>
+                      <h5 className="text-xs font-medium text-gray-700 mb-1">Exemplo de planilha:</h5>
+                      <div className="overflow-x-auto">
+                        <table className="text-xs w-full border-collapse">
+                          <thead>
+                            <tr className="bg-gray-200">
+                              <th className="border border-gray-300 p-1">A</th>
+                              <th className="border border-gray-300 p-1">B</th>
+                              <th className="border border-gray-300 p-1">C</th>
+                              <th className="border border-gray-300 p-1">D</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="bg-blue-50">
+                              <td className="border border-gray-300 p-1 font-medium">nome</td>
+                              <td className="border border-gray-300 p-1 font-medium">email</td>
+                              <td className="border border-gray-300 p-1 font-medium">cpf</td>
+                              <td className="border border-gray-300 p-1 font-medium">senha</td>
+                            </tr>
+                            <tr>
+                              <td className="border border-gray-300 p-1">João Silva</td>
+                              <td className="border border-gray-300 p-1">joao@gmail.com</td>
+                              <td className="border border-gray-300 p-1">12345678900</td>
+                              <td className="border border-gray-300 p-1">senha123</td>
+                            </tr>
+                            <tr>
+                              <td className="border border-gray-300 p-1">Maria Oliveira</td>
+                              <td className="border border-gray-300 p-1">maria@gmail.com</td>
+                              <td className="border border-gray-300 p-1">98765432100</td>
+                              <td className="border border-gray-300 p-1">senha456</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <p className="mt-2 text-xs text-gray-600">
+                        Salve sua planilha como um arquivo CSV (valores separados por vírgula) antes de fazer o upload.
+                      </p>
                     </div>
                   </div>
                   
