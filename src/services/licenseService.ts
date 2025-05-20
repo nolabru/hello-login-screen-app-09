@@ -63,11 +63,59 @@ export const acquireLicense = async (
       company_id: companyId,
       plan_id: planId,
       total_licenses: totalLicenses,
+      used_licenses: 0, // Iniciar com zero licenças usadas
       start_date: startDate.toISOString(),
       expiry_date: expiryDate.toISOString(),
+      status: 'active',
+      payment_status: 'active' // Definir como active por padrão ao adquirir
     });
 
   if (error) throw error;
+};
+
+// Verificar disponibilidade de licenças
+export const checkLicenseAvailability = async (companyId: number): Promise<{
+  available: number;
+  total: number;
+  used: number;
+}> => {
+  try {
+    // Buscar todas as licenças ativas da empresa
+    const { data, error } = await supabase
+      .from('company_licenses')
+      .select('total_licenses, used_licenses, payment_status, status')
+      .eq('company_id', companyId)
+      .eq('status', 'active')
+      .or('payment_status.eq.active,payment_status.eq.completed');
+
+    if (error) throw error;
+
+    // Se não houver licenças, retornar zeros
+    if (!data || data.length === 0) {
+      return { available: 0, total: 0, used: 0 };
+    }
+
+    // Somar todas as licenças ativas e pagas
+    let total = 0;
+    let used = 0;
+
+    data.forEach(license => {
+      // Considerar apenas licenças com pagamento concluído ou ativo
+      if (license.payment_status === 'active' || license.payment_status === 'completed') {
+        total += license.total_licenses;
+        used += license.used_licenses || 0;
+      }
+    });
+
+    return {
+      total,
+      used,
+      available: Math.max(0, total - used)
+    };
+  } catch (error) {
+    console.error('Erro ao verificar disponibilidade de licenças:', error);
+    return { available: 0, total: 0, used: 0 };
+  }
 };
 
 // Atualizar status da licença de um funcionário
@@ -81,34 +129,4 @@ export const updateEmployeeLicenseStatus = async (
     .eq('id', employeeId);
 
   if (error) throw error;
-};
-
-// Verificar disponibilidade de licenças
-export const checkLicenseAvailability = async (companyId: number): Promise<{
-  available: number;
-  total: number;
-  used: number;
-}> => {
-  const { data, error } = await supabase
-    .from('company_licenses')
-    .select('total_licenses, used_licenses')
-    .eq('company_id', companyId)
-    .eq('status', 'active')
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') {
-      // Nenhuma licença encontrada
-      return { available: 0, total: 0, used: 0 };
-    }
-    throw error;
-  }
-
-  const total = data.total_licenses;
-  const used = data.used_licenses || 0;
-  return { 
-    total, 
-    used, 
-    available: Math.max(0, total - used) 
-  };
 };

@@ -32,6 +32,7 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
       const checkLicenses = async () => {
         try {
           const { available } = await checkLicenseAvailability(companyId);
+          console.log('Licenças disponíveis:', available);
           setHasAvailableLicenses(available > 0);
           
           if (available <= 0) {
@@ -73,7 +74,7 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
         senha: data.senha,
         id_empresa: companyId,
         status: false,
-        license_status: 'pending' // Inicialmente como pendente
+        license_status: 'active' // Definir como active para consumir uma licença
       });
 
       if (error) throw error;
@@ -146,7 +147,7 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
         .from('user_profiles')
         .update({ 
           id_empresa: companyId,
-          license_status: 'pending' 
+          license_status: 'active' // Definir como active para consumir uma licença
         })
         .eq('id', existingUser.id);
 
