@@ -6,6 +6,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Clock, UserPlus, Users, UserCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import CompanyPsychologistsList from '@/components/dashboard/company/CompanyPsychologistsList';
 
 const CompanyDashboard: React.FC = () => {
   const [companyName, setCompanyName] = useState('');
@@ -17,6 +19,7 @@ const CompanyDashboard: React.FC = () => {
     wellBeingIndex: 'N/A'
   });
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     const fetchCompanyData = async () => {
@@ -58,6 +61,15 @@ const CompanyDashboard: React.FC = () => {
     fetchCompanyData();
   }, []);
 
+  const handleLogout = () => {
+    // Clear local storage
+    localStorage.removeItem('companyId');
+    localStorage.removeItem('companyEmail');
+    
+    // Redirect to home page
+    window.location.href = '/';
+  };
+
   return (
     <>
       <Helmet>
@@ -70,7 +82,11 @@ const CompanyDashboard: React.FC = () => {
               <h1 className="text-2xl font-medium mb-2">{companyName}</h1>
               <p className="text-gray-500">{localStorage.getItem('companyEmail')}</p>
             </div>
-            <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-50">
+            <Button 
+              variant="outline" 
+              className="border-red-500 text-red-500 hover:bg-red-50"
+              onClick={handleLogout}
+            >
               <span className="mr-1">Sair</span>
             </Button>
           </div>
@@ -82,97 +98,120 @@ const CompanyDashboard: React.FC = () => {
             </p>
           </div>
           
-          <div className="flex justify-end gap-4 mb-6">
-            <Button className="bg-indigo-900 hover:bg-indigo-800">
-              <UserPlus size={16} className="mr-2" />
-              Adicionar Funcionário
-            </Button>
-            <Button variant="outline" className="border-indigo-900 text-indigo-900 hover:bg-indigo-50">
-              <UserCheck size={16} className="mr-2" />
-              Buscar Psicólogos
-            </Button>
-          </div>
-          
-          <div className="mb-8">
-            <h2 className="flex items-center text-xl font-medium mb-4">
-              <Clock size={20} className="text-indigo-500 mr-2" />
-              Visão geral do grupo
-            </h2>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+              <TabsTrigger value="psychologists">Psicólogos</TabsTrigger>
+              <TabsTrigger value="employees">Funcionários</TabsTrigger>
+            </TabsList>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {/* Card 1 - Funcionários Ativos */}
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-gray-700">Funcionários Ativos</h3>
-                    <Users className="h-5 w-5 text-blue-500" />
-                  </div>
-                  <p className="text-4xl font-bold text-blue-500">0</p>
-                  <p className="text-sm text-gray-500 mt-2">0 funcionários usando o app</p>
-                </CardContent>
-              </Card>
+            <TabsContent value="overview" className="space-y-8">
+              <div className="flex justify-end gap-4 mb-6">
+                <Button className="bg-indigo-900 hover:bg-indigo-800">
+                  <UserPlus size={16} className="mr-2" />
+                  Adicionar Funcionário
+                </Button>
+                <Button variant="outline" className="border-indigo-900 text-indigo-900 hover:bg-indigo-50">
+                  <UserCheck size={16} className="mr-2" />
+                  Buscar Psicólogos
+                </Button>
+              </div>
               
-              {/* Card 2 - Funcionários Pendentes */}
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-gray-700">Funcionários Pendentes</h3>
-                    <UserPlus className="h-5 w-5 text-orange-500" />
-                  </div>
-                  <p className="text-4xl font-bold text-orange-500">0</p>
-                  <p className="text-sm text-gray-500 mt-2">Aguardando ativação de conta</p>
-                </CardContent>
-              </Card>
+              <div className="mb-8">
+                <h2 className="flex items-center text-xl font-medium mb-4">
+                  <Clock size={20} className="text-indigo-500 mr-2" />
+                  Visão geral do grupo
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {/* Card 1 - Funcionários Ativos */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-gray-700">Funcionários Ativos</h3>
+                        <Users className="h-5 w-5 text-blue-500" />
+                      </div>
+                      <p className="text-4xl font-bold text-blue-500">0</p>
+                      <p className="text-sm text-gray-500 mt-2">0 funcionários usando o app</p>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Card 2 - Funcionários Pendentes */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-gray-700">Funcionários Pendentes</h3>
+                        <UserPlus className="h-5 w-5 text-orange-500" />
+                      </div>
+                      <p className="text-4xl font-bold text-orange-500">0</p>
+                      <p className="text-sm text-gray-500 mt-2">Aguardando ativação de conta</p>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Card 3 - Psicólogos Associados */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-gray-700">Psicólogos Associados</h3>
+                        <UserCheck className="h-5 w-5 text-green-500" />
+                      </div>
+                      <p className="text-4xl font-bold text-green-500">0</p>
+                      <p className="text-sm text-gray-500 mt-2">Profissionais ativos</p>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Card 4 - Psicólogos Pendentes */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-gray-700">Psicólogos Pendentes</h3>
+                        <Clock className="h-5 w-5 text-purple-500" />
+                      </div>
+                      <p className="text-4xl font-bold text-purple-500">0</p>
+                      <p className="text-sm text-gray-500 mt-2">Aguardando aprovação</p>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Card 5 - Índice de Bem-estar */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-gray-700">Índice de Bem-estar</h3>
+                        <div className="h-5 w-5 text-indigo-500">📊</div>
+                      </div>
+                      <p className="text-4xl font-bold text-indigo-500">N/A</p>
+                      <p className="text-sm text-gray-500 mt-2">Média atual da equipe</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
               
-              {/* Card 3 - Psicólogos Associados */}
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-gray-700">Psicólogos Associados</h3>
-                    <UserCheck className="h-5 w-5 text-green-500" />
-                  </div>
-                  <p className="text-4xl font-bold text-green-500">0</p>
-                  <p className="text-sm text-gray-500 mt-2">Profissionais ativos</p>
-                </CardContent>
-              </Card>
-              
-              {/* Card 4 - Psicólogos Pendentes */}
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-gray-700">Psicólogos Pendentes</h3>
-                    <Clock className="h-5 w-5 text-purple-500" />
-                  </div>
-                  <p className="text-4xl font-bold text-purple-500">0</p>
-                  <p className="text-sm text-gray-500 mt-2">Aguardando aprovação</p>
-                </CardContent>
-              </Card>
-              
-              {/* Card 5 - Índice de Bem-estar */}
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-gray-700">Índice de Bem-estar</h3>
-                    <div className="h-5 w-5 text-indigo-500">📊</div>
-                  </div>
-                  <p className="text-4xl font-bold text-indigo-500">N/A</p>
-                  <p className="text-sm text-gray-500 mt-2">Média atual da equipe</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-          
-          <div className="mb-6">
-            <h2 className="flex items-center text-xl font-medium mb-4">
-              <span className="text-indigo-500 mr-2">📈</span>
-              Tendências de Saúde Mental
-            </h2>
-            <Card>
-              <CardContent className="p-6 h-60 flex items-center justify-center">
-                <p className="text-gray-500">Dados anonimizados do grupo</p>
-              </CardContent>
-            </Card>
-          </div>
+              <div className="mb-6">
+                <h2 className="flex items-center text-xl font-medium mb-4">
+                  <span className="text-indigo-500 mr-2">📈</span>
+                  Tendências de Saúde Mental
+                </h2>
+                <Card>
+                  <CardContent className="p-6 h-60 flex items-center justify-center">
+                    <p className="text-gray-500">Dados anonimizados do grupo</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="psychologists">
+              <CompanyPsychologistsList />
+            </TabsContent>
+            
+            <TabsContent value="employees">
+              <div className="text-center py-12">
+                <h2 className="text-xl font-medium mb-2">Gestão de Funcionários</h2>
+                <p className="text-gray-500">
+                  Esta seção está em desenvolvimento. Em breve você poderá gerenciar os funcionários da sua empresa.
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </CompanyDashboardLayout>
     </>
