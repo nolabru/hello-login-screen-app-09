@@ -2,7 +2,7 @@
 import React, { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '@/components/Logo';
-import { Home, Users, LogOut, Search, Menu, X, CreditCard } from 'lucide-react';
+import { Home, Users, LogOut, Search, Menu, X, CreditCard, FileText } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/components/ui/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -78,6 +78,7 @@ const CompanyDashboardLayout: React.FC<CompanyDashboardLayoutProps> = ({ childre
     { path: '/company/funcionarios', label: 'Funcionários', icon: Users },
     { path: '/company/psicologos', label: 'Psicólogos', icon: Search },
     { path: '/company/licencas', label: 'Licenças', icon: CreditCard },
+    { path: '/company/relatorio-conformidade', label: 'Report e Conformidade', icon: FileText },
   ];
 
   const handleLogout = () => {
