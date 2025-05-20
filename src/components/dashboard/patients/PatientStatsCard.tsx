@@ -14,7 +14,7 @@ const PatientStatsCard: React.FC = () => {
           <div>
             <p className="text-sm font-medium text-gray-500">Pacientes Ativos</p>
             {loading ? (
-              <div className="h-9 w-12 bg-gray-200 animate-pulse rounded"></div>
+              <div className="h-9 w-12 bg-gray-200 animate-pulse rounded mt-1"></div>
             ) : (
               <div className="text-4xl font-medium mt-1">{activePatients}</div>
             )}

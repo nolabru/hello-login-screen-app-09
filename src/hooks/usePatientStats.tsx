@@ -31,8 +31,9 @@ const usePatientStats = (): PatientStats => {
         
         if (allError) throw allError;
         
-        // Filter active patients (with status 'active')
-        const activeOnes = allPatients?.filter(p => p.status === 'active') || [];
+        // Filter active patients (with status 'active' or 'Active')
+        const activeOnes = allPatients?.filter(p => 
+          p.status === 'active' || p.status === 'Active') || [];
         
         setTotalPatients(allPatients?.length || 0);
         setActivePatients(activeOnes.length);
