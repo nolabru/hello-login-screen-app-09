@@ -131,21 +131,30 @@ const AdminEmployees: React.FC = () => {
                         {employee.nome}
                       </TableCell>
                       <TableCell>{employee.email}</TableCell>
-                      <TableCell>{employee.company_name || '-'}</TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant="secondary"
+                          className="bg-indigo-100 text-indigo-800 hover:bg-indigo-200"
+                        >
+                          {employee.company_name}
+                        </Badge>
+                      </TableCell>
                       <TableCell>{employee.cpf}</TableCell>
                       <TableCell>{employee.phone || '-'}</TableCell>
                       <TableCell>
                         <Badge 
-                          className={employee.status ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-red-100 text-red-800 hover:bg-red-100'}
+                          variant={employee.status ? 'default' : 'destructive'}
+                          className={employee.status ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
                         >
                           {employee.status ? 'Ativo' : 'Inativo'}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge 
+                          variant="outline"
                           className={employee.license_status === 'active' ? 
-                            'bg-purple-100 text-purple-800 hover:bg-purple-100' : 
-                            'bg-gray-100 text-gray-800 hover:bg-gray-100'}
+                            'bg-purple-100 text-purple-800 hover:bg-purple-200 border-purple-200' : 
+                            'bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-200'}
                         >
                           {employee.license_status === 'active' ? 'Ativa' : 'Inativa'}
                         </Badge>

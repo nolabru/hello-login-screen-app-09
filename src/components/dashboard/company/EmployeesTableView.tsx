@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow 
 } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import EmployeeStatusBadge from './EmployeeStatusBadge';
 
 export type Employee = {
@@ -19,6 +20,7 @@ export type Employee = {
   status: boolean;
   connection_status: string;
   phone?: string;
+  company_name?: string;
 };
 
 interface EmployeesTableViewProps {
