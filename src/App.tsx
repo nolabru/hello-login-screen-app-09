@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -19,6 +20,12 @@ import CompanyLicenses from "./pages/CompanyLicenses";
 import CompanyComplianceReport from "./pages/CompanyComplianceReport";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminConnections from "./pages/admin/AdminConnections";
+import AdminPsychologists from "./pages/admin/AdminPsychologists";
+import AdminCompanies from "./pages/admin/AdminCompanies";
+import AdminEmployees from "./pages/admin/AdminEmployees";
+import AdminLicenses from "./pages/admin/AdminLicenses";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 // Create a new QueryClient instance outside the component
 const queryClient = new QueryClient();
@@ -51,8 +58,13 @@ const App = () => {
               
               {/* Admin Routes */}
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/admin/psychologists" element={<AdminPsychologists />} />
+              <Route path="/admin/companies" element={<AdminCompanies />} />
+              <Route path="/admin/employees" element={<AdminEmployees />} />
               <Route path="/admin/connections" element={<AdminConnections />} />
-              {/* Other admin routes can be added here as needed */}
+              <Route path="/admin/licenses" element={<AdminLicenses />} />
+              <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
               
               {/* Catch-all route for 404 */}
               <Route path="*" element={<NotFound />} />
