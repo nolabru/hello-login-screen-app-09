@@ -1,12 +1,14 @@
+
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import CompanyDashboardLayout from '@/components/layout/CompanyDashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, UserPlus, Users, UserCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CompanyPsychologistsList from '@/components/dashboard/company/CompanyPsychologistsList';
+import CompanyEmployeesList from '@/components/dashboard/company/CompanyEmployeesList';
+import AddEmployeeDialog from '@/components/dashboard/company/AddEmployeeDialog';
 
 const CompanyDashboard: React.FC = () => {
   const [companyName, setCompanyName] = useState('');
@@ -19,6 +21,8 @@ const CompanyDashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
+  const [companyId, setCompanyId] = useState<number | null>(null);
+  const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchCompanyData = async () => {
@@ -28,6 +32,7 @@ const CompanyDashboard: React.FC = () => {
         if (!companyId) return;
         
         const companyIdNumber = parseInt(companyId, 10);
+        setCompanyId(companyIdNumber);
         
         // Get company name
         const { data: company } = await supabase
@@ -40,13 +45,27 @@ const CompanyDashboard: React.FC = () => {
           setCompanyName(company.name);
         }
         
-        // For now, using mock data for stats
-        // In a real implementation, you would fetch this from the database
+        // Fetch real stats
+        const { data: employees } = await supabase
+          .from('user_profiles')
+          .select('id, status')
+          .eq('id_empresa', companyIdNumber);
+          
+        const { data: psychologists } = await supabase
+          .from('company_psychologist_associations')
+          .select('id, status')
+          .eq('id_empresa', companyIdNumber);
+        
+        const activeEmps = employees?.filter(emp => emp.status).length || 0;
+        const pendingEmps = employees?.filter(emp => !emp.status).length || 0;
+        const activePsychs = psychologists?.filter(psy => psy.status === 'active').length || 0;
+        const pendingPsychs = psychologists?.filter(psy => psy.status === 'pending').length || 0;
+        
         setStats({
-          activeEmployees: 0,
-          pendingEmployees: 0,
-          activePsychologists: 0,
-          pendingPsychologists: 0,
+          activeEmployees: activeEmps,
+          pendingEmployees: pendingEmps,
+          activePsychologists: activePsychs,
+          pendingPsychologists: pendingPsychs,
           wellBeingIndex: 'N/A'
         });
         
@@ -100,13 +119,16 @@ const CompanyDashboard: React.FC = () => {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
             <TabsList>
               <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-              <TabsTrigger value="psychologists">Psicólogos</TabsTrigger>
               <TabsTrigger value="employees">Funcionários</TabsTrigger>
+              <TabsTrigger value="psychologists">Psicólogos</TabsTrigger>
             </TabsList>
             
             <TabsContent value="overview" className="space-y-8">
               <div className="flex justify-end gap-4 mb-6">
-                <Button className="bg-indigo-900 hover:bg-indigo-800">
+                <Button 
+                  className="bg-indigo-900 hover:bg-indigo-800"
+                  onClick={() => setIsAddEmployeeDialogOpen(true)}
+                >
                   Adicionar Funcionário
                 </Button>
                 <Button variant="outline" className="border-indigo-900 text-indigo-900 hover:bg-indigo-50">
@@ -126,8 +148,8 @@ const CompanyDashboard: React.FC = () => {
                       <div className="mb-2">
                         <h3 className="text-gray-700">Funcionários Ativos</h3>
                       </div>
-                      <p className="text-4xl font-bold text-blue-500">0</p>
-                      <p className="text-sm text-gray-500 mt-2">0 funcionários usando o app</p>
+                      <p className="text-4xl font-bold text-blue-500">{stats.activeEmployees}</p>
+                      <p className="text-sm text-gray-500 mt-2">{stats.activeEmployees} funcionários usando o app</p>
                     </CardContent>
                   </Card>
                   
@@ -137,7 +159,7 @@ const CompanyDashboard: React.FC = () => {
                       <div className="mb-2">
                         <h3 className="text-gray-700">Funcionários Pendentes</h3>
                       </div>
-                      <p className="text-4xl font-bold text-orange-500">0</p>
+                      <p className="text-4xl font-bold text-orange-500">{stats.pendingEmployees}</p>
                       <p className="text-sm text-gray-500 mt-2">Aguardando ativação de conta</p>
                     </CardContent>
                   </Card>
@@ -148,7 +170,7 @@ const CompanyDashboard: React.FC = () => {
                       <div className="mb-2">
                         <h3 className="text-gray-700">Psicólogos Associados</h3>
                       </div>
-                      <p className="text-4xl font-bold text-green-500">0</p>
+                      <p className="text-4xl font-bold text-green-500">{stats.activePsychologists}</p>
                       <p className="text-sm text-gray-500 mt-2">Profissionais ativos</p>
                     </CardContent>
                   </Card>
@@ -159,7 +181,7 @@ const CompanyDashboard: React.FC = () => {
                       <div className="mb-2">
                         <h3 className="text-gray-700">Psicólogos Pendentes</h3>
                       </div>
-                      <p className="text-4xl font-bold text-purple-500">0</p>
+                      <p className="text-4xl font-bold text-purple-500">{stats.pendingPsychologists}</p>
                       <p className="text-sm text-gray-500 mt-2">Aguardando aprovação</p>
                     </CardContent>
                   </Card>
@@ -170,7 +192,7 @@ const CompanyDashboard: React.FC = () => {
                       <div className="mb-2">
                         <h3 className="text-gray-700">Índice de Bem-estar</h3>
                       </div>
-                      <p className="text-4xl font-bold text-indigo-500">N/A</p>
+                      <p className="text-4xl font-bold text-indigo-500">{stats.wellBeingIndex}</p>
                       <p className="text-sm text-gray-500 mt-2">Média atual da equipe</p>
                     </CardContent>
                   </Card>
@@ -189,20 +211,43 @@ const CompanyDashboard: React.FC = () => {
               </div>
             </TabsContent>
             
+            <TabsContent value="employees">
+              <CompanyEmployeesList />
+            </TabsContent>
+            
             <TabsContent value="psychologists">
               <CompanyPsychologistsList />
             </TabsContent>
-            
-            <TabsContent value="employees">
-              <div className="text-center py-12">
-                <h2 className="text-xl font-medium mb-2">Gestão de Funcionários</h2>
-                <p className="text-gray-500">
-                  Esta seção está em desenvolvimento. Em breve você poderá gerenciar os funcionários da sua empresa.
-                </p>
-              </div>
-            </TabsContent>
           </Tabs>
         </div>
+        
+        {companyId && (
+          <AddEmployeeDialog
+            open={isAddEmployeeDialogOpen}
+            onOpenChange={setIsAddEmployeeDialogOpen}
+            onEmployeeAdded={() => {
+              // Refresh the stats after adding an employee
+              const fetchStats = async () => {
+                const { data: employees } = await supabase
+                  .from('user_profiles')
+                  .select('id, status')
+                  .eq('id_empresa', companyId);
+                  
+                const activeEmps = employees?.filter(emp => emp.status).length || 0;
+                const pendingEmps = employees?.filter(emp => !emp.status).length || 0;
+                
+                setStats(prev => ({
+                  ...prev,
+                  activeEmployees: activeEmps,
+                  pendingEmployees: pendingEmps
+                }));
+              };
+              
+              fetchStats();
+            }}
+            companyId={companyId}
+          />
+        )}
       </CompanyDashboardLayout>
     </>
   );
