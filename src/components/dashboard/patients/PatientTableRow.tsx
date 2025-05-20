@@ -34,7 +34,6 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isChatHistoryOpen, setIsChatHistoryOpen] = useState(false);
-  const [isConfirmingPatient, setIsConfirmingPatient] = useState(false);
   const { toast } = useToast();
 
   const handleDeleteAssociation = async () => {
@@ -71,45 +70,17 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
     }
   };
 
-  const handleConfirmPatient = async () => {
-    setIsConfirmingPatient(true);
-    try {
-      const psychologistId = localStorage.getItem('psychologistId');
-      if (!psychologistId) throw new Error('ID do psicólogo não encontrado');
-
-      // Update the association status to active
-      const { error } = await supabase
-        .from('user_psychologist_associations')
-        .update({ status: 'active' })
-        .eq('id_psicologo', parseInt(psychologistId))
-        .eq('id_usuario', patient.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Paciente confirmado",
-        description: `${patient.nome} agora é seu paciente ativo.`,
-      });
-
-      onPatientRemoved(); // Refresh the patient list
-    } catch (error) {
-      console.error('Erro ao confirmar paciente:', error);
-      toast({
-        title: "Erro ao confirmar paciente",
-        description: "Não foi possível confirmar este paciente. Tente novamente.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsConfirmingPatient(false);
-    }
-  };
-
   return (
     <>
       <TableRow 
         key={patient.id} 
-        className="cursor-pointer hover:bg-purple-50/50 transition-colors"
-        onClick={() => setIsChatHistoryOpen(true)}
+        className={`${patient.status === 'active' ? 'cursor-pointer hover:bg-purple-50/50' : ''} transition-colors`}
+        onClick={(e) => {
+          // Only allow clicking the row to open chat history if status is active
+          if (patient.status === 'active') {
+            setIsChatHistoryOpen(true);
+          }
+        }}
       >
         <TableCell>
           <div className="flex items-center">
@@ -124,33 +95,22 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
         <TableCell>{patient.last_session}</TableCell>
         <TableCell className="text-right">
           <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
-            <Button 
-              variant="outline" 
-              size="sm"
-              title="Ver detalhes"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsChatHistoryOpen(true);
-              }}
-            >
-              Ver Mais
-            </Button>
-            
-            {patient.status === 'pending' && (
+            {/* Only show "Ver Mais" button when status is active */}
+            {patient.status === 'active' && (
               <Button 
                 variant="outline" 
                 size="sm"
-                className="text-green-600 hover:bg-green-50 hover:text-green-700"
+                title="Ver detalhes"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleConfirmPatient();
+                  setIsChatHistoryOpen(true);
                 }}
-                disabled={isConfirmingPatient}
               >
-                {isConfirmingPatient ? 'Confirmando...' : 'Aceitar'}
+                Ver Mais
               </Button>
             )}
-
+            
+            {/* Remove button always shown */}
             <Button 
               variant="outline" 
               size="sm" 
@@ -196,20 +156,22 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
         </DialogContent>
       </Dialog>
 
-      {/* Chat History Dialog */}
-      <Dialog open={isChatHistoryOpen} onOpenChange={setIsChatHistoryOpen}>
-        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              Histórico de Interações - {patient.nome}
-            </DialogTitle>
-            <DialogDescription>
-              Histórico completo de interações do paciente com a AIA
-            </DialogDescription>
-          </DialogHeader>
-          <PatientChatHistory patientId={patient.id} />
-        </DialogContent>
-      </Dialog>
+      {/* Chat History Dialog - only shows up if patient status is active */}
+      {patient.status === 'active' && (
+        <Dialog open={isChatHistoryOpen} onOpenChange={setIsChatHistoryOpen}>
+          <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                Histórico de Interações - {patient.nome}
+              </DialogTitle>
+              <DialogDescription>
+                Histórico completo de interações do paciente com a AIA
+              </DialogDescription>
+            </DialogHeader>
+            <PatientChatHistory patientId={patient.id} />
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 };
