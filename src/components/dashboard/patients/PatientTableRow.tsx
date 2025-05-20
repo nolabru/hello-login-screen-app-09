@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import PatientChatHistory from './PatientChatHistory';
+import { Check, Trash } from 'lucide-react';
 
 interface Patient {
   id: number;
@@ -147,7 +148,14 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
                 }}
                 disabled={isConfirmingPatient}
               >
-                {isConfirmingPatient ? 'Confirmando...' : 'Aceitar'}
+                {isConfirmingPatient ? (
+                  'Confirmando...'
+                ) : (
+                  <>
+                    <Check className="h-4 w-4 mr-1" />
+                    Aceitar
+                  </>
+                )}
               </Button>
             )}
 
@@ -161,6 +169,7 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
                 setIsDeleteDialogOpen(true);
               }}
             >
+              <Trash className="h-4 w-4 mr-1" />
               Remover
             </Button>
           </div>
