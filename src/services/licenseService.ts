@@ -67,8 +67,22 @@ export const acquireLicense = async (
       start_date: startDate.toISOString(),
       expiry_date: expiryDate.toISOString(),
       status: 'active',
-      payment_status: 'active' // Definir como active por padrão ao adquirir
+      payment_status: 'pending' // Definir como pending por padrão ao adquirir
     });
+
+  if (error) throw error;
+};
+
+// Cancelar uma licença pendente
+export const cancelLicense = async (licenseId: number): Promise<void> => {
+  const { error } = await supabase
+    .from('company_licenses')
+    .update({
+      status: 'canceled',
+      payment_status: 'canceled'
+    })
+    .eq('id', licenseId)
+    .eq('payment_status', 'pending'); // Apenas cancelar licenças pendentes
 
   if (error) throw error;
 };

@@ -95,7 +95,11 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({ c
       ) : (
         <div className="space-y-4">
           {licenses.map(license => (
-            <CompanyLicenseInfo key={license.id} license={license} />
+            <CompanyLicenseInfo 
+              key={license.id} 
+              license={license} 
+              onLicenseUpdated={fetchLicenses}
+            />
           ))}
         </div>
       )}
