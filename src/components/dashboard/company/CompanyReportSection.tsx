@@ -38,6 +38,7 @@ const CompanyReportSection: React.FC<CompanyReportSectionProps> = ({
             return;
           }
           
+          // Use the companyId directly without type conversion since Supabase handles UUID strings
           const { data, error } = await supabase
             .from('companies')
             .select('name, razao_social, cnpj')
