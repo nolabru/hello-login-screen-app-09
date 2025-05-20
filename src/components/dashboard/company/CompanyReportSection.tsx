@@ -35,7 +35,7 @@ const CompanyReportSection: React.FC<CompanyReportSectionProps> = ({
       <CardContent className="space-y-6">
         {Object.entries(section.fields).map(([fieldKey, field]) => (
           <div key={fieldKey} className="space-y-2">
-            <Label htmlFor={`${sectionKey}-${fieldKey}`}>
+            <Label htmlFor={`${sectionKey}-${fieldKey}`} className="font-medium">
               {field.label}
             </Label>
             {field.multiline ? (
@@ -45,6 +45,7 @@ const CompanyReportSection: React.FC<CompanyReportSectionProps> = ({
                 value={field.value || ''}
                 onChange={(e) => updateReportField(sectionKey, fieldKey, e.target.value)}
                 rows={5}
+                className="resize-none"
               />
             ) : (
               <Input 
