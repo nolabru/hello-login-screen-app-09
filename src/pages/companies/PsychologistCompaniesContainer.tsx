@@ -36,6 +36,11 @@ const PsychologistCompaniesContainer: React.FC = () => {
     handleRequestConnection
   } = useCompanySearch(loadCompanies);
 
+  // Group companies by status
+  const pendingCompanies = filteredCompanies.filter(company => company.connection_status === 'pending');
+  const requestedCompanies = filteredCompanies.filter(company => company.connection_status === 'requested');
+  const activeCompanies = filteredCompanies.filter(company => company.connection_status === 'active');
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -59,12 +64,48 @@ const PsychologistCompaniesContainer: React.FC = () => {
         />
       </div>
 
-      <CompanyList 
-        companies={filteredCompanies} 
-        isLoading={isLoading} 
-        onViewDetails={handleViewCompanyDetails}
-        refreshCompanies={loadCompanies}
-      />
+      {pendingCompanies.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-medium mb-3">Convites de Empresas</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Empresas que convidaram você para conexão. Aceite para disponibilizar seus serviços aos funcionários.
+          </p>
+          <CompanyList 
+            companies={pendingCompanies} 
+            isLoading={isLoading} 
+            onViewDetails={handleViewCompanyDetails}
+            refreshCompanies={loadCompanies}
+            listType="pending"
+          />
+        </div>
+      )}
+
+      {requestedCompanies.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-medium mb-3">Solicitações Enviadas</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Solicitações de conexão enviadas por você às empresas. Aguarde aprovação.
+          </p>
+          <CompanyList 
+            companies={requestedCompanies} 
+            isLoading={isLoading} 
+            onViewDetails={handleViewCompanyDetails}
+            refreshCompanies={loadCompanies}
+            listType="requested"
+          />
+        </div>
+      )}
+
+      <div className="mb-6">
+        <h2 className="text-lg font-medium mb-3">Empresas Conectadas</h2>
+        <CompanyList 
+          companies={activeCompanies} 
+          isLoading={isLoading} 
+          onViewDetails={handleViewCompanyDetails}
+          refreshCompanies={loadCompanies}
+          listType="active"
+        />
+      </div>
       
       {/* Dialog para buscar e conectar com empresas */}
       <CompanySearchDialog

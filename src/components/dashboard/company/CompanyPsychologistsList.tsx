@@ -6,6 +6,7 @@ import { Search, UserPlus, UserCheck, UserX } from 'lucide-react';
 import { TableCell, TableRow, TableBody, TableHead, TableHeader, Table } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -124,7 +125,7 @@ const CompanyPsychologistsList: React.FC = () => {
     }
   };
 
-  // Connect psychologist to company
+  // Connect psychologist to company (set as pending until psychologist accepts)
   const connectPsychologist = async (psychologistId: number) => {
     try {
       const companyId = localStorage.getItem('companyId');
@@ -132,14 +133,49 @@ const CompanyPsychologistsList: React.FC = () => {
 
       const companyIdNumber = parseInt(companyId, 10);
 
-      // Create association in the new table
+      // Create association with pending status
       const { error } = await supabase
         .from('company_psychologist_associations')
         .insert({
           id_empresa: companyIdNumber,
           id_psicologo: psychologistId,
-          status: 'active' // Automatically approve connection
+          status: 'pending' // Request pending approval from psychologist
         });
+
+      if (error) throw error;
+
+      toast({
+        title: "Solicitação enviada",
+        description: "A solicitação de conexão foi enviada ao psicólogo.",
+      });
+
+      // Refresh list
+      fetchCompanyPsychologists();
+      setIsSearchDialogOpen(false);
+    } catch (error) {
+      console.error('Error connecting psychologist:', error);
+      toast({
+        title: "Erro na conexão",
+        description: "Não foi possível enviar a solicitação ao psicólogo.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Approve pending psychologist connection
+  const approvePsychologist = async (psychologistId: number) => {
+    try {
+      const companyId = localStorage.getItem('companyId');
+      if (!companyId) return;
+
+      const companyIdNumber = parseInt(companyId, 10);
+
+      // Update association status to active
+      const { error } = await supabase
+        .from('company_psychologist_associations')
+        .update({ status: 'active' })
+        .eq('id_empresa', companyIdNumber)
+        .eq('id_psicologo', psychologistId);
 
       if (error) throw error;
 
@@ -167,18 +203,51 @@ const CompanyPsychologistsList: React.FC = () => {
       }
 
       toast({
-        title: "Psicólogo conectado",
-        description: "O psicólogo foi conectado à empresa e seus funcionários com sucesso.",
+        title: "Psicólogo aprovado",
+        description: "O psicólogo foi aprovado e conectado aos funcionários da empresa.",
       });
 
       // Refresh list
       fetchCompanyPsychologists();
-      setIsSearchDialogOpen(false);
     } catch (error) {
-      console.error('Error connecting psychologist:', error);
+      console.error('Error approving psychologist:', error);
       toast({
-        title: "Erro na conexão",
-        description: "Não foi possível conectar o psicólogo à empresa.",
+        title: "Erro na aprovação",
+        description: "Não foi possível aprovar o psicólogo.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Reject pending psychologist connection
+  const rejectPsychologist = async (psychologistId: number) => {
+    try {
+      const companyId = localStorage.getItem('companyId');
+      if (!companyId) return;
+
+      const companyIdNumber = parseInt(companyId, 10);
+
+      // Delete the association
+      const { error } = await supabase
+        .from('company_psychologist_associations')
+        .delete()
+        .eq('id_empresa', companyIdNumber)
+        .eq('id_psicologo', psychologistId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Solicitação rejeitada",
+        description: "A solicitação de conexão foi rejeitada.",
+      });
+
+      // Refresh list
+      fetchCompanyPsychologists();
+    } catch (error) {
+      console.error('Error rejecting psychologist:', error);
+      toast({
+        title: "Erro ao rejeitar",
+        description: "Não foi possível rejeitar a solicitação.",
         variant: "destructive"
       });
     }
@@ -250,6 +319,25 @@ const CompanyPsychologistsList: React.FC = () => {
     }
   }, [searchQuery, isSearchDialogOpen]);
 
+  // Render status badge
+  const renderStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <Badge className="bg-green-500">Ativo</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-500">Solicitação Enviada</Badge>;
+      case 'requested':
+        return <Badge className="bg-blue-500">Solicitou Conexão</Badge>;
+      default:
+        return <Badge className="bg-gray-500">Desconhecido</Badge>;
+    }
+  };
+
+  // Group psychologists by status
+  const pendingRequests = companyPsychologists.filter(p => p.status === 'requested');
+  const activePsychologists = companyPsychologists.filter(p => p.status === 'active');
+  const pendingInvites = companyPsychologists.filter(p => p.status === 'pending');
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -266,50 +354,153 @@ const CompanyPsychologistsList: React.FC = () => {
         </Button>
       </div>
 
+      {/* Pending Connection Requests Section */}
+      {pendingRequests.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Solicitações de Conexão</h3>
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-medium">Nome</TableHead>
+                    <TableHead className="font-medium">Email</TableHead>
+                    <TableHead className="font-medium">CRP</TableHead>
+                    <TableHead className="font-medium">Especialidade</TableHead>
+                    <TableHead className="text-right font-medium">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingRequests.map((psychologist) => (
+                    <TableRow key={psychologist.id}>
+                      <TableCell className="font-medium">{psychologist.nome}</TableCell>
+                      <TableCell>{psychologist.email}</TableCell>
+                      <TableCell>{psychologist.crp}</TableCell>
+                      <TableCell>{psychologist.especialidade || 'Não especificada'}</TableCell>
+                      <TableCell className="text-right space-x-2">
+                        <Button 
+                          variant="default" 
+                          size="sm" 
+                          className="bg-green-600 hover:bg-green-700"
+                          onClick={() => approvePsychologist(psychologist.id)}
+                        >
+                          <UserCheck size={16} className="mr-1" />
+                          Aprovar
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-red-500 border-red-300 hover:bg-red-50"
+                          onClick={() => rejectPsychologist(psychologist.id)}
+                        >
+                          <UserX size={16} className="mr-1" />
+                          Rejeitar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Pending Invites Section */}
+      {pendingInvites.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium">Convites Pendentes</h3>
+          <Card>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-medium">Nome</TableHead>
+                    <TableHead className="font-medium">Email</TableHead>
+                    <TableHead className="font-medium">CRP</TableHead>
+                    <TableHead className="font-medium">Status</TableHead>
+                    <TableHead className="text-right font-medium">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pendingInvites.map((psychologist) => (
+                    <TableRow key={psychologist.id}>
+                      <TableCell className="font-medium">{psychologist.nome}</TableCell>
+                      <TableCell>{psychologist.email}</TableCell>
+                      <TableCell>{psychologist.crp}</TableCell>
+                      <TableCell>{renderStatusBadge(psychologist.status)}</TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-red-500 border-red-300 hover:bg-red-50"
+                          onClick={() => disconnectPsychologist(psychologist.id)}
+                        >
+                          <UserX size={16} className="mr-1" />
+                          Cancelar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Active Psychologists Section */}
       <Card>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="p-8 text-center">
               <p className="text-gray-500">Carregando psicólogos...</p>
             </div>
-          ) : companyPsychologists.length === 0 ? (
+          ) : activePsychologists.length === 0 && pendingRequests.length === 0 && pendingInvites.length === 0 ? (
             <div className="p-8 text-center">
               <p className="text-gray-500">Nenhum psicólogo conectado à empresa.</p>
               <p className="text-sm text-gray-400 mt-2">Clique em "Adicionar Psicólogo" para conectar.</p>
             </div>
+          ) : activePsychologists.length === 0 ? (
+            <div className="p-8 text-center">
+              <p className="text-gray-500">Nenhum psicólogo ativo no momento.</p>
+            </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-medium">Nome</TableHead>
-                  <TableHead className="font-medium">Email</TableHead>
-                  <TableHead className="font-medium">CRP</TableHead>
-                  <TableHead className="font-medium">Especialidade</TableHead>
-                  <TableHead className="text-right font-medium">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {companyPsychologists.map((psychologist) => (
-                  <TableRow key={psychologist.id}>
-                    <TableCell className="font-medium">{psychologist.nome}</TableCell>
-                    <TableCell>{psychologist.email}</TableCell>
-                    <TableCell>{psychologist.crp}</TableCell>
-                    <TableCell>{psychologist.especialidade || 'Não especificada'}</TableCell>
-                    <TableCell className="text-right">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-red-500 border-red-300 hover:bg-red-50"
-                        onClick={() => disconnectPsychologist(psychologist.id)}
-                      >
-                        <UserX size={16} className="mr-1" />
-                        Desconectar
-                      </Button>
-                    </TableCell>
+            <>
+              <h3 className="text-lg font-medium p-4 border-b">Psicólogos Ativos</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-medium">Nome</TableHead>
+                    <TableHead className="font-medium">Email</TableHead>
+                    <TableHead className="font-medium">CRP</TableHead>
+                    <TableHead className="font-medium">Especialidade</TableHead>
+                    <TableHead className="text-right font-medium">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {activePsychologists.map((psychologist) => (
+                    <TableRow key={psychologist.id}>
+                      <TableCell className="font-medium">{psychologist.nome}</TableCell>
+                      <TableCell>{psychologist.email}</TableCell>
+                      <TableCell>{psychologist.crp}</TableCell>
+                      <TableCell>{psychologist.especialidade || 'Não especificada'}</TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="text-red-500 border-red-300 hover:bg-red-50"
+                          onClick={() => disconnectPsychologist(psychologist.id)}
+                        >
+                          <UserX size={16} className="mr-1" />
+                          Desconectar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </>
           )}
         </CardContent>
       </Card>
@@ -365,7 +556,7 @@ const CompanyPsychologistsList: React.FC = () => {
                             size="sm"
                             onClick={() => connectPsychologist(psychologist.id)}
                           >
-                            <UserCheck size={16} className="mr-1" />
+                            <UserPlus size={16} className="mr-1" />
                             Conectar
                           </Button>
                         </TableCell>

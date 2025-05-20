@@ -79,16 +79,34 @@ export const searchAvailableCompanies = async (query: string, psychologistId: st
 export const requestCompanyConnection = async (companyId: number, psychologistId: string): Promise<void> => {
   const psychologistIdNumber = parseInt(psychologistId, 10);
 
-  // Criar nova associação com status pendente
+  // Criar nova associação com status requested (o psicólogo solicitou conexão)
   const { error } = await supabase
     .from('company_psychologist_associations')
     .insert({
       id_empresa: companyId,
       id_psicologo: psychologistIdNumber,
-      status: 'pending' // Solicitação pendente
+      status: 'requested' // Solicitação enviada à empresa
     });
 
   if (error) throw error;
+};
+
+export const acceptCompanyRequest = async (companyId: number, psychologistId: string): Promise<void> => {
+  try {
+    const psychologistIdNumber = parseInt(psychologistId, 10);
+    
+    // Update the association status to active
+    const { error } = await supabase
+      .from('company_psychologist_associations')
+      .update({ status: 'active' })
+      .eq('id_empresa', companyId)
+      .eq('id_psicologo', psychologistIdNumber);
+    
+    if (error) throw error;
+  } catch (error) {
+    console.error('Error accepting company request:', error);
+    throw error;
+  }
 };
 
 export const disconnectFromCompany = async (companyId: number, psychologistId: string): Promise<void> => {

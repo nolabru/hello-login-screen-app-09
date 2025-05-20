@@ -1,28 +1,29 @@
 
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { CompanySearchResult } from '../types';
 import { searchAvailableCompanies, requestCompanyConnection } from '../companiesService';
+import { CompanySearchResult } from '../types';
 
-export const useCompanySearch = (onConnectionRequestComplete: () => Promise<void>) => {
+export const useCompanySearch = (onSuccess: () => void) => {
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<CompanySearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
 
-  const handleSearchCompanies = async (searchQuery: string) => {
-    if (!searchQuery.trim()) return;
-    
+  const handleSearchCompanies = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
     setIsSearching(true);
-    setSearchResults([]);
-    
     try {
       const psychologistId = localStorage.getItem('psychologistId');
       if (!psychologistId) {
-        throw new Error('Nenhum psicólogo logado');
+        throw new Error('ID do psicólogo não encontrado');
       }
-      
-      const results = await searchAvailableCompanies(searchQuery, psychologistId);
+
+      const results = await searchAvailableCompanies(query, psychologistId);
       setSearchResults(results);
     } catch (error) {
       console.error('Erro ao buscar empresas:', error);
@@ -40,26 +41,24 @@ export const useCompanySearch = (onConnectionRequestComplete: () => Promise<void
     try {
       const psychologistId = localStorage.getItem('psychologistId');
       if (!psychologistId) {
-        throw new Error('Nenhum psicólogo logado');
+        throw new Error('ID do psicólogo não encontrado');
       }
 
       await requestCompanyConnection(companyId, psychologistId);
-
+      
       toast({
         title: "Solicitação enviada",
-        description: "Conexão com a empresa solicitada com sucesso.",
+        description: "Solicitação de conexão enviada com sucesso.",
       });
 
-      // Close the dialog and update the list
+      // Close dialog and refresh companies list
       setIsSearchDialogOpen(false);
-      
-      // Reload the connected companies list
-      await onConnectionRequestComplete();
+      onSuccess();
     } catch (error) {
       console.error('Erro ao solicitar conexão:', error);
       toast({
         title: "Erro na solicitação",
-        description: "Não foi possível solicitar conexão com esta empresa.",
+        description: "Não foi possível enviar a solicitação. Tente novamente.",
         variant: "destructive"
       });
     }
