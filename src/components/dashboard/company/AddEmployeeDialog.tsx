@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import AddSingleEmployeeForm from './AddSingleEmployeeForm';
 import LinkEmployeeForm from './LinkEmployeeForm';
+import BulkEmployeeUpload from './BulkEmployeeUpload';
 import { AddSingleEmployeeFormValues, LinkEmployeeFormValues } from './employeeSchema';
 import { checkLicenseAvailability } from '@/services/licenseService';
 
@@ -194,15 +195,16 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle className="text-xl">Adicionar Funcionário</DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 mb-6">
+          <TabsList className="grid grid-cols-3 mb-6">
             <TabsTrigger value="add">Novo Funcionário</TabsTrigger>
             <TabsTrigger value="link">Vincular Existente</TabsTrigger>
+            <TabsTrigger value="bulk">Importar CSV</TabsTrigger>
           </TabsList>
 
           <TabsContent value="add" className="py-2">
@@ -211,6 +213,18 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
 
           <TabsContent value="link" className="py-2">
             <LinkEmployeeForm onSubmit={handleLinkEmployeeSubmit} isSubmitting={isSubmitting} />
+          </TabsContent>
+          
+          <TabsContent value="bulk" className="py-2">
+            <BulkEmployeeUpload 
+              companyId={companyId} 
+              onComplete={() => {
+                onEmployeeAdded();
+                onOpenChange(false);
+              }}
+              isSubmitting={isSubmitting}
+              setIsSubmitting={setIsSubmitting}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>
