@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import CompanyDashboardLayout from '@/components/layout/CompanyDashboardLayout';
@@ -108,18 +107,15 @@ const CompanyDashboard: React.FC = () => {
             <TabsContent value="overview" className="space-y-8">
               <div className="flex justify-end gap-4 mb-6">
                 <Button className="bg-indigo-900 hover:bg-indigo-800">
-                  <UserPlus size={16} className="mr-2" />
                   Adicionar Funcionário
                 </Button>
                 <Button variant="outline" className="border-indigo-900 text-indigo-900 hover:bg-indigo-50">
-                  <UserCheck size={16} className="mr-2" />
                   Buscar Psicólogos
                 </Button>
               </div>
               
               <div className="mb-8">
-                <h2 className="flex items-center text-xl font-medium mb-4">
-                  <Clock size={20} className="text-indigo-500 mr-2" />
+                <h2 className="text-xl font-medium mb-4">
                   Visão geral do grupo
                 </h2>
                 
@@ -127,9 +123,8 @@ const CompanyDashboard: React.FC = () => {
                   {/* Card 1 - Funcionários Ativos */}
                   <Card>
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="mb-2">
                         <h3 className="text-gray-700">Funcionários Ativos</h3>
-                        <Users className="h-5 w-5 text-blue-500" />
                       </div>
                       <p className="text-4xl font-bold text-blue-500">0</p>
                       <p className="text-sm text-gray-500 mt-2">0 funcionários usando o app</p>
@@ -139,9 +134,8 @@ const CompanyDashboard: React.FC = () => {
                   {/* Card 2 - Funcionários Pendentes */}
                   <Card>
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="mb-2">
                         <h3 className="text-gray-700">Funcionários Pendentes</h3>
-                        <UserPlus className="h-5 w-5 text-orange-500" />
                       </div>
                       <p className="text-4xl font-bold text-orange-500">0</p>
                       <p className="text-sm text-gray-500 mt-2">Aguardando ativação de conta</p>
@@ -151,9 +145,8 @@ const CompanyDashboard: React.FC = () => {
                   {/* Card 3 - Psicólogos Associados */}
                   <Card>
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="mb-2">
                         <h3 className="text-gray-700">Psicólogos Associados</h3>
-                        <UserCheck className="h-5 w-5 text-green-500" />
                       </div>
                       <p className="text-4xl font-bold text-green-500">0</p>
                       <p className="text-sm text-gray-500 mt-2">Profissionais ativos</p>
@@ -163,9 +156,8 @@ const CompanyDashboard: React.FC = () => {
                   {/* Card 4 - Psicólogos Pendentes */}
                   <Card>
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="mb-2">
                         <h3 className="text-gray-700">Psicólogos Pendentes</h3>
-                        <Clock className="h-5 w-5 text-purple-500" />
                       </div>
                       <p className="text-4xl font-bold text-purple-500">0</p>
                       <p className="text-sm text-gray-500 mt-2">Aguardando aprovação</p>
@@ -175,9 +167,8 @@ const CompanyDashboard: React.FC = () => {
                   {/* Card 5 - Índice de Bem-estar */}
                   <Card>
                     <CardContent className="p-6">
-                      <div className="flex items-center justify-between mb-2">
+                      <div className="mb-2">
                         <h3 className="text-gray-700">Índice de Bem-estar</h3>
-                        <div className="h-5 w-5 text-indigo-500">📊</div>
                       </div>
                       <p className="text-4xl font-bold text-indigo-500">N/A</p>
                       <p className="text-sm text-gray-500 mt-2">Média atual da equipe</p>
@@ -187,8 +178,7 @@ const CompanyDashboard: React.FC = () => {
               </div>
               
               <div className="mb-6">
-                <h2 className="flex items-center text-xl font-medium mb-4">
-                  <span className="text-indigo-500 mr-2">📈</span>
+                <h2 className="text-xl font-medium mb-4">
                   Tendências de Saúde Mental
                 </h2>
                 <Card>
