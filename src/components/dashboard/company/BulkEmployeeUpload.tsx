@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +6,14 @@ import { useToast } from '@/components/ui/use-toast';
 import { AlertCircle, CheckCircle2, Upload, X } from 'lucide-react';
 import { checkLicenseAvailability } from '@/services/licenseService';
 import { Progress } from '@/components/ui/progress';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface BulkEmployeeUploadProps {
   companyId: number;
@@ -240,24 +247,24 @@ const BulkEmployeeUpload: React.FC<BulkEmployeeUploadProps> = ({
         </div>
         
         <div className="max-h-64 overflow-y-auto border rounded-md">
-          <table className="w-full">
-            <thead className="bg-gray-50 sticky top-0">
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CPF</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
+          <Table>
+            <TableHeader className="bg-gray-50 sticky top-0">
+              <TableRow>
+                <TableHead className="font-medium text-xs text-gray-500 uppercase">Nome</TableHead>
+                <TableHead className="font-medium text-xs text-gray-500 uppercase">Email</TableHead>
+                <TableHead className="font-medium text-xs text-gray-500 uppercase">CPF</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {parsedData.map((employee, index) => (
-                <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="px-4 py-2 text-sm">{employee.nome}</td>
-                  <td className="px-4 py-2 text-sm">{employee.email}</td>
-                  <td className="px-4 py-2 text-sm">{employee.cpf}</td>
-                </tr>
+                <TableRow key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <TableCell className="text-sm">{employee.nome}</TableCell>
+                  <TableCell className="text-sm">{employee.email}</TableCell>
+                  <TableCell className="text-sm">{employee.cpf}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
         
         {uploadStatus.inProgress ? (
@@ -329,11 +336,36 @@ const BulkEmployeeUpload: React.FC<BulkEmployeeUploadProps> = ({
         <p className="text-sm text-gray-600 mb-2">
           O arquivo CSV deve ter os seguintes cabeçalhos:
         </p>
-        <pre className="bg-gray-100 p-2 rounded text-xs overflow-x-auto">
-          nome,email,cpf,senha
-        </pre>
+        
+        <div className="overflow-hidden rounded-md border mb-3">
+          <Table>
+            <TableHeader className="bg-gray-100">
+              <TableRow>
+                <TableHead className="text-xs font-medium text-gray-600">nome</TableHead>
+                <TableHead className="text-xs font-medium text-gray-600">email</TableHead>
+                <TableHead className="text-xs font-medium text-gray-600">cpf</TableHead>
+                <TableHead className="text-xs font-medium text-gray-600">senha</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow className="bg-white">
+                <TableCell className="text-xs py-2">João Silva</TableCell>
+                <TableCell className="text-xs py-2">joao@email.com</TableCell>
+                <TableCell className="text-xs py-2">12345678901</TableCell>
+                <TableCell className="text-xs py-2">senha123</TableCell>
+              </TableRow>
+              <TableRow className="bg-gray-50">
+                <TableCell className="text-xs py-2">Maria Oliveira</TableCell>
+                <TableCell className="text-xs py-2">maria@email.com</TableCell>
+                <TableCell className="text-xs py-2">98765432109</TableCell>
+                <TableCell className="text-xs py-2">senha456</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+        
         <p className="text-xs text-gray-500 mt-2">
-          Exemplo: João Silva,joao@email.com,12345678901,senha123
+          Formato da linha CSV: <span className="font-mono bg-gray-100 px-1 rounded">João Silva,joao@email.com,12345678901,senha123</span>
         </p>
       </div>
     </div>
