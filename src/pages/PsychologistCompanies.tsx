@@ -9,6 +9,7 @@ import { UserPlus, Search } from 'lucide-react';
 import { TableCell, TableRow, TableBody, TableHead, TableHeader, Table } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 type Company = {
   id: number;
@@ -18,11 +19,21 @@ type Company = {
   connection_status: string;
 };
 
+type CompanySearchResult = {
+  id: number;
+  name: string;
+  contact_email: string;
+  status: boolean;
+};
+
 const PsychologistCompanies: React.FC = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([]);
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<CompanySearchResult[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
 
   // Buscar empresas associadas ao psicólogo
@@ -103,6 +114,158 @@ const PsychologistCompanies: React.FC = () => {
     setFilteredCompanies(filtered);
   }, [searchQuery, companies]);
 
+  // Buscar empresas para conexão
+  const searchCompanies = async () => {
+    if (!searchQuery.trim()) return;
+    
+    setIsSearching(true);
+    setSearchResults([]);
+    
+    try {
+      // Obter o ID do psicólogo atual
+      const psychologistId = localStorage.getItem('psychologistId');
+      if (!psychologistId) {
+        throw new Error('Nenhum psicólogo logado');
+      }
+      
+      const psychologistIdNumber = parseInt(psychologistId, 10);
+      
+      // Buscar empresas que correspondem à pesquisa
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, name, contact_email, status')
+        .or(`name.ilike.%${searchQuery}%,contact_email.ilike.%${searchQuery}%`)
+        .eq('status', true)
+        .limit(10);
+
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        // Obter empresas já conectadas para filtrá-las dos resultados
+        const { data: existingAssociations } = await supabase
+          .from('company_psychologist_associations')
+          .select('id_empresa')
+          .eq('id_psicologo', psychologistIdNumber);
+        
+        const connectedCompanyIds = existingAssociations?.map(assoc => assoc.id_empresa) || [];
+        
+        // Filtrar empresas já conectadas
+        const filteredResults = data.filter(company => !connectedCompanyIds.includes(company.id));
+        
+        setSearchResults(filteredResults);
+      } else {
+        setSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar empresas:', error);
+      toast({
+        title: "Erro na busca",
+        description: "Não foi possível buscar empresas. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Solicitar conexão com uma empresa
+  const requestCompanyConnection = async (companyId: number) => {
+    try {
+      const psychologistId = localStorage.getItem('psychologistId');
+      if (!psychologistId) {
+        throw new Error('Nenhum psicólogo logado');
+      }
+
+      const psychologistIdNumber = parseInt(psychologistId, 10);
+
+      // Criar nova associação com status pendente
+      const { error } = await supabase
+        .from('company_psychologist_associations')
+        .insert({
+          id_empresa: companyId,
+          id_psicologo: psychologistIdNumber,
+          status: 'pending' // Solicitação pendente
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Solicitação enviada",
+        description: "Conexão com a empresa solicitada com sucesso.",
+      });
+
+      // Fechar o diálogo e atualizar a lista
+      setIsSearchDialogOpen(false);
+      // Recarregar a lista de empresas conectadas
+      fetchCompanies();
+    } catch (error) {
+      console.error('Erro ao solicitar conexão:', error);
+      toast({
+        title: "Erro na solicitação",
+        description: "Não foi possível solicitar conexão com esta empresa.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Função auxiliar para carregar empresas
+  const fetchCompanies = async () => {
+    setIsLoading(true);
+    try {
+      const psychologistId = localStorage.getItem('psychologistId');
+      if (!psychologistId) {
+        throw new Error('Nenhum psicólogo logado');
+      }
+
+      const psychologistIdNumber = parseInt(psychologistId, 10);
+
+      // Buscar associações do psicólogo com empresas
+      const { data: associations, error: associationsError } = await supabase
+        .from('company_psychologist_associations')
+        .select('id_empresa, status')
+        .eq('id_psicologo', psychologistIdNumber);
+
+      if (associationsError) throw associationsError;
+
+      if (associations && associations.length > 0) {
+        // Extrair IDs das empresas associadas
+        const companyIds = associations.map(assoc => assoc.id_empresa);
+
+        // Buscar detalhes das empresas
+        const { data: companiesData, error: companiesError } = await supabase
+          .from('companies')
+          .select('id, name, contact_email, status')
+          .in('id', companyIds);
+
+        if (companiesError) throw companiesError;
+
+        // Mapear empresas com status de conexão
+        const mappedCompanies = companiesData?.map(company => {
+          const association = associations.find(a => a.id_empresa === company.id);
+          return {
+            ...company,
+            connection_status: association?.status || 'pending'
+          };
+        }) || [];
+
+        setCompanies(mappedCompanies);
+        setFilteredCompanies(mappedCompanies);
+      } else {
+        setCompanies([]);
+        setFilteredCompanies([]);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar empresas:', error);
+      toast({
+        title: "Erro ao carregar empresas",
+        description: "Não foi possível carregar a lista de empresas associadas.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <>
       <Helmet>
@@ -115,7 +278,10 @@ const PsychologistCompanies: React.FC = () => {
               <h1 className="text-2xl font-medium">Empresas</h1>
               <p className="text-gray-500">Gerencie suas conexões com empresas</p>
             </div>
-            <Button className="bg-indigo-900 hover:bg-indigo-800">
+            <Button 
+              className="bg-indigo-900 hover:bg-indigo-800"
+              onClick={() => setIsSearchDialogOpen(true)}
+            >
               <UserPlus size={16} className="mr-2" />
               Solicitar Conexão
             </Button>
@@ -185,6 +351,75 @@ const PsychologistCompanies: React.FC = () => {
               )}
             </CardContent>
           </Card>
+          
+          {/* Dialog para buscar e conectar com empresas */}
+          <Dialog open={isSearchDialogOpen} onOpenChange={setIsSearchDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Conectar com Empresas</DialogTitle>
+                <DialogDescription>
+                  Busque empresas para solicitar uma conexão.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Buscar por nome ou email da empresa..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={searchCompanies}
+                    disabled={isSearching || !searchQuery.trim()}
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {isSearching ? (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500">Buscando empresas...</p>
+                  </div>
+                ) : searchResults.length > 0 ? (
+                  <div className="max-h-[300px] overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead></TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {searchResults.map((company) => (
+                          <TableRow key={company.id}>
+                            <TableCell className="font-medium">{company.name}</TableCell>
+                            <TableCell>{company.contact_email}</TableCell>
+                            <TableCell className="text-right">
+                              <Button 
+                                size="sm"
+                                onClick={() => requestCompanyConnection(company.id)}
+                              >
+                                <UserPlus size={16} className="mr-1" />
+                                Conectar
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : searchQuery.trim() && !isSearching ? (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500">Nenhuma empresa encontrada com este termo.</p>
+                  </div>
+                ) : null}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </DashboardLayout>
     </>
