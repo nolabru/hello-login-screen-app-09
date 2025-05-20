@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +19,7 @@ type Patient = {
   status: string;
   last_session?: string;
   user_id?: number;
+  company_name?: string; // Added company name field
 };
 
 const PatientsList: React.FC = () => {
@@ -96,12 +96,36 @@ const PatientsList: React.FC = () => {
       // Buscar os dados dos pacientes
       const { data: userProfiles, error: profilesError } = await supabase
         .from('user_profiles')
-        .select('id, nome, email, phone')
+        .select('id, nome, email, phone, id_empresa')
         .in('id', userIds);
       
       if (profilesError) throw profilesError;
       
       console.log('Fetched user profiles:', userProfiles);
+      
+      // Collect all company IDs to fetch company names
+      const companyIds = userProfiles
+        ?.filter(profile => profile.id_empresa !== null)
+        .map(profile => profile.id_empresa) || [];
+      
+      // Create a map to store company names by ID
+      const companyNameMap = new Map();
+      
+      // Only fetch companies if there are company IDs
+      if (companyIds.length > 0) {
+        // Fetch company names
+        const { data: companies, error: companiesError } = await supabase
+          .from('companies')
+          .select('id, name, razao_social')
+          .in('id', companyIds);
+        
+        if (companiesError) throw companiesError;
+        
+        // Build a map of company ID to name
+        companies?.forEach(company => {
+          companyNameMap.set(company.id, company.name || company.razao_social);
+        });
+      }
       
       // Mapear e combinar os dados
       const patientsList = userProfiles?.map(profile => {
@@ -115,7 +139,8 @@ const PatientsList: React.FC = () => {
           last_session: association?.atualizado_em ? 
             format(new Date(association.atualizado_em), 'dd/MM/yyyy', {locale: ptBR}) : 
             'Sem sessões',
-          user_id: profile.id
+          user_id: profile.id,
+          company_name: profile.id_empresa ? companyNameMap.get(profile.id_empresa) || 'Empresa' : undefined,
         };
       }) || [];
       

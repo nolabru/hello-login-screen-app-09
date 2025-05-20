@@ -4,6 +4,7 @@ import { TableRow, TableCell } from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import PatientStatusBadge from './PatientStatusBadge';
 import {
   Dialog,
@@ -23,6 +24,7 @@ interface Patient {
   status: string;
   last_session?: string;
   user_id?: number;
+  company_name?: string; // Added company name field
 }
 
 interface PatientTableRowProps {
@@ -73,6 +75,8 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
     }
   };
 
+  const isCompanyPatient = Boolean(patient.company_name);
+
   return (
     <>
       <TableRow 
@@ -113,51 +117,62 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
               </Button>
             )}
             
-            {/* Remove button always shown */}
-            <Button 
-              variant="outline" 
-              size="sm" 
-              title="Remover vínculo" 
-              className="text-red-500 hover:bg-red-50 hover:text-red-600"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsDeleteDialogOpen(true);
-              }}
-            >
-              Remover
-            </Button>
+            {/* Show company badge for company patients or remove button for direct patients */}
+            {isCompanyPatient ? (
+              <Badge 
+                variant="outline" 
+                className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50"
+              >
+                {patient.company_name}
+              </Badge>
+            ) : (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                title="Remover vínculo" 
+                className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDeleteDialogOpen(true);
+                }}
+              >
+                Remover
+              </Button>
+            )}
           </div>
         </TableCell>
       </TableRow>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Confirmar exclusão de vínculo</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja remover o vínculo com o paciente <span className="font-medium">{patient.nome}</span>?
-              Esta ação não pode ser desfeita.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex flex-row justify-end gap-2 mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-              disabled={isDeleting}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteAssociation}
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'Removendo...' : 'Remover vínculo'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Delete Confirmation Dialog - Only for non-company patients */}
+      {!isCompanyPatient && (
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirmar exclusão de vínculo</DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja remover o vínculo com o paciente <span className="font-medium">{patient.nome}</span>?
+                Esta ação não pode ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex flex-row justify-end gap-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+                disabled={isDeleting}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDeleteAssociation}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Removendo...' : 'Remover vínculo'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Chat History Dialog - only shows up if patient status is active */}
       {normalizedStatus === 'active' && (
