@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import TabsCustom from './ui/tabs-custom';
@@ -66,10 +67,40 @@ const LoginForm: React.FC = () => {
         navigate('/dashboard');
       } else {
         // Lógica para empresas
+        console.log('Tentando fazer login como empresa');
+        
+        // Verificar se a empresa existe na tabela companies
+        const { data: company, error: fetchError } = await supabase
+          .from('companies')
+          .select()
+          .or(`email.eq.${email},contact_email.eq.${email}`)
+          .eq('senha', password)
+          .single();
+
+        if (fetchError || !company) {
+          console.error('Erro ao fazer login como empresa:', fetchError);
+          toast({
+            title: "Credenciais inválidas",
+            description: "E-mail ou senha incorretos.",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
+
+        console.log('Empresa encontrada:', company);
+        
+        // Empresa encontrada, salvar dados na sessão
+        localStorage.setItem('companyId', company.id.toString());
+        localStorage.setItem('companyName', company.name || 'Empresa');
+        localStorage.setItem('companyEmail', company.email || company.contact_email || email);
+        
         toast({
-          title: "Funcionalidade em desenvolvimento",
-          description: "O acesso para empresas ainda está sendo implementado."
+          title: "Login bem-sucedido",
+          description: `Bem-vindo(a) de volta, ${company.name || 'Empresa'}!`
         });
+
+        navigate('/company/dashboard');
       }
     } catch (err) {
       console.error('Erro inesperado:', err);
