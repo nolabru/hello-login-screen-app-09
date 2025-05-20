@@ -347,6 +347,15 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
                     <code className="text-xs block bg-gray-100 p-2 rounded">
                       nome,email,cpf,senha
                     </code>
+                    <div className="mt-3 p-2 bg-gray-100 rounded border border-gray-200">
+                      <h5 className="text-xs font-medium text-gray-700 mb-1">Exemplo:</h5>
+                      <pre className="text-xs text-gray-600 overflow-x-auto whitespace-pre-wrap">
+nome,email,cpf,senha
+João Silva,joao.silva@email.com,12345678900,senha123
+Maria Oliveira,maria@email.com,98765432100,senha456
+Carlos Pereira,carlos@email.com,11122233344,senha789
+                      </pre>
+                    </div>
                   </div>
                   
                   <div className="grid w-full max-w-sm items-center gap-1.5">

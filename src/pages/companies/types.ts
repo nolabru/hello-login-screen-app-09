@@ -33,4 +33,6 @@ export type Employee = {
   status: boolean;
   connection_status: string;
   phone?: string;
+  cpf?: string;
+  senha?: string;
 };
