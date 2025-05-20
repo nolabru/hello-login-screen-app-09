@@ -21,6 +21,9 @@ const CompanyLicenseInfo: React.FC<CompanyLicenseInfoProps> = ({ license }) => {
     progressColor = "bg-yellow-500";
   }
 
+  // Verificar se o status do pagamento é positivo (active ou completed são considerados como pagos)
+  const isPaymentPositive = license.payment_status === 'completed' || license.payment_status === 'active';
+
   return (
     <Card className="mb-6">
       <CardContent className="p-6">
@@ -60,10 +63,10 @@ const CompanyLicenseInfo: React.FC<CompanyLicenseInfoProps> = ({ license }) => {
           <div className="mt-2 pt-4 border-t border-gray-100">
             <p className="text-sm text-gray-500">Status do pagamento</p>
             <Badge variant={
-              license.payment_status === 'completed' ? 'outline' : 
+              isPaymentPositive ? 'outline' : 
               license.payment_status === 'pending' ? 'secondary' : 'destructive'
             }>
-              {license.payment_status === 'completed' ? 'Pago' : 
+              {isPaymentPositive ? 'Pago' : 
                license.payment_status === 'pending' ? 'Pendente' : 'Falha'}
             </Badge>
           </div>
