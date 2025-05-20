@@ -114,18 +114,35 @@ export const acceptCompanyRequest = async (companyId: number, psychologistId: st
     
     // Connect all company employees to this psychologist
     if (employees && employees.length > 0) {
-      // Create employee-psychologist associations
-      const employeeAssociations = employees.map(employee => ({
-        id_usuario: employee.id,
-        id_psicologo: psychologistIdNumber,
-        status: 'pending' // Employees need to accept the connection
-      }));
+      // First, check for any existing associations to avoid duplicates
+      const employeeIds = employees.map(emp => emp.id);
       
-      const { error: associationsError } = await supabase
+      const { data: existingAssociations, error: checkError } = await supabase
         .from('user_psychologist_associations')
-        .insert(employeeAssociations);
+        .select('id_usuario')
+        .eq('id_psicologo', psychologistIdNumber)
+        .in('id_usuario', employeeIds);
+        
+      if (checkError) throw checkError;
       
-      if (associationsError) throw associationsError;
+      // Filter out users who already have associations
+      const existingUserIds = existingAssociations?.map(assoc => assoc.id_usuario) || [];
+      const newEmployees = employees.filter(emp => !existingUserIds.includes(emp.id));
+      
+      if (newEmployees.length > 0) {
+        // Create employee-psychologist associations only for new connections
+        const employeeAssociations = newEmployees.map(employee => ({
+          id_usuario: employee.id,
+          id_psicologo: psychologistIdNumber,
+          status: 'active' // Set employees as active patients immediately
+        }));
+        
+        const { error: associationsError } = await supabase
+          .from('user_psychologist_associations')
+          .insert(employeeAssociations);
+        
+        if (associationsError) throw associationsError;
+      }
     }
   } catch (error) {
     console.error('Error accepting company request:', error);

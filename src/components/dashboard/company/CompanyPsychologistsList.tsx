@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -179,7 +178,7 @@ const CompanyPsychologistsList: React.FC = () => {
 
       if (error) throw error;
 
-      // Connect all company employees to this psychologist
+      // Get all company employees to connect them with this psychologist
       const { data: employees, error: employeesError } = await supabase
         .from('user_profiles')
         .select('id')
@@ -188,18 +187,35 @@ const CompanyPsychologistsList: React.FC = () => {
       if (employeesError) throw employeesError;
 
       if (employees && employees.length > 0) {
-        // Create associations between employees and psychologist
-        const employeeAssociations = employees.map(employee => ({
-          id_usuario: employee.id,
-          id_psicologo: psychologistId,
-          status: 'pending' // Employees need to accept the connection
-        }));
-
-        const { error: associationError } = await supabase
+        // Check for existing associations to avoid duplicates
+        const employeeIds = employees.map(emp => emp.id);
+        
+        const { data: existingAssociations, error: checkError } = await supabase
           .from('user_psychologist_associations')
-          .insert(employeeAssociations);
+          .select('id_usuario')
+          .eq('id_psicologo', psychologistId)
+          .in('id_usuario', employeeIds);
+          
+        if (checkError) throw checkError;
+        
+        // Filter out users who already have associations
+        const existingUserIds = existingAssociations?.map(assoc => assoc.id_usuario) || [];
+        const newEmployees = employees.filter(emp => !existingUserIds.includes(emp.id));
+        
+        if (newEmployees.length > 0) {
+          // Create associations between employees and psychologist
+          const employeeAssociations = newEmployees.map(employee => ({
+            id_usuario: employee.id,
+            id_psicologo: psychologistId,
+            status: 'active' // Set employees as active patients immediately
+          }));
 
-        if (associationError) throw associationError;
+          const { error: associationError } = await supabase
+            .from('user_psychologist_associations')
+            .insert(employeeAssociations);
+
+          if (associationError) throw associationError;
+        }
       }
 
       toast({
