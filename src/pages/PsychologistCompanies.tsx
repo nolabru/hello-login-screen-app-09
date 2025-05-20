@@ -5,11 +5,12 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { UserPlus, Search } from 'lucide-react';
+import { UserPlus, Search, Clock, Calendar } from 'lucide-react';
 import { TableCell, TableRow, TableBody, TableHead, TableHeader, Table } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { format } from 'date-fns';
 
 type Company = {
   id: number;
@@ -17,6 +18,7 @@ type Company = {
   contact_email: string;
   status: boolean;
   connection_status: string;
+  created_at?: string; // Timestamp of when the connection was requested
 };
 
 type CompanySearchResult = {
@@ -24,6 +26,16 @@ type CompanySearchResult = {
   name: string;
   contact_email: string;
   status: boolean;
+};
+
+type CompanyDetail = {
+  id: number;
+  name: string;
+  contact_email: string;
+  status: boolean;
+  connection_status: string;
+  created_at?: string;
+  updated_at?: string;
 };
 
 const PsychologistCompanies: React.FC = () => {
@@ -34,6 +46,8 @@ const PsychologistCompanies: React.FC = () => {
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<CompanySearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [selectedCompany, setSelectedCompany] = useState<CompanyDetail | null>(null);
   const { toast } = useToast();
 
   // Buscar empresas associadas ao psicólogo
@@ -51,7 +65,7 @@ const PsychologistCompanies: React.FC = () => {
         // Buscar associações do psicólogo com empresas
         const { data: associations, error: associationsError } = await supabase
           .from('company_psychologist_associations')
-          .select('id_empresa, status')
+          .select('id_empresa, status, created_at, updated_at')
           .eq('id_psicologo', psychologistIdNumber);
 
         if (associationsError) throw associationsError;
@@ -73,7 +87,8 @@ const PsychologistCompanies: React.FC = () => {
             const association = associations.find(a => a.id_empresa === company.id);
             return {
               ...company,
-              connection_status: association?.status || 'pending'
+              connection_status: association?.status || 'pending',
+              created_at: association?.created_at
             };
           }) || [];
 
@@ -208,6 +223,43 @@ const PsychologistCompanies: React.FC = () => {
     }
   };
 
+  // Visualizar detalhes da empresa
+  const viewCompanyDetails = async (company: Company) => {
+    try {
+      const psychologistId = localStorage.getItem('psychologistId');
+      if (!psychologistId) {
+        throw new Error('Nenhum psicólogo logado');
+      }
+
+      const psychologistIdNumber = parseInt(psychologistId, 10);
+
+      // Buscar detalhes da associação
+      const { data: associationData, error: associationError } = await supabase
+        .from('company_psychologist_associations')
+        .select('*')
+        .eq('id_empresa', company.id)
+        .eq('id_psicologo', psychologistIdNumber)
+        .single();
+
+      if (associationError) throw associationError;
+
+      setSelectedCompany({
+        ...company,
+        created_at: associationData?.created_at,
+        updated_at: associationData?.updated_at
+      });
+      
+      setIsDetailDialogOpen(true);
+    } catch (error) {
+      console.error('Erro ao buscar detalhes da empresa:', error);
+      toast({
+        title: "Erro ao carregar detalhes",
+        description: "Não foi possível carregar os detalhes desta conexão.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Função auxiliar para carregar empresas
   const fetchCompanies = async () => {
     setIsLoading(true);
@@ -222,7 +274,7 @@ const PsychologistCompanies: React.FC = () => {
       // Buscar associações do psicólogo com empresas
       const { data: associations, error: associationsError } = await supabase
         .from('company_psychologist_associations')
-        .select('id_empresa, status')
+        .select('id_empresa, status, created_at, updated_at')
         .eq('id_psicologo', psychologistIdNumber);
 
       if (associationsError) throw associationsError;
@@ -244,7 +296,8 @@ const PsychologistCompanies: React.FC = () => {
           const association = associations.find(a => a.id_empresa === company.id);
           return {
             ...company,
-            connection_status: association?.status || 'pending'
+            connection_status: association?.status || 'pending',
+            created_at: association?.created_at
           };
         }) || [];
 
@@ -263,6 +316,16 @@ const PsychologistCompanies: React.FC = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Format date helper
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Não disponível';
+    try {
+      return format(new Date(dateString), 'dd/MM/yyyy HH:mm');
+    } catch (error) {
+      return 'Data inválida';
     }
   };
 
@@ -340,6 +403,7 @@ const PsychologistCompanies: React.FC = () => {
                           <Button 
                             variant="outline" 
                             size="sm"
+                            onClick={() => viewCompanyDetails(company)}
                           >
                             Ver detalhes
                           </Button>
@@ -418,6 +482,65 @@ const PsychologistCompanies: React.FC = () => {
                   </div>
                 ) : null}
               </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Dialog de detalhes da empresa */}
+          <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Detalhes da Conexão</DialogTitle>
+                <DialogDescription>
+                  Informações sobre sua conexão com esta empresa.
+                </DialogDescription>
+              </DialogHeader>
+              
+              {selectedCompany && (
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <h3 className="font-medium">Empresa</h3>
+                    <p>{selectedCompany.name}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="font-medium">Email de contato</h3>
+                    <p>{selectedCompany.contact_email}</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h3 className="font-medium">Status da conexão</h3>
+                    <p>
+                      <span 
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          selectedCompany.connection_status === 'active' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {selectedCompany.connection_status === 'active' ? 'Conectada' : 'Pendente'}
+                      </span>
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Calendar size={16} className="text-gray-500" />
+                      <h3 className="font-medium">Data da solicitação</h3>
+                    </div>
+                    <p>{formatDate(selectedCompany.created_at)}</p>
+                  </div>
+                  
+                  {selectedCompany.updated_at && selectedCompany.created_at !== selectedCompany.updated_at && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Clock size={16} className="text-gray-500" />
+                        <h3 className="font-medium">Última atualização</h3>
+                      </div>
+                      <p>{formatDate(selectedCompany.updated_at)}</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </DialogContent>
           </Dialog>
         </div>
