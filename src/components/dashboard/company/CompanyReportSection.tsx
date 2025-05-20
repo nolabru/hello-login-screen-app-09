@@ -1,13 +1,11 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { ReportData } from '@/hooks/useReportData';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
 
 interface CompanyReportSectionProps {
   title: string;
@@ -23,57 +21,6 @@ const CompanyReportSection: React.FC<CompanyReportSectionProps> = ({
   updateReportField
 }) => {
   const section = reportData[sectionKey];
-  const { toast } = useToast();
-  
-  useEffect(() => {
-    // Only fetch data for company info section
-    if (sectionKey === 'companyInfo') {
-      const fetchCompanyData = async () => {
-        try {
-          // Get current company ID from localStorage (this should be set during login)
-          const companyId = localStorage.getItem('companyId');
-          
-          if (!companyId) {
-            console.log('Company ID not found in localStorage');
-            return;
-          }
-          
-          // Make sure to query with the correct type without conversion
-          // The 'id' column in Supabase can be queried with a string UUID
-          const { data, error } = await supabase
-            .from('companies')
-            .select('name, razao_social, cnpj')
-            .eq('id', companyId)
-            .single();
-          
-          if (error) {
-            console.error('Error fetching company data:', error);
-            return;
-          }
-          
-          if (data) {
-            // Pre-fill company information fields with data from Supabase
-            if (data.razao_social && !reportData.companyInfo.fields.companyName.value) {
-              updateReportField('companyInfo', 'companyName', data.razao_social);
-            }
-            
-            if (data.cnpj && !reportData.companyInfo.fields.cnpj.value) {
-              updateReportField('companyInfo', 'cnpj', data.cnpj);
-            }
-            
-            toast({
-              title: "Dados da empresa carregados",
-              description: "Informações básicas da empresa foram preenchidas automaticamente."
-            });
-          }
-        } catch (error) {
-          console.error('Error in fetchCompanyData:', error);
-        }
-      };
-      
-      fetchCompanyData();
-    }
-  }, [sectionKey, updateReportField]);
   
   if (!section) return null;
   
