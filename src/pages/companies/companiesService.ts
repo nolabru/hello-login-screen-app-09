@@ -103,6 +103,30 @@ export const acceptCompanyRequest = async (companyId: number, psychologistId: st
       .eq('id_psicologo', psychologistIdNumber);
     
     if (error) throw error;
+    
+    // Get all employees associated with this company
+    const { data: employees, error: employeesError } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('id_empresa', companyId);
+    
+    if (employeesError) throw employeesError;
+    
+    // Connect all company employees to this psychologist
+    if (employees && employees.length > 0) {
+      // Create employee-psychologist associations
+      const employeeAssociations = employees.map(employee => ({
+        id_usuario: employee.id,
+        id_psicologo: psychologistIdNumber,
+        status: 'pending' // Employees need to accept the connection
+      }));
+      
+      const { error: associationsError } = await supabase
+        .from('user_psychologist_associations')
+        .insert(employeeAssociations);
+      
+      if (associationsError) throw associationsError;
+    }
   } catch (error) {
     console.error('Error accepting company request:', error);
     throw error;

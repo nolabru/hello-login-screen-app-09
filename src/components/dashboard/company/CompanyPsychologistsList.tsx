@@ -192,7 +192,7 @@ const CompanyPsychologistsList: React.FC = () => {
         const employeeAssociations = employees.map(employee => ({
           id_usuario: employee.id,
           id_psicologo: psychologistId,
-          status: 'active' // Auto-approve employee-psychologist connection
+          status: 'pending' // Employees need to accept the connection
         }));
 
         const { error: associationError } = await supabase
