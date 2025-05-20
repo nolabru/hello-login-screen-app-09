@@ -1,5 +1,5 @@
-
 import { supabase } from '@/integrations/supabase/client';
+import { Employee } from '@/pages/companies/types';
 
 export interface LicensePlan {
   id: number;
@@ -143,4 +143,33 @@ export const updateEmployeeLicenseStatus = async (
     .eq('id', employeeId);
 
   if (error) throw error;
+};
+
+// Nova função: Buscar usuários com licenças ativas de um plano específico
+export const fetchUsersWithLicense = async (
+  companyId: number, 
+  licenseId: number
+): Promise<Employee[]> => {
+  try {
+    // Buscar usuários da empresa com status de licença 'active'
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('id, nome, email, phone, status, license_status')
+      .eq('id_empresa', companyId)
+      .eq('license_status', 'active');
+      
+    if (error) throw error;
+    
+    return data.map(user => ({
+      id: user.id,
+      nome: user.nome,
+      email: user.email,
+      status: user.status,
+      connection_status: user.license_status || 'inactive',
+      phone: user.phone || undefined,
+    })) || [];
+  } catch (error) {
+    console.error('Erro ao buscar usuários com licença:', error);
+    return [];
+  }
 };
