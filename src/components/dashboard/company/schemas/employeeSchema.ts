@@ -14,5 +14,6 @@ export const linkEmployeeSchema = z.object({
   email: z.string().email({ message: 'Email inválido' }),
 });
 
+// Export the exact types that match the schema definitions
 export type AddSingleEmployeeFormValues = z.infer<typeof addSingleEmployeeSchema>;
 export type LinkEmployeeFormValues = z.infer<typeof linkEmployeeSchema>;
