@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Clock, Calendar } from 'lucide-react';
+import { Clock, Calendar, Users } from 'lucide-react';
 import { CompanyDetail } from './types';
 import { formatDate } from './utils';
 
@@ -52,6 +52,14 @@ const CompanyDetailDialog: React.FC<CompanyDetailDialogProps> = ({
                 {company.connection_status === 'active' ? 'Conectada' : 'Pendente'}
               </span>
             </p>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Users size={16} className="text-gray-500" />
+              <h3 className="font-medium">Funcionários</h3>
+            </div>
+            <p>{company.employee_count || 0} funcionário(s)</p>
           </div>
           
           <div className="space-y-2">

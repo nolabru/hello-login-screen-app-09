@@ -202,9 +202,18 @@ export const fetchCompanyDetails = async (company: Company, psychologistId: stri
 
   if (associationError) throw associationError;
 
+  // Buscar contagem de funcionários da empresa
+  const { count: employeeCount, error: countError } = await supabase
+    .from('user_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('id_empresa', company.id);
+
+  if (countError) throw countError;
+
   return {
     ...company,
     created_at: associationData?.created_at,
-    updated_at: associationData?.updated_at
+    updated_at: associationData?.updated_at,
+    employee_count: employeeCount || 0
   };
 };

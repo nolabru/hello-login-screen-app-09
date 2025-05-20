@@ -23,6 +23,7 @@ export type CompanyDetail = {
   connection_status: string;
   created_at?: string;
   updated_at?: string;
+  employee_count?: number;
 };
 
 export type Employee = {
