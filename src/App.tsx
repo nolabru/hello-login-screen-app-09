@@ -11,6 +11,7 @@ import CompanyRegistration from "./pages/CompanyRegistration";
 import PsychologistDashboard from "./pages/PsychologistDashboard";
 import PsychologistPatients from "./pages/PsychologistPatients";
 import PsychologistSettings from "./pages/PsychologistSettings";
+import PsychologistCompanies from "./pages/PsychologistCompanies";
 import CompanyDashboard from "./pages/CompanyDashboard";
 
 const App = () => {
@@ -31,7 +32,7 @@ const App = () => {
             <Route path="/company/dashboard" element={<CompanyDashboard />} />
             <Route path="/pacientes" element={<PsychologistPatients />} />
             <Route path="/configuracoes" element={<PsychologistSettings />} />
-            <Route path="/empresas" element={<CompanyDashboard />} />
+            <Route path="/empresas" element={<PsychologistCompanies />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
