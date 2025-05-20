@@ -150,12 +150,13 @@ const CompanyDashboard: React.FC = () => {
                 </Button>
               </div>
               
+              {/* Primeira linha - Funcionários */}
               <div className="mb-8">
                 <h2 className="text-xl font-medium mb-4">
-                  Visão geral do grupo
+                  Funcionários
                 </h2>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Card 1 - Funcionários Ativos */}
                   <Card>
                     <CardContent className="p-6">
@@ -177,7 +178,16 @@ const CompanyDashboard: React.FC = () => {
                       <p className="text-sm text-gray-500 mt-2">Aguardando ativação de conta</p>
                     </CardContent>
                   </Card>
-                  
+                </div>
+              </div>
+              
+              {/* Segunda linha - Psicólogos */}
+              <div className="mb-8">
+                <h2 className="text-xl font-medium mb-4">
+                  Psicólogos
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Card 3 - Psicólogos Associados */}
                   <Card>
                     <CardContent className="p-6">
@@ -199,7 +209,16 @@ const CompanyDashboard: React.FC = () => {
                       <p className="text-sm text-gray-500 mt-2">Aguardando aprovação</p>
                     </CardContent>
                   </Card>
-                  
+                </div>
+              </div>
+              
+              {/* Terceira linha - Licenças e Índice */}
+              <div className="mb-8">
+                <h2 className="text-xl font-medium mb-4">
+                  Licenças e Bem-estar
+                </h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Card 5 - Licenças Disponíveis */}
                   <Card>
                     <CardContent className="p-6">
