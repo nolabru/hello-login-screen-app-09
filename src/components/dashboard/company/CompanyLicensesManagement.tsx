@@ -23,7 +23,11 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({ c
     setLoading(true);
     try {
       const data = await fetchCompanyLicenses(companyId);
-      setLicenses(data);
+      // Filter out licenses that have been canceled
+      const activeLicenses = data.filter(license => 
+        !(license.payment_status === 'canceled' || license.status === 'canceled')
+      );
+      setLicenses(activeLicenses);
       
       // Buscar estatísticas de disponibilidade
       const availabilityStats = await checkLicenseAvailability(companyId);
