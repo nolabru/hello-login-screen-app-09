@@ -24,7 +24,7 @@ interface Patient {
   status: string;
   last_session?: string;
   user_id?: number;
-  company_name?: string; // Added company name field
+  company_name?: string;
 }
 
 interface PatientTableRowProps {
@@ -121,7 +121,7 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
             {isCompanyPatient ? (
               <Badge 
                 variant="outline" 
-                className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50"
+                className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50 min-w-20 flex justify-center items-center"
               >
                 {patient.company_name}
               </Badge>
