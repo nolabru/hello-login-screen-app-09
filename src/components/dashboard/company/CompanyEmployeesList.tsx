@@ -11,6 +11,7 @@ import EmployeesTableView from './EmployeesTableView';
 import EmployeesCardView from './EmployeesCardView';
 import EmployeesEmptyState from './EmployeesEmptyState';
 import type { Employee } from './EmployeesTableView';
+import { updateEmployeeLicenseStatus } from '@/services/licenseService';
 
 const CompanyEmployeesList: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -90,6 +91,10 @@ const CompanyEmployeesList: React.FC = () => {
     if (!confirm('Tem certeza que deseja desvincular este funcionário?')) return;
     
     try {
+      // Primeiro, marcar a licença como inativa para liberar a licença
+      await updateEmployeeLicenseStatus(employeeId, 'inactive');
+      
+      // Em seguida, desvincular o funcionário da empresa
       const { error } = await supabase
         .from('user_profiles')
         .update({ id_empresa: null })
@@ -99,7 +104,7 @@ const CompanyEmployeesList: React.FC = () => {
       
       toast({
         title: 'Funcionário desvinculado',
-        description: 'O funcionário foi desvinculado da empresa com sucesso.',
+        description: 'O funcionário foi desvinculado da empresa com sucesso e a licença foi liberada.',
       });
       
       fetchEmployees();
