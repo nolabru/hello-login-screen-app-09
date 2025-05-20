@@ -36,6 +36,9 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
   const [isChatHistoryOpen, setIsChatHistoryOpen] = useState(false);
   const { toast } = useToast();
 
+  // Normalize status for consistent comparison
+  const normalizedStatus = patient.status.toLowerCase();
+  
   const handleDeleteAssociation = async () => {
     setIsDeleting(true);
     try {
@@ -74,10 +77,10 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
     <>
       <TableRow 
         key={patient.id} 
-        className={`${patient.status === 'active' ? 'cursor-pointer hover:bg-purple-50/50' : ''} transition-colors`}
+        className={`${normalizedStatus === 'active' ? 'cursor-pointer hover:bg-purple-50/50' : ''} transition-colors`}
         onClick={(e) => {
           // Only allow clicking the row to open chat history if status is active
-          if (patient.status === 'active') {
+          if (normalizedStatus === 'active') {
             setIsChatHistoryOpen(true);
           }
         }}
@@ -96,7 +99,7 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
         <TableCell className="text-right">
           <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
             {/* Only show "Ver Mais" button when status is active */}
-            {patient.status === 'active' && (
+            {normalizedStatus === 'active' && (
               <Button 
                 variant="outline" 
                 size="sm"
@@ -157,7 +160,7 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
       </Dialog>
 
       {/* Chat History Dialog - only shows up if patient status is active */}
-      {patient.status === 'active' && (
+      {normalizedStatus === 'active' && (
         <Dialog open={isChatHistoryOpen} onOpenChange={setIsChatHistoryOpen}>
           <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>

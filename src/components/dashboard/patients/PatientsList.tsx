@@ -47,9 +47,11 @@ const PatientsList: React.FC = () => {
   // Filter patients based on active tab
   const filterPatientsByTab = (patientsList: Patient[], tab: string) => {
     if (tab === 'active') {
-      setFilteredPatients(patientsList.filter(p => p.status === 'active'));
+      // Case insensitive comparison for status
+      setFilteredPatients(patientsList.filter(p => p.status.toLowerCase() === 'active'));
     } else if (tab === 'pending') {
-      setFilteredPatients(patientsList.filter(p => p.status === 'pending'));
+      // Case insensitive comparison for status
+      setFilteredPatients(patientsList.filter(p => p.status.toLowerCase() === 'pending'));
     } else {
       setFilteredPatients(patientsList);
     }
@@ -86,6 +88,8 @@ const PatientsList: React.FC = () => {
         return;
       }
       
+      console.log('Fetched associations:', associations);
+      
       // Extrair os IDs dos usuários
       const userIds = associations.map(assoc => assoc.id_usuario);
       
@@ -96,6 +100,8 @@ const PatientsList: React.FC = () => {
         .in('id', userIds);
       
       if (profilesError) throw profilesError;
+      
+      console.log('Fetched user profiles:', userProfiles);
       
       // Mapear e combinar os dados
       const patientsList = userProfiles?.map(profile => {
@@ -112,6 +118,8 @@ const PatientsList: React.FC = () => {
           user_id: profile.id
         };
       }) || [];
+      
+      console.log('Mapped patients list:', patientsList);
       
       setPatients(patientsList);
       filterPatientsByTab(patientsList, activeTab);

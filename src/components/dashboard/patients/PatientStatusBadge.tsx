@@ -8,7 +8,10 @@ interface PatientStatusBadgeProps {
 const PatientStatusBadge: React.FC<PatientStatusBadgeProps> = ({ status }) => {
   let badgeClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
   
-  switch (status.toLowerCase()) {
+  // Normalize status for comparison
+  const normalizedStatus = status.toLowerCase();
+  
+  switch (normalizedStatus) {
     case 'active':
       badgeClasses += ' bg-green-100 text-green-800 border border-green-200';
       return <span className={badgeClasses}>Ativo</span>;
