@@ -85,7 +85,7 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
         return;
       }
 
-      // Criar novo usuário
+      // Criar novo usuário com status pending
       const { data: newUser, error } = await supabase
         .from('user_profiles')
         .insert({
@@ -93,7 +93,8 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
           email: values.email,
           cpf: values.cpf || '',
           senha: values.senha,
-          id_empresa: companyId
+          id_empresa: companyId,
+          status: false // Set status as pending (false) until first access
         })
         .select()
         .single();
@@ -102,7 +103,7 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
 
       toast({
         title: 'Funcionário adicionado com sucesso',
-        description: `${values.nome} foi adicionado à sua empresa.`,
+        description: `${values.nome} foi adicionado à sua empresa. O status é pendente até o primeiro acesso.`,
       });
 
       addSingleForm.reset();
@@ -151,14 +152,17 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
       // Atualizar o id_empresa do usuário
       const { error } = await supabase
         .from('user_profiles')
-        .update({ id_empresa: companyId })
+        .update({ 
+          id_empresa: companyId,
+          status: false // Set status as pending (false) until first access
+        })
         .eq('id', user.id);
 
       if (error) throw error;
 
       toast({
         title: 'Funcionário vinculado com sucesso',
-        description: `${user.nome} foi vinculado à sua empresa.`,
+        description: `${user.nome} foi vinculado à sua empresa. O status é pendente até o primeiro acesso.`,
       });
 
       linkForm.reset();
@@ -209,7 +213,7 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
           return;
         }
 
-        // Processar em lote
+        // Processar em lote com status pending para novos usuários
         const { data, error } = await supabase
           .from('user_profiles')
           .insert(
@@ -218,7 +222,8 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
               email: emp.email,
               cpf: emp.cpf || '',
               senha: emp.senha,
-              id_empresa: companyId
+              id_empresa: companyId,
+              status: false // Set status as pending (false) until first access
             }))
           );
 
@@ -226,7 +231,7 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
 
         toast({
           title: 'Funcionários adicionados com sucesso',
-          description: `${employees.length} funcionários foram adicionados à sua empresa.`,
+          description: `${employees.length} funcionários foram adicionados à sua empresa. O status é pendente até o primeiro acesso.`,
         });
 
         setBatchFile(null);
