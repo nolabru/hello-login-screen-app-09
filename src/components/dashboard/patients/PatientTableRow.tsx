@@ -121,7 +121,7 @@ const PatientTableRow: React.FC<PatientTableRowProps> = ({ patient, onPatientRem
             {isCompanyPatient ? (
               <Badge 
                 variant="outline" 
-                className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50 min-w-20 flex justify-center items-center"
+                className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50 min-w-24 px-3 flex justify-center items-center text-center"
               >
                 {patient.company_name}
               </Badge>
