@@ -27,7 +27,7 @@ const RecentPatientActivity: React.FC = () => {
         
         const psychologistIdNumber = parseInt(psychologistId, 10);
         
-        // Buscar associações de pacientes recentes (últimas atualizações)
+        // Buscar associações de pacientes recentes (últimas atualizações), excluindo status pendente
         const { data: associations, error: associationsError } = await supabase
           .from('user_psychologist_associations')
           .select(`
@@ -37,6 +37,7 @@ const RecentPatientActivity: React.FC = () => {
             atualizado_em
           `)
           .eq('id_psicologo', psychologistIdNumber)
+          .neq('status', 'pending') // Exclude pending status
           .order('atualizado_em', { ascending: false })
           .limit(4);
         
@@ -69,9 +70,6 @@ const RecentPatientActivity: React.FC = () => {
           switch (assoc.status) {
             case 'approved':
               action = 'Paciente aprovado';
-              break;
-            case 'pending':
-              action = 'Aguardando aprovação';
               break;
             case 'active':
               action = 'Sessão realizada';

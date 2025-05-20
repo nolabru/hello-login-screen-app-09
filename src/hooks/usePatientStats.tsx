@@ -22,11 +22,12 @@ const usePatientStats = (): PatientStats => {
         // Convert to number
         const psychologistIdNumber = parseInt(psychologistId, 10);
         
-        // Fetch all associated patients
+        // Fetch all associated patients EXCLUDING pending status
         const { data: allPatients, error: allError } = await supabase
           .from('user_psychologist_associations')
           .select('id_relacao, status')
-          .eq('id_psicologo', psychologistIdNumber);
+          .eq('id_psicologo', psychologistIdNumber)
+          .neq('status', 'pending'); // Exclude pending status
         
         if (allError) throw allError;
         

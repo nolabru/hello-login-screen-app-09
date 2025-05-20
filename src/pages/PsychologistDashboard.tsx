@@ -40,15 +40,17 @@ const PsychologistDashboard: React.FC = () => {
         const nextDay = new Date(selectedDate);
         nextDay.setDate(nextDay.getDate() + 1);
         
-        // Query for interactions on the selected date
+        // Query for interactions on the selected date, excluding pending status
         const { data: associations, error } = await supabase
           .from('user_psychologist_associations')
           .select(`
             id_relacao,
             id_usuario,
+            status,
             atualizado_em
           `)
           .eq('id_psicologo', psychologistIdNumber)
+          .neq('status', 'pending') // Exclude pending status
           .gte('atualizado_em', selectedDate.toISOString())
           .lt('atualizado_em', nextDay.toISOString())
           .order('atualizado_em', { ascending: false });
