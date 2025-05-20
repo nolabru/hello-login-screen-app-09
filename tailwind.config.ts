@@ -60,7 +60,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)", ...fontFamily.sans],
+        sans: ["Quicksand", "var(--font-sans)", ...fontFamily.sans],
         display: ["Comfortaa", "cursive"],
       },
       keyframes: {
