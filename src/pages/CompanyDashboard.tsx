@@ -9,15 +9,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CompanyPsychologistsList from '@/components/dashboard/company/CompanyPsychologistsList';
 import CompanyEmployeesList from '@/components/dashboard/company/CompanyEmployeesList';
 import AddEmployeeDialog from '@/components/dashboard/company/AddEmployeeDialog';
+import CompanyLicensesManagement from '@/components/dashboard/company/CompanyLicensesManagement';
+import { checkLicenseAvailability } from '@/services/licenseService';
+import { useToast } from '@/components/ui/use-toast';
 
 const CompanyDashboard: React.FC = () => {
+  const { toast } = useToast();
   const [companyName, setCompanyName] = useState('');
   const [stats, setStats] = useState({
     activeEmployees: 0,
     pendingEmployees: 0,
     activePsychologists: 0,
     pendingPsychologists: 0,
-    wellBeingIndex: 'N/A'
+    wellBeingIndex: 'N/A',
+    availableLicenses: 0,
+    totalLicenses: 0
   });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
@@ -61,12 +67,17 @@ const CompanyDashboard: React.FC = () => {
         const activePsychs = psychologists?.filter(psy => psy.status === 'active').length || 0;
         const pendingPsychs = psychologists?.filter(psy => psy.status === 'pending').length || 0;
         
+        // Fetch license availability
+        const licenseStats = await checkLicenseAvailability(companyIdNumber);
+        
         setStats({
           activeEmployees: activeEmps,
           pendingEmployees: pendingEmps,
           activePsychologists: activePsychs,
           pendingPsychologists: pendingPsychs,
-          wellBeingIndex: 'N/A'
+          wellBeingIndex: 'N/A',
+          availableLicenses: licenseStats.available,
+          totalLicenses: licenseStats.total
         });
         
       } catch (error) {
@@ -121,6 +132,7 @@ const CompanyDashboard: React.FC = () => {
               <TabsTrigger value="overview">Visão Geral</TabsTrigger>
               <TabsTrigger value="employees">Funcionários</TabsTrigger>
               <TabsTrigger value="psychologists">Psicólogos</TabsTrigger>
+              <TabsTrigger value="licenses">Licenças</TabsTrigger>
             </TabsList>
             
             <TabsContent value="overview" className="space-y-8">
@@ -128,6 +140,8 @@ const CompanyDashboard: React.FC = () => {
                 <Button 
                   className="bg-indigo-900 hover:bg-indigo-800"
                   onClick={() => setIsAddEmployeeDialogOpen(true)}
+                  disabled={stats.availableLicenses <= 0}
+                  title={stats.availableLicenses <= 0 ? "Sem licenças disponíveis" : ""}
                 >
                   Adicionar Funcionário
                 </Button>
@@ -141,7 +155,7 @@ const CompanyDashboard: React.FC = () => {
                   Visão geral do grupo
                 </h2>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {/* Card 1 - Funcionários Ativos */}
                   <Card>
                     <CardContent className="p-6">
@@ -186,7 +200,18 @@ const CompanyDashboard: React.FC = () => {
                     </CardContent>
                   </Card>
                   
-                  {/* Card 5 - Índice de Bem-estar */}
+                  {/* Card 5 - Licenças Disponíveis */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="mb-2">
+                        <h3 className="text-gray-700">Licenças Disponíveis</h3>
+                      </div>
+                      <p className="text-4xl font-bold text-indigo-500">{stats.availableLicenses}</p>
+                      <p className="text-sm text-gray-500 mt-2">De {stats.totalLicenses} licenças totais</p>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Card 6 - Índice de Bem-estar */}
                   <Card>
                     <CardContent className="p-6">
                       <div className="mb-2">
@@ -218,6 +243,10 @@ const CompanyDashboard: React.FC = () => {
             <TabsContent value="psychologists">
               <CompanyPsychologistsList />
             </TabsContent>
+            
+            <TabsContent value="licenses">
+              {companyId && <CompanyLicensesManagement companyId={companyId} />}
+            </TabsContent>
           </Tabs>
         </div>
         
@@ -236,10 +265,15 @@ const CompanyDashboard: React.FC = () => {
                 const activeEmps = employees?.filter(emp => emp.status).length || 0;
                 const pendingEmps = employees?.filter(emp => !emp.status).length || 0;
                 
+                // Also update license information
+                const licenseStats = await checkLicenseAvailability(companyId);
+                
                 setStats(prev => ({
                   ...prev,
                   activeEmployees: activeEmps,
-                  pendingEmployees: pendingEmps
+                  pendingEmployees: pendingEmps,
+                  availableLicenses: licenseStats.available,
+                  totalLicenses: licenseStats.total
                 }));
               };
               

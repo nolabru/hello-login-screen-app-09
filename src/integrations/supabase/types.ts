@@ -51,6 +51,63 @@ export type Database = {
         }
         Relationships: []
       }
+      company_licenses: {
+        Row: {
+          company_id: number
+          created_at: string | null
+          expiry_date: string
+          id: number
+          payment_status: string
+          plan_id: number
+          start_date: string
+          status: string
+          total_licenses: number
+          updated_at: string | null
+          used_licenses: number | null
+        }
+        Insert: {
+          company_id: number
+          created_at?: string | null
+          expiry_date: string
+          id?: number
+          payment_status?: string
+          plan_id: number
+          start_date: string
+          status?: string
+          total_licenses: number
+          updated_at?: string | null
+          used_licenses?: number | null
+        }
+        Update: {
+          company_id?: number
+          created_at?: string | null
+          expiry_date?: string
+          id?: number
+          payment_status?: string
+          plan_id?: number
+          start_date?: string
+          status?: string
+          total_licenses?: number
+          updated_at?: string | null
+          used_licenses?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_licenses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_licenses_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "license_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       company_psychologist_associations: {
         Row: {
           created_at: string | null
@@ -92,6 +149,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      license_plans: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          description: string | null
+          id: number
+          max_users: number
+          name: string
+          price_monthly: number
+          price_yearly: number
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          max_users: number
+          name: string
+          price_monthly: number
+          price_yearly: number
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          description?: string | null
+          id?: number
+          max_users?: number
+          name?: string
+          price_monthly?: number
+          price_yearly?: number
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       psychologist_patient_notes: {
         Row: {
@@ -217,6 +310,7 @@ export type Database = {
           id: number
           id_empresa: number | null
           idade: number | null
+          license_status: string | null
           name: string | null
           nome: string
           objective: string | null
@@ -238,6 +332,7 @@ export type Database = {
           id?: number
           id_empresa?: number | null
           idade?: number | null
+          license_status?: string | null
           name?: string | null
           nome: string
           objective?: string | null
@@ -259,6 +354,7 @@ export type Database = {
           id?: number
           id_empresa?: number | null
           idade?: number | null
+          license_status?: string | null
           name?: string | null
           nome?: string
           objective?: string | null
