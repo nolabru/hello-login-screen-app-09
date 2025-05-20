@@ -16,6 +16,7 @@ import PsychologistCompanies from "./pages/PsychologistCompanies";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import CompanyEmployees from "./pages/CompanyEmployees";
 import CompanyPsychologists from "./pages/CompanyPsychologists";
+import CompanyLicenses from "./pages/CompanyLicenses";
 
 // Create a new QueryClient instance outside the component
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => {
               <Route path="/company/dashboard" element={<CompanyDashboard />} />
               <Route path="/company/funcionarios" element={<CompanyEmployees />} />
               <Route path="/company/psicologos" element={<CompanyPsychologists />} />
+              <Route path="/company/licencas" element={<CompanyLicenses />} />
               <Route path="/pacientes" element={<PsychologistPatients />} />
               <Route path="/configuracoes" element={<PsychologistSettings />} />
               <Route path="/empresas" element={<PsychologistCompanies />} />
