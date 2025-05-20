@@ -7,6 +7,7 @@ export interface CompanyPsychologistAssociation {
   id_psicologo: number;
   status: string;
   created_at?: string;
+  updated_at?: string;
 }
 
 export const createCompanyPsychologistAssociation = async (association: CompanyPsychologistAssociation) => {
@@ -24,27 +25,41 @@ export const createCompanyPsychologistAssociation = async (association: CompanyP
 };
 
 export const getCompanyPsychologists = async (companyId: number) => {
-  const { data, error } = await supabase
+  // First get association IDs
+  const { data: associations, error: associationsError } = await supabase
     .from('company_psychologist_associations')
-    .select(`
-      id,
-      id_psicologo,
-      status,
-      psychologists (
-        id,
-        nome,
-        email,
-        crp,
-        especialidade
-      )
-    `)
+    .select('id, id_psicologo, status')
     .eq('id_empresa', companyId);
 
-  if (error) {
-    throw error;
+  if (associationsError) {
+    throw associationsError;
   }
 
-  return data;
+  if (!associations || associations.length === 0) {
+    return [];
+  }
+
+  // Extract psychologist IDs
+  const psychologistIds = associations.map(assoc => assoc.id_psicologo);
+
+  // Get psychologist details
+  const { data: psychologists, error: psychologistsError } = await supabase
+    .from('psychologists')
+    .select('id, nome, email, crp, especialidade')
+    .in('id', psychologistIds);
+
+  if (psychologistsError) {
+    throw psychologistsError;
+  }
+
+  // Map psychologists with their association status
+  return psychologists.map(psychologist => {
+    const association = associations.find(a => a.id_psicologo === psychologist.id);
+    return {
+      ...psychologist,
+      status: association?.status || 'pending'
+    };
+  });
 };
 
 export const removeCompanyPsychologistAssociation = async (companyId: number, psychologistId: number) => {

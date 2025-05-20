@@ -51,6 +51,48 @@ export type Database = {
         }
         Relationships: []
       }
+      company_psychologist_associations: {
+        Row: {
+          created_at: string | null
+          id: number
+          id_empresa: number
+          id_psicologo: number
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          id_empresa: number
+          id_psicologo: number
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          id_empresa?: number
+          id_psicologo?: number
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_psychologist_associations_id_empresa_fkey"
+            columns: ["id_empresa"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_psychologist_associations_id_psicologo_fkey"
+            columns: ["id_psicologo"]
+            isOneToOne: false
+            referencedRelation: "psychologists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       psychologist_patient_notes: {
         Row: {
           atualizado_em: string | null

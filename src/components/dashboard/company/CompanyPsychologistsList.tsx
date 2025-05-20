@@ -37,17 +37,16 @@ const CompanyPsychologistsList: React.FC = () => {
 
       const companyIdNumber = parseInt(companyId, 10);
 
-      // Get company-psychologist associations
+      // First get the associations
       const { data: associations, error: associationsError } = await supabase
         .from('company_psychologist_associations')
-        .select(`
-          id,
-          id_psicologo,
-          status
-        `)
+        .select('id, id_psicologo, status')
         .eq('id_empresa', companyIdNumber);
 
-      if (associationsError) throw associationsError;
+      if (associationsError) {
+        console.error('Error fetching associations:', associationsError);
+        throw associationsError;
+      }
 
       if (!associations || associations.length === 0) {
         setCompanyPsychologists([]);
@@ -64,7 +63,10 @@ const CompanyPsychologistsList: React.FC = () => {
         .select('id, nome, email, crp, especialidade')
         .in('id', psychologistIds);
 
-      if (psychologistsError) throw psychologistsError;
+      if (psychologistsError) {
+        console.error('Error fetching psychologists:', psychologistsError);
+        throw psychologistsError;
+      }
 
       // Map psychologists with their association status
       const mappedPsychologists = psychologistsData?.map(psych => {
@@ -130,7 +132,7 @@ const CompanyPsychologistsList: React.FC = () => {
 
       const companyIdNumber = parseInt(companyId, 10);
 
-      // Create association
+      // Create association in the new table
       const { error } = await supabase
         .from('company_psychologist_associations')
         .insert({
