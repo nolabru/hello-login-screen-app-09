@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -52,11 +53,18 @@ interface UserProfile {
   status: boolean;
   phone: string | null;
   id_empresa: number | null;
+  license_status: string | null;
 }
 
 interface Company {
   id: number;
   name: string;
+}
+
+interface CompanyLicense {
+  available: number;
+  total: number;
+  used: number;
 }
 
 const AdminUsers: React.FC = () => {
@@ -68,6 +76,8 @@ const AdminUsers: React.FC = () => {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [userToAssign, setUserToAssign] = useState<UserProfile | null>(null);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
+  const [licenseInfo, setLicenseInfo] = useState<CompanyLicense | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { data: users, isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ['adminUsers'],
@@ -163,24 +173,70 @@ const AdminUsers: React.FC = () => {
     setUserToAssign(user);
     setSelectedCompanyId(user.id_empresa ? String(user.id_empresa) : '');
     setAssignDialogOpen(true);
+    
+    // Reset license info when opening dialog
+    setLicenseInfo(null);
+    
+    // If a company is already selected, fetch its license info
+    if (user.id_empresa) {
+      fetchCompanyLicenseInfo(user.id_empresa);
+    }
+  };
+  
+  const fetchCompanyLicenseInfo = async (companyId: number) => {
+    try {
+      const { checkLicenseAvailability } = await import('@/services/licenseService');
+      const licenseData = await checkLicenseAvailability(companyId);
+      setLicenseInfo(licenseData);
+    } catch (error) {
+      console.error("Error fetching license info:", error);
+      setLicenseInfo(null);
+    }
+  };
+  
+  const handleCompanyChange = (value: string) => {
+    setSelectedCompanyId(value);
+    
+    // Fetch license info when company is selected
+    if (value && value !== 'null') {
+      fetchCompanyLicenseInfo(parseInt(value));
+    } else {
+      setLicenseInfo(null);
+    }
   };
 
   const handleAssignConfirm = async () => {
     if (!userToAssign) return;
+    setIsLoading(true);
     
     try {
-      // Update the user with the selected company ID
+      const newCompanyId = selectedCompanyId === 'null' ? null : selectedCompanyId ? parseInt(selectedCompanyId) : null;
+      const prevCompanyId = userToAssign.id_empresa;
+      const wasLicensed = userToAssign.license_status === 'active';
+      
+      // Check if assigning to a company and if there are available licenses
+      if (newCompanyId && (!licenseInfo || licenseInfo.available <= 0)) {
+        toast({
+          title: "Erro ao atribuir usuário",
+          description: "A empresa não possui licenças disponíveis para atribuir a este usuário.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Update the user with the selected company ID and activate license
       const { error } = await supabase
         .from('user_profiles')
         .update({ 
-          id_empresa: selectedCompanyId ? parseInt(selectedCompanyId) : null 
+          id_empresa: newCompanyId,
+          license_status: newCompanyId ? 'active' : 'inactive' // Set license status based on company assignment
         })
         .eq('id', userToAssign.id);
 
       if (error) throw error;
 
-      const companyName = selectedCompanyId 
-        ? companies?.find(c => c.id === parseInt(selectedCompanyId))?.name 
+      const companyName = newCompanyId 
+        ? companies?.find(c => c.id === parseInt(String(newCompanyId)))?.name 
         : 'nenhuma empresa';
 
       toast({
@@ -198,9 +254,11 @@ const AdminUsers: React.FC = () => {
         variant: "destructive"
       });
     } finally {
+      setIsLoading(false);
       setAssignDialogOpen(false);
       setUserToAssign(null);
       setSelectedCompanyId('');
+      setLicenseInfo(null);
     }
   };
 
@@ -248,7 +306,7 @@ const AdminUsers: React.FC = () => {
                   <TableHead className="font-medium">Telefone</TableHead>
                   <TableHead className="font-medium">Empresa</TableHead>
                   <TableHead className="font-medium">Status</TableHead>
-                  <TableHead className="font-medium">Tipo</TableHead>
+                  <TableHead className="font-medium">Licença</TableHead>
                   <TableHead className="text-right font-medium">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -285,9 +343,9 @@ const AdminUsers: React.FC = () => {
                       </TableCell>
                       <TableCell>
                         <Badge 
-                          className={user.id_empresa ? 'bg-blue-100 text-blue-800 hover:bg-blue-100' : 'bg-amber-100 text-amber-800 hover:bg-amber-100'}
+                          className={user.license_status === 'active' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100' : 'bg-gray-100 text-gray-800 hover:bg-gray-100'}
                         >
-                          {user.id_empresa ? 'Funcionário' : 'Paciente'}
+                          {user.license_status === 'active' ? 'Ativa' : 'Inativa'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -365,7 +423,7 @@ const AdminUsers: React.FC = () => {
               {companiesLoading ? (
                 <div>Carregando empresas...</div>
               ) : (
-                <Select value={selectedCompanyId} onValueChange={setSelectedCompanyId}>
+                <Select value={selectedCompanyId} onValueChange={handleCompanyChange}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione uma empresa" />
                   </SelectTrigger>
@@ -380,12 +438,54 @@ const AdminUsers: React.FC = () => {
                 </Select>
               )}
             </div>
+            
+            {/* License information section */}
+            {selectedCompanyId && selectedCompanyId !== 'null' && (
+              <div className="mt-2 p-4 bg-gray-50 rounded-md">
+                {licenseInfo ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Informações de Licença</p>
+                    <div className="grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <p className="text-gray-500">Total</p>
+                        <p className="font-medium">{licenseInfo.total}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Em uso</p>
+                        <p className="font-medium">{licenseInfo.used}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Disponíveis</p>
+                        <p className={`font-medium ${licenseInfo.available <= 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {licenseInfo.available}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {licenseInfo.available <= 0 && (
+                      <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded">
+                        Não há licenças disponíveis para esta empresa. É necessário adquirir mais licenças.
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex justify-center py-2">
+                    <p className="text-sm text-gray-500">Carregando informações de licença...</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleAssignConfirm}>Salvar</Button>
+            <Button 
+              onClick={handleAssignConfirm} 
+              disabled={isLoading || (selectedCompanyId && selectedCompanyId !== 'null' && (!licenseInfo || licenseInfo.available <= 0))}
+            >
+              {isLoading ? 'Salvando...' : 'Salvar'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
