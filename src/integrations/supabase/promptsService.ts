@@ -60,6 +60,19 @@ export const deletePrompt = async (id: string): Promise<void> => {
 };
 
 export const setActivePrompt = async (id: string): Promise<AIPrompt> => {
+  // Primeiro, obtenha o prompt atual para garantir que ele exista
+  const { data: prompt, error: fetchError } = await supabase
+    .from("ai_prompts")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (fetchError) {
+    console.error("Erro ao buscar prompt para ativação:", fetchError);
+    throw fetchError;
+  }
+
+  // Atualizamos esse prompt para ativo primeiro
   const { data, error } = await supabase
     .from("ai_prompts")
     .update({ is_active: true })

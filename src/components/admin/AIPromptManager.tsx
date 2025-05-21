@@ -10,7 +10,7 @@ import {
   TableCell
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +29,7 @@ const AIPromptManager: React.FC = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [promptToDelete, setPromptToDelete] = useState<string | null>(null);
+  const [isActivating, setIsActivating] = useState(false);
 
   const { toast } = useToast();
 
@@ -167,6 +168,19 @@ const AIPromptManager: React.FC = () => {
 
   const handleSetActive = async (id: string) => {
     try {
+      setIsActivating(true);
+      // Encontrar o prompt atual
+      const targetPrompt = prompts.find(p => p.id === id);
+      
+      // Se o prompt já está ativo, não faça nada
+      if (targetPrompt?.is_active) {
+        toast({
+          title: "Prompt já ativo",
+          description: "Este prompt já está definido como ativo.",
+        });
+        return;
+      }
+      
       const updated = await setActivePrompt(id);
       
       // Atualizar o estado local para refletir que apenas este prompt está ativo
@@ -186,6 +200,8 @@ const AIPromptManager: React.FC = () => {
         title: "Erro",
         description: "Não foi possível ativar o prompt. Tente novamente.",
       });
+    } finally {
+      setIsActivating(false);
     }
   };
 
@@ -253,6 +269,7 @@ const AIPromptManager: React.FC = () => {
                       variant="outline" 
                       size="sm"
                       onClick={() => handleSetActive(prompt.id)}
+                      disabled={isActivating}
                       title="Definir como ativo"
                     >
                       <Check size={16} />
@@ -288,6 +305,11 @@ const AIPromptManager: React.FC = () => {
             <DialogTitle>
               {currentPrompt ? "Editar Prompt" : "Novo Prompt"}
             </DialogTitle>
+            <DialogDescription>
+              {currentPrompt 
+                ? "Edite as informações do prompt existente." 
+                : "Preencha as informações para criar um novo prompt."}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -326,8 +348,10 @@ const AIPromptManager: React.FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir este prompt? Esta ação não pode ser desfeita.
+            </DialogDescription>
           </DialogHeader>
-          <p>Tem certeza que deseja excluir este prompt? Esta ação não pode ser desfeita.</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
               Cancelar
