@@ -44,6 +44,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { checkLicenseAvailability } from '@/services/licenseService';
 
 interface UserProfile {
   id: number;
@@ -142,6 +143,16 @@ const AdminUsers: React.FC = () => {
     if (!userToDelete) return;
     
     try {
+      // Check if user has an active license that needs to be freed
+      if (userToDelete.license_status === 'active' && userToDelete.id_empresa) {
+        // First update license_status to inactive
+        await supabase
+          .from('user_profiles')
+          .update({ license_status: 'inactive' })
+          .eq('id', userToDelete.id);
+      }
+      
+      // Then delete the user
       const { error } = await supabase
         .from('user_profiles')
         .delete()
@@ -185,12 +196,16 @@ const AdminUsers: React.FC = () => {
   
   const fetchCompanyLicenseInfo = async (companyId: number) => {
     try {
-      const { checkLicenseAvailability } = await import('@/services/licenseService');
       const licenseData = await checkLicenseAvailability(companyId);
       setLicenseInfo(licenseData);
     } catch (error) {
       console.error("Error fetching license info:", error);
       setLicenseInfo(null);
+      toast({
+        title: "Erro ao carregar informações de licença",
+        description: "Não foi possível verificar a disponibilidade de licenças.",
+        variant: "destructive"
+      });
     }
   };
   
@@ -221,6 +236,7 @@ const AdminUsers: React.FC = () => {
           description: "A empresa não possui licenças disponíveis para atribuir a este usuário.",
           variant: "destructive"
         });
+        setIsLoading(false);
         return;
       }
 
@@ -246,6 +262,16 @@ const AdminUsers: React.FC = () => {
       
       // Refresh data
       queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      
+      // If company changed and license was previously active, refresh the old company's license info
+      if (prevCompanyId && prevCompanyId !== newCompanyId && wasLicensed) {
+        queryClient.invalidateQueries({ queryKey: ['companyLicenses', prevCompanyId] });
+      }
+      
+      // If assigned to a new company, refresh that company's license info
+      if (newCompanyId) {
+        queryClient.invalidateQueries({ queryKey: ['companyLicenses', newCompanyId] });
+      }
     } catch (error) {
       console.error("Error assigning user to company:", error);
       toast({
@@ -442,9 +468,9 @@ const AdminUsers: React.FC = () => {
             {/* License information section */}
             {selectedCompanyId && selectedCompanyId !== 'null' && (
               <div className="mt-2 p-4 bg-gray-50 rounded-md">
+                <h3 className="text-sm font-medium mb-2">Informações de Licença</h3>
                 {licenseInfo ? (
                   <div className="space-y-2">
-                    <p className="text-sm font-medium">Informações de Licença</p>
                     <div className="grid grid-cols-3 gap-2 text-sm">
                       <div>
                         <p className="text-gray-500">Total</p>
