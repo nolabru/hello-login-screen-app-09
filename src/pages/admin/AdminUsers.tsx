@@ -2,71 +2,19 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Search, User, Trash2, Building2 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
-import AdminDashboardLayout from '@/components/layout/AdminDashboardLayout';
-import { Input } from '@/components/ui/input';
-import { 
-  Table, 
-  TableHeader, 
-  TableHead, 
-  TableRow, 
-  TableBody, 
-  TableCell 
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from "@/components/ui/alert-dialog";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle,
-  DialogTrigger 
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import AdminDashboardLayout from '@/components/layout/AdminDashboardLayout';
 import { checkLicenseAvailability } from '@/services/licenseService';
+import { UserProfile } from '@/types/user';
+import { Company } from '@/types/company';
+import { CompanyLicense } from '@/types/license';
 
-interface UserProfile {
-  id: number;
-  nome: string;
-  email: string;
-  cpf: string;
-  status: boolean;
-  phone: string | null;
-  id_empresa: number | null;
-  license_status: string | null;
-}
-
-interface Company {
-  id: number;
-  name: string;
-}
-
-interface CompanyLicense {
-  available: number;
-  total: number;
-  used: number;
-}
+// Import our new components
+import UserSearch from '@/components/admin/UserSearch';
+import UserTable from '@/components/admin/UserTable';
+import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
+import AssignCompanyDialog from '@/components/admin/AssignCompanyDialog';
 
 const AdminUsers: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,6 +28,7 @@ const AdminUsers: React.FC = () => {
   const [licenseInfo, setLicenseInfo] = useState<CompanyLicense | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Fetch users
   const { data: users, isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ['adminUsers'],
     queryFn: async () => {
@@ -102,6 +51,7 @@ const AdminUsers: React.FC = () => {
     }
   });
 
+  // Fetch companies
   const { data: companies, isLoading: companiesLoading } = useQuery({
     queryKey: ['adminCompanies'],
     queryFn: async () => {
@@ -122,16 +72,6 @@ const AdminUsers: React.FC = () => {
       
       return data as Company[];
     }
-  });
-  
-  const filteredUsers = users?.filter(user => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      user.nome?.toLowerCase().includes(searchLower) ||
-      user.email?.toLowerCase().includes(searchLower) ||
-      user.cpf?.includes(searchQuery) ||
-      (user.phone && user.phone.includes(searchQuery))
-    );
   });
 
   const handleDeleteClick = (user: UserProfile) => {
@@ -300,221 +240,42 @@ const AdminUsers: React.FC = () => {
             <p className="text-gray-500">Gerencie todos os usuários cadastrados no sistema</p>
           </div>
 
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Search className="text-gray-400" size={20} />
-                <Input
-                  placeholder="Buscar usuário por nome, email ou CPF..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <UserSearch 
+            searchQuery={searchQuery} 
+            onSearchQueryChange={setSearchQuery} 
+          />
 
-          {usersLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <p>Carregando usuários...</p>
-            </div>
-          ) : usersError ? (
-            <div className="flex justify-center items-center h-64">
-              <p className="text-red-500">Erro ao carregar dados. Por favor, tente novamente.</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-medium">Nome</TableHead>
-                  <TableHead className="font-medium">Email</TableHead>
-                  <TableHead className="font-medium">CPF</TableHead>
-                  <TableHead className="font-medium">Telefone</TableHead>
-                  <TableHead className="font-medium">Empresa</TableHead>
-                  <TableHead className="font-medium">Status</TableHead>
-                  <TableHead className="font-medium">Licença</TableHead>
-                  <TableHead className="text-right font-medium">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers && filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell className="font-medium flex items-center">
-                        <User className="h-4 w-4 text-gray-500 mr-2" />
-                        {user.nome}
-                      </TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.cpf}</TableCell>
-                      <TableCell>{user.phone || '-'}</TableCell>
-                      <TableCell>
-                        {user.id_empresa ? (
-                          <Badge 
-                            className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-3 py-1.5 flex flex-col items-center justify-center w-40"
-                          >
-                            {companies?.find(c => c.id === user.id_empresa)?.name || 'Carregando...'}
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-gray-500">
-                            Sem empresa
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          className={user.status ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-red-100 text-red-800 hover:bg-red-100'}
-                        >
-                          {user.status ? 'Ativo' : 'Inativo'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          className={user.license_status === 'active' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100' : 'bg-gray-100 text-gray-800 hover:bg-gray-100'}
-                        >
-                          {user.license_status === 'active' ? 'Ativa' : 'Inativa'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50"
-                            onClick={() => handleAssignClick(user)}
-                          >
-                            <Building2 className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            onClick={() => handleDeleteClick(user)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                      {searchQuery 
-                        ? 'Nenhum usuário encontrado para essa busca.' 
-                        : 'Nenhum usuário cadastrado no sistema.'}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          )}
+          <UserTable 
+            users={users}
+            isLoading={usersLoading}
+            error={usersError}
+            searchQuery={searchQuery}
+            companies={companies}
+            onAssignClick={handleAssignClick}
+            onDeleteClick={handleDeleteClick}
+          />
         </div>
       </AdminDashboardLayout>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir o usuário {userToDelete?.nome}? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteConfirm}
-              className="bg-red-600 text-white hover:bg-red-700"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DeleteConfirmationDialog 
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        userToDelete={userToDelete}
+        onConfirmDelete={handleDeleteConfirm}
+      />
 
-      {/* Assign Company Dialog */}
-      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Atribuir Empresa</DialogTitle>
-            <DialogDescription>
-              Selecione a empresa para o usuário {userToAssign?.nome}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <label htmlFor="company" className="text-sm font-medium">
-                Empresa
-              </label>
-              {companiesLoading ? (
-                <div>Carregando empresas...</div>
-              ) : (
-                <Select value={selectedCompanyId} onValueChange={handleCompanyChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma empresa" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="null">Nenhuma empresa</SelectItem>
-                    {companies?.map((company) => (
-                      <SelectItem key={company.id} value={String(company.id)}>
-                        {company.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-            
-            {/* License information section */}
-            {selectedCompanyId && selectedCompanyId !== 'null' && (
-              <div className="mt-2 p-4 bg-gray-50 rounded-md">
-                <h3 className="text-sm font-medium mb-2">Informações de Licença</h3>
-                {licenseInfo ? (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-3 gap-2 text-sm">
-                      <div>
-                        <p className="text-gray-500">Total</p>
-                        <p className="font-medium">{licenseInfo.total}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Em uso</p>
-                        <p className="font-medium">{licenseInfo.used}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Disponíveis</p>
-                        <p className={`font-medium ${licenseInfo.available <= 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          {licenseInfo.available}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    {licenseInfo.available <= 0 && (
-                      <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded">
-                        Não há licenças disponíveis para esta empresa. É necessário adquirir mais licenças.
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex justify-center py-2">
-                    <p className="text-sm text-gray-500">Carregando informações de licença...</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button 
-              onClick={handleAssignConfirm} 
-              disabled={isLoading || (selectedCompanyId && selectedCompanyId !== 'null' && (!licenseInfo || licenseInfo.available <= 0))}
-            >
-              {isLoading ? 'Salvando...' : 'Salvar'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AssignCompanyDialog 
+        open={assignDialogOpen}
+        onOpenChange={setAssignDialogOpen}
+        userToAssign={userToAssign}
+        companies={companies}
+        companiesLoading={companiesLoading}
+        onConfirmAssign={handleAssignConfirm}
+        selectedCompanyId={selectedCompanyId}
+        onSelectedCompanyIdChange={handleCompanyChange}
+        licenseInfo={licenseInfo}
+        isLoading={isLoading}
+      />
     </>
   );
 };
