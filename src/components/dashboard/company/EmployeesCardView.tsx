@@ -3,6 +3,7 @@ import React from 'react';
 import { User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import EmployeeStatusBadge from './EmployeeStatusBadge';
 import type { Employee } from './EmployeesTableView';
 
@@ -27,6 +28,17 @@ const EmployeesCardView: React.FC<EmployeesCardViewProps> = ({
               </div>
               
               <div className="text-sm text-gray-500">{employee.email}</div>
+              
+              {employee.company_name && (
+                <div className="py-1">
+                  <Badge 
+                    variant="indigo"
+                    className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-3 py-1.5 flex flex-col items-center justify-center w-full"
+                  >
+                    {employee.company_name}
+                  </Badge>
+                </div>
+              )}
               
               <div className="flex justify-between items-center pt-2">
                 <EmployeeStatusBadge status={employee.status} />

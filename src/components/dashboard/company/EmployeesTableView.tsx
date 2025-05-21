@@ -38,6 +38,9 @@ const EmployeesTableView: React.FC<EmployeesTableViewProps> = ({
         <TableRow className="bg-gray-50">
           <TableHead className="font-medium">Nome</TableHead>
           <TableHead className="font-medium">Email</TableHead>
+          {employees.some(e => e.company_name) && (
+            <TableHead className="font-medium text-center">Empresa</TableHead>
+          )}
           <TableHead className="font-medium">Status</TableHead>
           <TableHead className="text-right font-medium">Ações</TableHead>
         </TableRow>
@@ -50,6 +53,18 @@ const EmployeesTableView: React.FC<EmployeesTableViewProps> = ({
               {employee.nome}
             </TableCell>
             <TableCell>{employee.email}</TableCell>
+            {employees.some(e => e.company_name) && (
+              <TableCell className="text-center">
+                {employee.company_name && (
+                  <Badge 
+                    variant="indigo"
+                    className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-3 py-1.5 flex flex-col items-center justify-center w-40 mx-auto"
+                  >
+                    {employee.company_name}
+                  </Badge>
+                )}
+              </TableCell>
+            )}
             <TableCell>
               <EmployeeStatusBadge status={employee.status} />
             </TableCell>

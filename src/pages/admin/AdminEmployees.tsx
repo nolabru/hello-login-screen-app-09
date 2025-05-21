@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useQuery } from '@tanstack/react-query';
@@ -115,7 +114,7 @@ const AdminEmployees: React.FC = () => {
                 <TableRow className="bg-gray-50">
                   <TableHead className="font-medium">Nome</TableHead>
                   <TableHead className="font-medium">Email</TableHead>
-                  <TableHead className="font-medium">Empresa</TableHead>
+                  <TableHead className="font-medium text-center">Empresa</TableHead>
                   <TableHead className="font-medium">CPF</TableHead>
                   <TableHead className="font-medium">Telefone</TableHead>
                   <TableHead className="font-medium">Status</TableHead>
@@ -131,10 +130,10 @@ const AdminEmployees: React.FC = () => {
                         {employee.nome}
                       </TableCell>
                       <TableCell>{employee.email}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         <Badge 
-                          variant="secondary"
-                          className="bg-indigo-100 text-indigo-800 hover:bg-indigo-200"
+                          variant="indigo"
+                          className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-3 py-1.5 flex flex-col items-center justify-center w-40 mx-auto"
                         >
                           {employee.company_name}
                         </Badge>
@@ -143,8 +142,7 @@ const AdminEmployees: React.FC = () => {
                       <TableCell>{employee.phone || '-'}</TableCell>
                       <TableCell>
                         <Badge 
-                          variant={employee.status ? 'default' : 'destructive'}
-                          className={employee.status ? 'bg-green-100 text-green-800 hover:bg-green-200' : ''}
+                          variant={employee.status ? 'success' : 'destructive'}
                         >
                           {employee.status ? 'Ativo' : 'Inativo'}
                         </Badge>
