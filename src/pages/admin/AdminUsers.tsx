@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -371,7 +370,7 @@ const AdminUsers: React.FC = () => {
                     <SelectValue placeholder="Selecione uma empresa" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhuma empresa</SelectItem>
+                    <SelectItem value="null">Nenhuma empresa</SelectItem>
                     {companies?.map((company) => (
                       <SelectItem key={company.id} value={String(company.id)}>
                         {company.name}
