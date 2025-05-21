@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { useQuery } from '@tanstack/react-query';
-import { Search, User } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Search, User, Trash2 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import AdminDashboardLayout from '@/components/layout/AdminDashboardLayout';
 import { Input } from '@/components/ui/input';
@@ -15,7 +16,18 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 
 interface Employee {
   id: number;
@@ -32,6 +44,9 @@ interface Employee {
 const AdminEmployees: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<Employee | null>(null);
 
   const { data: employees, isLoading, error } = useQuery({
     queryKey: ['adminEmployees'],
@@ -73,6 +88,42 @@ const AdminEmployees: React.FC = () => {
       (employee.phone && employee.phone.includes(searchQuery))
     );
   });
+
+  const handleDeleteClick = (employee: Employee) => {
+    setEmployeeToDelete(employee);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!employeeToDelete) return;
+    
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('id', employeeToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Funcionário removido",
+        description: `O funcionário ${employeeToDelete.nome} foi removido com sucesso.`,
+      });
+      
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['adminEmployees'] });
+    } catch (error) {
+      console.error("Error deleting employee:", error);
+      toast({
+        title: "Erro ao remover funcionário",
+        description: "Não foi possível remover o funcionário. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setEmployeeToDelete(null);
+    }
+  };
 
   return (
     <>
@@ -119,6 +170,7 @@ const AdminEmployees: React.FC = () => {
                   <TableHead className="font-medium">Telefone</TableHead>
                   <TableHead className="font-medium">Status</TableHead>
                   <TableHead className="font-medium">Licença</TableHead>
+                  <TableHead className="text-right font-medium">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -157,11 +209,21 @@ const AdminEmployees: React.FC = () => {
                           {employee.license_status === 'active' ? 'Ativa' : 'Inativa'}
                         </Badge>
                       </TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDeleteClick(employee)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                       {searchQuery 
                         ? 'Nenhum funcionário encontrado para essa busca.' 
                         : 'Nenhum funcionário cadastrado no sistema.'}
@@ -173,6 +235,26 @@ const AdminEmployees: React.FC = () => {
           )}
         </div>
       </AdminDashboardLayout>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o funcionário {employeeToDelete?.nome}? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

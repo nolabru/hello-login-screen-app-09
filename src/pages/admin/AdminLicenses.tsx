@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { useQuery } from '@tanstack/react-query';
-import { Search, Key } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Search, Key, Trash2 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import AdminDashboardLayout from '@/components/layout/AdminDashboardLayout';
 import { Input } from '@/components/ui/input';
@@ -16,8 +16,19 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 
 interface License {
   id: number;
@@ -36,6 +47,9 @@ interface License {
 const AdminLicenses: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [licenseToDelete, setLicenseToDelete] = useState<License | null>(null);
 
   const { data: licenses, isLoading, error } = useQuery({
     queryKey: ['adminLicenses'],
@@ -119,6 +133,42 @@ const AdminLicenses: React.FC = () => {
     }
   };
 
+  const handleDeleteClick = (license: License) => {
+    setLicenseToDelete(license);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!licenseToDelete) return;
+    
+    try {
+      const { error } = await supabase
+        .from('company_licenses')
+        .delete()
+        .eq('id', licenseToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Licença removida",
+        description: `A licença da empresa ${licenseToDelete.company_name} foi removida com sucesso.`,
+      });
+      
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['adminLicenses'] });
+    } catch (error) {
+      console.error("Error deleting license:", error);
+      toast({
+        title: "Erro ao remover licença",
+        description: "Não foi possível remover a licença. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setLicenseToDelete(null);
+    }
+  };
+
   return (
     <>
       <Helmet>
@@ -165,6 +215,7 @@ const AdminLicenses: React.FC = () => {
                   <TableHead className="font-medium">Data de Expiração</TableHead>
                   <TableHead className="font-medium">Status</TableHead>
                   <TableHead className="font-medium">Pagamento</TableHead>
+                  <TableHead className="text-right font-medium">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -197,11 +248,21 @@ const AdminLicenses: React.FC = () => {
                            license.payment_status}
                         </Badge>
                       </TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDeleteClick(license)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                       {searchQuery 
                         ? 'Nenhuma licença encontrada para essa busca.' 
                         : 'Nenhuma licença cadastrada no sistema.'}
@@ -213,6 +274,26 @@ const AdminLicenses: React.FC = () => {
           )}
         </div>
       </AdminDashboardLayout>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a licença da empresa {licenseToDelete?.company_name}? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { useQuery } from '@tanstack/react-query';
-import { Search, Building2 } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Search, Building2, Trash2 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import AdminDashboardLayout from '@/components/layout/AdminDashboardLayout';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,17 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 
 interface Company {
   id: number;
@@ -31,6 +42,9 @@ interface Company {
 const AdminCompanies: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
 
   const { data: companies, isLoading, error } = useQuery({
     queryKey: ['adminCompanies'],
@@ -64,6 +78,42 @@ const AdminCompanies: React.FC = () => {
       company.razao_social?.toLowerCase().includes(searchLower)
     );
   });
+
+  const handleDeleteClick = (company: Company) => {
+    setCompanyToDelete(company);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!companyToDelete) return;
+    
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .delete()
+        .eq('id', companyToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Empresa removida",
+        description: `A empresa ${companyToDelete.name} foi removida com sucesso.`,
+      });
+      
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ['adminCompanies'] });
+    } catch (error) {
+      console.error("Error deleting company:", error);
+      toast({
+        title: "Erro ao remover empresa",
+        description: "Não foi possível remover a empresa. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setCompanyToDelete(null);
+    }
+  };
 
   return (
     <>
@@ -109,6 +159,7 @@ const AdminCompanies: React.FC = () => {
                   <TableHead className="font-medium">CNPJ</TableHead>
                   <TableHead className="font-medium">Razão Social</TableHead>
                   <TableHead className="font-medium">Status</TableHead>
+                  <TableHead className="text-right font-medium">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -130,11 +181,21 @@ const AdminCompanies: React.FC = () => {
                           {company.status ? 'Ativo' : 'Inativo'}
                         </Badge>
                       </TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDeleteClick(company)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                       {searchQuery 
                         ? 'Nenhuma empresa encontrada para essa busca.' 
                         : 'Nenhuma empresa cadastrada no sistema.'}
@@ -146,6 +207,26 @@ const AdminCompanies: React.FC = () => {
           )}
         </div>
       </AdminDashboardLayout>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a empresa {companyToDelete?.name}? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
