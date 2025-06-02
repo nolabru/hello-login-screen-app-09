@@ -45,7 +45,7 @@ const CompanyForm = () => {
             <CompanyFormFields form={form} />
 
             <div className="flex justify-end pt-8">
-              <Button type="submit" disabled={isSubmitting} className="px-6 py-3 bg-portal-purple text-white rounded-lg hover:opacity-90 transition">
+              <Button type="submit" disabled={isSubmitting} className="px-6 py-3 bg-portal-purple text-white rounded-lg hover:purple-700 transition text-center">
                 {isSubmitting ? 'Cadastrando...' : 'Cadastrar'}
               </Button>
             </div>
