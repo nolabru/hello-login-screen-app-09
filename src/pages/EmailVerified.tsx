@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { CheckCircle, ArrowRight } from 'lucide-react';
@@ -8,27 +8,10 @@ import { Button } from '@/components/ui/button';
 
 const EmailVerified = () => {
   const [searchParams] = useSearchParams();
-  const [countdown, setCountdown] = useState(5);
   
   // Extrair parâmetros da URL para verificação
   const type = searchParams.get('type');
   const token = searchParams.get('token');
-  
-  useEffect(() => {
-    // Countdown para redirecionamento automático
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          // Redirecionar para a página inicial após countdown
-          window.location.href = '/';
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
 
   return (
     <>
@@ -65,15 +48,6 @@ const EmailVerified = () => {
               Seu e-mail foi confirmado com sucesso. Agora você pode acessar sua conta e começar a usar o Portal Calma.
             </p>
             
-            {/* Informação de redirecionamento */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <p className="text-sm text-gray-500">
-                Você será redirecionado automaticamente em{' '}
-                <span className="font-bold text-portal-purple">{countdown}</span>{' '}
-                segundos
-              </p>
-            </div>
-            
             {/* Botões de ação */}
             <div className="space-y-3">
               <Link to="/" className="w-full">
@@ -82,10 +56,6 @@ const EmailVerified = () => {
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
-              
-              <p className="text-xs text-gray-400">
-                Ou aguarde o redirecionamento automático
-              </p>
             </div>
           </div>
           
