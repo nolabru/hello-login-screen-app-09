@@ -55,6 +55,22 @@ const sentimentData = [
   }
 ];
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <p className="text-gray-900 font-medium mb-2">{`Mês: ${label}`}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} className="text-gray-800 text-sm">
+            <span className="font-medium">{entry.name}:</span> {entry.value}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 const SentimentChart: React.FC = () => {
   return (
     <Card className="w-full">
@@ -73,7 +89,7 @@ const SentimentChart: React.FC = () => {
             >
               <XAxis dataKey="name" />
               <YAxis />
-              <Tooltip />
+              <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="feliz" stackId="a" fill="#E8F5E8" name="Feliz" />
               <Bar dataKey="triste" stackId="a" fill="#E3F2FD" name="Triste" />
               <Bar dataKey="ansioso" stackId="a" fill="#FFF3E0" name="Ansioso" />
