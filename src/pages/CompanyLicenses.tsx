@@ -30,7 +30,7 @@ const CompanyLicenses: React.FC = () => {
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-2xl font-medium">Gerenciamento de Licenças</h1>
+              <h1 className="text-2xl font-medium  text-neutral-700">Gerenciamento de Licenças</h1>
               <p className="text-gray-500">Gerencie as licenças e planos da sua empresa</p>
             </div>
           </div>
