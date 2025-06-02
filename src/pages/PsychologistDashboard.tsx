@@ -109,13 +109,13 @@ const PsychologistDashboard: React.FC = () => {
           <div className="grid md:grid-cols-1 gap-6">
             <Card className="w-full">
               <CardContent className="p-6">
-                <h3 className="text-lg font-medium mb-4">Calendário de Interações</h3>
+                <h3 className="text-lg font-medium mb-4 text-neutral-700">Calendário de Interações</h3>
                 <div className="flex flex-col lg:flex-row gap-6">
                   <div className="flex justify-center">
                     <Calendar mode="single" selected={date} onSelect={setDate} className="rounded-md border shadow p-3 pointer-events-auto" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="text-sm font-medium mb-3">
+                    <h4 className="text-sm font-medium mb-3 text-neutral-700">
                       Interações AIA-paciente em {date?.toLocaleDateString('pt-BR', {
                       day: '2-digit',
                       month: 'long',
