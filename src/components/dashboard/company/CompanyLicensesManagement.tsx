@@ -56,7 +56,7 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
           
           
         </div>
-        <Button onClick={() => setIsAcquireDialogOpen(true)} className="flex items-center gap-2">
+        <Button onClick={() => setIsAcquireDialogOpen(true)} className="flex items-center gap-2 bg-portal-purple hover:bg-portal-purple-dark">
           <CirclePlus size={16} />
           <span>Adquirir Licenças</span>
         </Button>
@@ -68,15 +68,15 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gray-50 p-4 rounded-md">
               <p className="text-sm text-gray-500">Licenças Totais</p>
-              <p className="text-2xl font-bold">{licenseStats.total}</p>
+              <p className="text-2xl font-bold text-portal-purple">{licenseStats.total}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-md">
               <p className="text-sm text-gray-500">Licenças em Uso</p>
-              <p className="text-2xl font-bold">{licenseStats.used}</p>
+              <p className="text-2xl font-bold text-portal-purple">{licenseStats.used}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-md">
               <p className="text-sm text-gray-500">Licenças Disponíveis</p>
-              <p className="text-2xl font-bold">{licenseStats.available}</p>
+              <p className="text-2xl font-bold text-portal-purple">{licenseStats.available}</p>
             </div>
           </div>
         </CardContent>
@@ -86,7 +86,7 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
       {loading ? <p className="text-center py-8">Carregando...</p> : licenses.length === 0 ? <Card>
           <CardContent className="p-6 text-center">
             <p className="mb-4">Sua empresa ainda não possui planos de licença ativos.</p>
-            <Button onClick={() => setIsAcquireDialogOpen(true)}>Adquirir Licenças</Button>
+            <Button onClick={() => setIsAcquireDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark">Adquirir Licenças</Button>
           </CardContent>
         </Card> : <div className="space-y-4">
           {licenses.map(license => <CompanyLicenseInfo key={license.id} license={license} companyId={companyId} onLicenseUpdated={fetchLicenses} />)}
