@@ -136,7 +136,7 @@ const CompanyDashboardLayout: React.FC<CompanyDashboardLayoutProps> = ({
           
           <div className="p-4 border-b">
             <p className="text-sm text-gray-500">Bem-vindo(a),</p>
-            <h2 className="font-medium text-xl">{companyName}</h2>
+            <h2 className="font-medium text-xl  text-neutral-700">{companyName}</h2>
             <p className="text-sm text-gray-500 mt-1 truncate">{companyEmail}</p>
           </div>
           
