@@ -112,7 +112,7 @@ const CompanyEmployeesList: React.FC = () => {
   };
   return <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-medium  text-neutral-700">Funcionários</h2>
+        <h2 className="font-medium text-neutral-700 text-xl">Funcionários</h2>
         <Button onClick={() => setIsAddDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark">
           <Plus className="h-4 w-4 mr-2" />
           Adicionar Funcionário
