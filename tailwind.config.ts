@@ -60,8 +60,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["Quicksand", "var(--font-sans)", ...fontFamily.sans],
-        display: ["Comfortaa", "cursive"],
+        sans: ["Roboto", "var(--font-sans)", ...fontFamily.sans],
+        display: ["Poppins", "sans-serif"],
       },
       keyframes: {
         "accordion-down": {

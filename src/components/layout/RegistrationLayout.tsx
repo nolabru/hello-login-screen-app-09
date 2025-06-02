@@ -16,7 +16,7 @@ const RegistrationLayout: React.FC<RegistrationLayoutProps> = ({ children }) => 
         <title>Calma</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=Quicksand:wght@300..700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet" />
       </Helmet>
       <div className="min-h-screen bg-gradient-portal">
         <div className="w-full p-4 sm:p-6">
