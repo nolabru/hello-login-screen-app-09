@@ -158,9 +158,9 @@ const PatientsList: React.FC = () => {
 
       <Tabs defaultValue="active" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="active">Pacientes Ativos</TabsTrigger>
-          <TabsTrigger value="pending">Solicitações Pendentes</TabsTrigger>
-          <TabsTrigger value="all">Todos</TabsTrigger>
+          <TabsTrigger value="active" className="text-neutral-700">Pacientes Ativos</TabsTrigger>
+          <TabsTrigger value="pending" className="text-neutral-700">Solicitações Pendentes</TabsTrigger>
+          <TabsTrigger value="all" className="text-neutral-700">Todos</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active">
