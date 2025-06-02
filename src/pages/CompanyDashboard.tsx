@@ -96,9 +96,7 @@ const CompanyDashboard: React.FC = () => {
               <h1 className="text-2xl font-medium">{companyName}</h1>
               <p className="text-gray-500">{localStorage.getItem('companyEmail')}</p>
             </div>
-            <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-50" onClick={handleLogout}>
-              <span className="mr-1">Sair</span>
-            </Button>
+            
           </div>
           
           <div className="bg-purple-50 border border-purple-100 rounded-lg p-6 mb-8">
