@@ -119,7 +119,7 @@ const CompanyComplianceReport = () => {
       <div className="container p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Relatório de Saúde Mental e Conformidade</h1>
+            <h1 className="text-2xl tracking-tight font-medium">Relatório de Saúde Mental e Conformidade</h1>
             <p className="text-muted-foreground">
               Preencha as informações abaixo para gerar seu relatório de conformidade
             </p>
