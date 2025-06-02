@@ -85,7 +85,7 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
       <h3 className="text-lg font-medium mb-4  text-neutral-700">Planos Ativos</h3>
       {loading ? <p className="text-center py-8">Carregando...</p> : licenses.length === 0 ? <Card>
           <CardContent className="p-6 text-center">
-            <p className="mb-4">Sua empresa ainda não possui planos de licença ativos.</p>
+            <p className="mb-4  text-neutral-700">Sua empresa ainda não possui planos de licença ativos.</p>
             <Button onClick={() => setIsAcquireDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark">Adquirir Licenças</Button>
           </CardContent>
         </Card> : <div className="space-y-4">
