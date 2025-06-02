@@ -315,7 +315,7 @@ const CompanyPsychologistsList: React.FC = () => {
   const activePsychologists = companyPsychologists.filter(p => p.status === 'active');
   const pendingInvites = companyPsychologists.filter(p => p.status === 'pending');
   return <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="font-medium text-neutral-700 text-xl">Psicólogos da Empresa</h2>
           
