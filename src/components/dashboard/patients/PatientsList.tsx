@@ -139,7 +139,7 @@ const PatientsList: React.FC = () => {
   return <div className="">
       <div className="flex justify-between items-center mb-6">
         <div className="flex flex-col">
-          <h1 className="text-2xl font-medium text-neutral-700 mb-2">
+          <h1 className="text-2xl font-medium text-neutral-700">
             Seus Pacientes
           </h1>
           <p className="text-gray-500">
