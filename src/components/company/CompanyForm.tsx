@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -9,6 +10,7 @@ import { companyFormSchema, CompanyFormValues } from './CompanyFormSchema';
 import { useCompanyRegistration } from '@/hooks/useCompanyRegistration';
 import { Form } from '@/components/ui/form';
 import CompanyFormFields from './CompanyFormFields';
+
 const CompanyForm = () => {
   const {
     handleSubmit: handleRegistrationSubmit,
@@ -28,13 +30,15 @@ const CompanyForm = () => {
       password: ''
     }
   });
+
   const onSubmit = (data: CompanyFormValues) => {
     handleRegistrationSubmit(data);
   };
-  return <Card className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
+
+  return (
+    <Card className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
       <CardContent className="p-10">
         <div className="flex items-center justify-center gap-4 mb-8">
-          
           <h1 className="font-semibold text-2xl text-portal-purple">Registro de Empresa</h1>
         </div>
         
@@ -45,7 +49,11 @@ const CompanyForm = () => {
             <CompanyFormFields form={form} />
 
             <div className="flex justify-end pt-8">
-              <Button type="submit" disabled={isSubmitting} className="px-6 py-3 bg-portal-purple text-white rounded-lg hover:portal-purple-dark transition text-center">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="px-6 py-3 bg-portal-purple text-white rounded-lg hover:bg-portal-purple-dark transition-colors text-center"
+              >
                 {isSubmitting ? 'Cadastrando...' : 'Cadastrar'}
               </Button>
             </div>
@@ -58,6 +66,8 @@ const CompanyForm = () => {
           </p>
         </div>
       </CardContent>
-    </Card>;
+    </Card>
+  );
 };
+
 export default CompanyForm;
