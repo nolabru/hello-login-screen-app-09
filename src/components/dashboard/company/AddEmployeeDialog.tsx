@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,66 +8,68 @@ import LinkEmployeeForm from './LinkEmployeeForm';
 import BulkEmployeeUpload from './BulkEmployeeUpload';
 import { AddSingleEmployeeFormValues, LinkEmployeeFormValues } from './employeeSchema';
 import { checkLicenseAvailability } from '@/services/licenseService';
-
 interface AddEmployeeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEmployeeAdded: () => void;
   companyId: number;
 }
-
 const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
   open,
   onOpenChange,
   onEmployeeAdded,
-  companyId,
+  companyId
 }) => {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [activeTab, setActiveTab] = useState('add');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasAvailableLicenses, setHasAvailableLicenses] = useState(false);
-
   useEffect(() => {
     if (open) {
       const checkLicenses = async () => {
         try {
-          const { available } = await checkLicenseAvailability(companyId);
+          const {
+            available
+          } = await checkLicenseAvailability(companyId);
           console.log('Licenças disponíveis:', available);
           setHasAvailableLicenses(available > 0);
-          
           if (available <= 0) {
             toast({
               title: "Sem licenças disponíveis",
               description: "Você não possui licenças disponíveis para adicionar funcionários. Adquira mais licenças na aba de Licenças.",
-              variant: "destructive",
+              variant: "destructive"
             });
           }
         } catch (error) {
           console.error('Erro ao verificar licenças disponíveis:', error);
         }
       };
-      
       checkLicenses();
     }
   }, [open, companyId, toast]);
-
   const handleSingleEmployeeSubmit = async (data: AddSingleEmployeeFormValues) => {
     setIsSubmitting(true);
     try {
       // Verificar licenças novamente antes de adicionar
-      const { available } = await checkLicenseAvailability(companyId);
+      const {
+        available
+      } = await checkLicenseAvailability(companyId);
       if (available <= 0) {
         toast({
           title: "Sem licenças disponíveis",
           description: "Você não possui licenças disponíveis para adicionar funcionários. Adquira mais licenças na aba de Licenças.",
-          variant: "destructive",
+          variant: "destructive"
         });
         onOpenChange(false);
         return;
       }
-      
+
       // Inserir novo funcionário
-      const { error } = await supabase.from('user_profiles').insert({
+      const {
+        error
+      } = await supabase.from('user_profiles').insert({
         nome: data.nome,
         email: data.email,
         cpf: data.cpf,
@@ -77,14 +78,11 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
         status: false,
         license_status: 'active' // Definir como active para consumir uma licença
       });
-
       if (error) throw error;
-
       toast({
         title: "Funcionário adicionado",
-        description: "O funcionário foi adicionado com sucesso e receberá um convite por email.",
+        description: "O funcionário foi adicionado com sucesso e receberá um convite por email."
       });
-
       onEmployeeAdded();
       onOpenChange(false);
     } catch (error: any) {
@@ -92,73 +90,67 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
       toast({
         title: "Erro",
         description: `Não foi possível adicionar o funcionário: ${error.message || error}`,
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
   const handleLinkEmployeeSubmit = async (data: LinkEmployeeFormValues) => {
     setIsSubmitting(true);
     try {
       // Verificar licenças novamente antes de vincular
-      const { available } = await checkLicenseAvailability(companyId);
+      const {
+        available
+      } = await checkLicenseAvailability(companyId);
       if (available <= 0) {
         toast({
           title: "Sem licenças disponíveis",
           description: "Você não possui licenças disponíveis para adicionar funcionários. Adquira mais licenças na aba de Licenças.",
-          variant: "destructive",
+          variant: "destructive"
         });
         onOpenChange(false);
         return;
       }
-      
-      // Buscar funcionário pelo email
-      const { data: existingUser, error: searchError } = await supabase
-        .from('user_profiles')
-        .select('id, id_empresa')
-        .eq('email', data.email)
-        .single();
 
+      // Buscar funcionário pelo email
+      const {
+        data: existingUser,
+        error: searchError
+      } = await supabase.from('user_profiles').select('id, id_empresa').eq('email', data.email).single();
       if (searchError) {
         if (searchError.code === 'PGRST116') {
           toast({
             title: "Usuário não encontrado",
             description: "Não encontramos um usuário com este email.",
-            variant: "destructive",
+            variant: "destructive"
           });
         } else {
           throw searchError;
         }
         return;
       }
-
       if (existingUser.id_empresa) {
         toast({
           title: "Usuário já vinculado",
           description: "Este usuário já está vinculado a uma empresa.",
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
 
       // Vincular usuário à empresa
-      const { error: updateError } = await supabase
-        .from('user_profiles')
-        .update({ 
-          id_empresa: companyId,
-          license_status: 'active' // Definir como active para consumir uma licença
-        })
-        .eq('id', existingUser.id);
-
+      const {
+        error: updateError
+      } = await supabase.from('user_profiles').update({
+        id_empresa: companyId,
+        license_status: 'active' // Definir como active para consumir uma licença
+      }).eq('id', existingUser.id);
       if (updateError) throw updateError;
-
       toast({
         title: "Funcionário vinculado",
-        description: "O funcionário foi vinculado à sua empresa com sucesso.",
+        description: "O funcionário foi vinculado à sua empresa com sucesso."
       });
-
       onEmployeeAdded();
       onOpenChange(false);
     } catch (error: any) {
@@ -166,16 +158,14 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
       toast({
         title: "Erro",
         description: `Não foi possível vincular o funcionário: ${error.message || error}`,
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
   if (!hasAvailableLicenses) {
-    return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
+    return <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="text-xl">Sem Licenças Disponíveis</DialogTitle>
@@ -189,15 +179,12 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
             </p>
           </div>
         </DialogContent>
-      </Dialog>
-    );
+      </Dialog>;
   }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+  return <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle className="text-xl">Adicionar Funcionário</DialogTitle>
+          <DialogTitle className="text-xl   text-neutral-700">Adicionar Funcionário</DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -216,20 +203,13 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
           </TabsContent>
           
           <TabsContent value="bulk" className="py-2">
-            <BulkEmployeeUpload 
-              companyId={companyId} 
-              onComplete={() => {
-                onEmployeeAdded();
-                onOpenChange(false);
-              }}
-              isSubmitting={isSubmitting}
-              setIsSubmitting={setIsSubmitting}
-            />
+            <BulkEmployeeUpload companyId={companyId} onComplete={() => {
+            onEmployeeAdded();
+            onOpenChange(false);
+          }} isSubmitting={isSubmitting} setIsSubmitting={setIsSubmitting} />
           </TabsContent>
         </Tabs>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };
-
 export default AddEmployeeDialog;
