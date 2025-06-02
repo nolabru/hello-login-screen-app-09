@@ -181,7 +181,7 @@ const LoginForm: React.FC = () => {
             </div>
             <input id="password" name="password" type={showPassword ? "text" : "password"} autoComplete="current-password" required value={password} onChange={e => setPassword(e.target.value)} className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent" placeholder="Sua senha" />
             <button type="button" className="absolute inset-y-0 right-0 pr-3 flex items-center" onClick={() => setShowPassword(!showPassword)}>
-              {showPassword ? <EyeOff size={20} className="text-gray-400 hover:text-gray-600" /> : <Eye size={20} className="text-gray-400 hover:text-gray-600" />}
+              {showPassword ? <EyeOff size={20} className="text-portal-purple hover:text-gray-600" /> : <Eye size={20} className="text-gray-400 hover:text-gray-600" />}
             </button>
           </div>
         </div>
