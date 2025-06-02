@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-
 type Psychologist = {
   id: number;
   nome: string;
@@ -17,7 +16,6 @@ type Psychologist = {
   especialidade?: string;
   status: string;
 };
-
 const CompanyPsychologistsList: React.FC = () => {
   const [psychologists, setPsychologists] = useState<Psychologist[]>([]);
   const [companyPsychologists, setCompanyPsychologists] = useState<Psychologist[]>([]);
@@ -26,7 +24,9 @@ const CompanyPsychologistsList: React.FC = () => {
   const [searchResults, setSearchResults] = useState<Psychologist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Fetch company psychologists
   const fetchCompanyPsychologists = async () => {
@@ -34,20 +34,17 @@ const CompanyPsychologistsList: React.FC = () => {
     try {
       const companyId = localStorage.getItem('companyId');
       if (!companyId) return;
-
       const companyIdNumber = parseInt(companyId, 10);
 
       // First get the associations
-      const { data: associations, error: associationsError } = await supabase
-        .from('company_psychologist_associations')
-        .select('id, id_psicologo, status')
-        .eq('id_empresa', companyIdNumber);
-
+      const {
+        data: associations,
+        error: associationsError
+      } = await supabase.from('company_psychologist_associations').select('id, id_psicologo, status').eq('id_empresa', companyIdNumber);
       if (associationsError) {
         console.error('Error fetching associations:', associationsError);
         throw associationsError;
       }
-
       if (!associations || associations.length === 0) {
         setCompanyPsychologists([]);
         setIsLoading(false);
@@ -58,11 +55,10 @@ const CompanyPsychologistsList: React.FC = () => {
       const psychologistIds = associations.map(assoc => assoc.id_psicologo);
 
       // Fetch psychologist details
-      const { data: psychologistsData, error: psychologistsError } = await supabase
-        .from('psychologists')
-        .select('id, nome, email, crp, especialidade')
-        .in('id', psychologistIds);
-
+      const {
+        data: psychologistsData,
+        error: psychologistsError
+      } = await supabase.from('psychologists').select('id, nome, email, crp, especialidade').in('id', psychologistIds);
       if (psychologistsError) {
         console.error('Error fetching psychologists:', psychologistsError);
         throw psychologistsError;
@@ -76,7 +72,6 @@ const CompanyPsychologistsList: React.FC = () => {
           status: association?.status || 'pending'
         };
       }) || [];
-
       setCompanyPsychologists(mappedPsychologists);
     } catch (error) {
       console.error('Error fetching company psychologists:', error);
@@ -93,21 +88,17 @@ const CompanyPsychologistsList: React.FC = () => {
   // Search for psychologists
   const searchPsychologists = async () => {
     if (!searchQuery.trim()) return;
-    
     setIsSearching(true);
     try {
-      const { data, error } = await supabase
-        .from('psychologists')
-        .select('id, nome, email, crp, especialidade')
-        .or(`nome.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,crp.ilike.%${searchQuery}%`)
-        .limit(10);
-
+      const {
+        data,
+        error
+      } = await supabase.from('psychologists').select('id, nome, email, crp, especialidade').or(`nome.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%,crp.ilike.%${searchQuery}%`).limit(10);
       if (error) throw error;
 
       // Filter out already connected psychologists
       const companyPsychologistIds = companyPsychologists.map(p => p.id);
       const filteredResults = data?.filter(p => !companyPsychologistIds.includes(p.id)) || [];
-
       setSearchResults(filteredResults.map(p => ({
         ...p,
         status: 'not_connected'
@@ -129,23 +120,20 @@ const CompanyPsychologistsList: React.FC = () => {
     try {
       const companyId = localStorage.getItem('companyId');
       if (!companyId) return;
-
       const companyIdNumber = parseInt(companyId, 10);
 
       // Create association with pending status
-      const { error } = await supabase
-        .from('company_psychologist_associations')
-        .insert({
-          id_empresa: companyIdNumber,
-          id_psicologo: psychologistId,
-          status: 'pending' // Request pending approval from psychologist
-        });
-
+      const {
+        error
+      } = await supabase.from('company_psychologist_associations').insert({
+        id_empresa: companyIdNumber,
+        id_psicologo: psychologistId,
+        status: 'pending' // Request pending approval from psychologist
+      });
       if (error) throw error;
-
       toast({
         title: "Solicitação enviada",
-        description: "A solicitação de conexão foi enviada ao psicólogo.",
+        description: "A solicitação de conexão foi enviada ao psicólogo."
       });
 
       // Refresh list
@@ -166,42 +154,34 @@ const CompanyPsychologistsList: React.FC = () => {
     try {
       const companyId = localStorage.getItem('companyId');
       if (!companyId) return;
-
       const companyIdNumber = parseInt(companyId, 10);
 
       // Update association status to active
-      const { error } = await supabase
-        .from('company_psychologist_associations')
-        .update({ status: 'active' })
-        .eq('id_empresa', companyIdNumber)
-        .eq('id_psicologo', psychologistId);
-
+      const {
+        error
+      } = await supabase.from('company_psychologist_associations').update({
+        status: 'active'
+      }).eq('id_empresa', companyIdNumber).eq('id_psicologo', psychologistId);
       if (error) throw error;
 
       // Get all company employees to connect them with this psychologist
-      const { data: employees, error: employeesError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('id_empresa', companyIdNumber);
-
+      const {
+        data: employees,
+        error: employeesError
+      } = await supabase.from('user_profiles').select('id').eq('id_empresa', companyIdNumber);
       if (employeesError) throw employeesError;
-
       if (employees && employees.length > 0) {
         // Check for existing associations to avoid duplicates
         const employeeIds = employees.map(emp => emp.id);
-        
-        const { data: existingAssociations, error: checkError } = await supabase
-          .from('user_psychologist_associations')
-          .select('id_usuario')
-          .eq('id_psicologo', psychologistId)
-          .in('id_usuario', employeeIds);
-          
+        const {
+          data: existingAssociations,
+          error: checkError
+        } = await supabase.from('user_psychologist_associations').select('id_usuario').eq('id_psicologo', psychologistId).in('id_usuario', employeeIds);
         if (checkError) throw checkError;
-        
+
         // Filter out users who already have associations
         const existingUserIds = existingAssociations?.map(assoc => assoc.id_usuario) || [];
         const newEmployees = employees.filter(emp => !existingUserIds.includes(emp.id));
-        
         if (newEmployees.length > 0) {
           // Create associations between employees and psychologist
           const employeeAssociations = newEmployees.map(employee => ({
@@ -209,18 +189,15 @@ const CompanyPsychologistsList: React.FC = () => {
             id_psicologo: psychologistId,
             status: 'active' // Set employees as active patients immediately
           }));
-
-          const { error: associationError } = await supabase
-            .from('user_psychologist_associations')
-            .insert(employeeAssociations);
-
+          const {
+            error: associationError
+          } = await supabase.from('user_psychologist_associations').insert(employeeAssociations);
           if (associationError) throw associationError;
         }
       }
-
       toast({
         title: "Psicólogo aprovado",
-        description: "O psicólogo foi aprovado e conectado aos funcionários da empresa.",
+        description: "O psicólogo foi aprovado e conectado aos funcionários da empresa."
       });
 
       // Refresh list
@@ -240,21 +217,16 @@ const CompanyPsychologistsList: React.FC = () => {
     try {
       const companyId = localStorage.getItem('companyId');
       if (!companyId) return;
-
       const companyIdNumber = parseInt(companyId, 10);
 
       // Delete the association
-      const { error } = await supabase
-        .from('company_psychologist_associations')
-        .delete()
-        .eq('id_empresa', companyIdNumber)
-        .eq('id_psicologo', psychologistId);
-
+      const {
+        error
+      } = await supabase.from('company_psychologist_associations').delete().eq('id_empresa', companyIdNumber).eq('id_psicologo', psychologistId);
       if (error) throw error;
-
       toast({
         title: "Solicitação rejeitada",
-        description: "A solicitação de conexão foi rejeitada.",
+        description: "A solicitação de conexão foi rejeitada."
       });
 
       // Refresh list
@@ -274,41 +246,30 @@ const CompanyPsychologistsList: React.FC = () => {
     try {
       const companyId = localStorage.getItem('companyId');
       if (!companyId) return;
-
       const companyIdNumber = parseInt(companyId, 10);
 
       // Remove association
-      const { error } = await supabase
-        .from('company_psychologist_associations')
-        .delete()
-        .eq('id_empresa', companyIdNumber)
-        .eq('id_psicologo', psychologistId);
-
+      const {
+        error
+      } = await supabase.from('company_psychologist_associations').delete().eq('id_empresa', companyIdNumber).eq('id_psicologo', psychologistId);
       if (error) throw error;
 
       // Remove all associations between company employees and this psychologist
-      const { data: employees, error: employeesError } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('id_empresa', companyIdNumber);
-
+      const {
+        data: employees,
+        error: employeesError
+      } = await supabase.from('user_profiles').select('id').eq('id_empresa', companyIdNumber);
       if (employeesError) throw employeesError;
-
       if (employees && employees.length > 0) {
         const employeeIds = employees.map(e => e.id);
-
-        const { error: dissociationError } = await supabase
-          .from('user_psychologist_associations')
-          .delete()
-          .eq('id_psicologo', psychologistId)
-          .in('id_usuario', employeeIds);
-
+        const {
+          error: dissociationError
+        } = await supabase.from('user_psychologist_associations').delete().eq('id_psicologo', psychologistId).in('id_usuario', employeeIds);
         if (dissociationError) throw dissociationError;
       }
-
       toast({
         title: "Psicólogo desconectado",
-        description: "O psicólogo foi desconectado da empresa e seus funcionários.",
+        description: "O psicólogo foi desconectado da empresa e seus funcionários."
       });
 
       // Refresh list
@@ -353,26 +314,20 @@ const CompanyPsychologistsList: React.FC = () => {
   const pendingRequests = companyPsychologists.filter(p => p.status === 'requested');
   const activePsychologists = companyPsychologists.filter(p => p.status === 'active');
   const pendingInvites = companyPsychologists.filter(p => p.status === 'pending');
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-medium">Psicólogos da Empresa</h2>
           <p className="text-gray-500">Gerencie os psicólogos conectados à sua empresa</p>
         </div>
-        <Button 
-          onClick={() => setIsSearchDialogOpen(true)}
-          className="bg-indigo-900 hover:bg-indigo-800"
-        >
+        <Button onClick={() => setIsSearchDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark">
           <UserPlus size={16} className="mr-2" />
           Adicionar Psicólogo
         </Button>
       </div>
 
       {/* Pending Connection Requests Section */}
-      {pendingRequests.length > 0 && (
-        <div className="space-y-4">
+      {pendingRequests.length > 0 && <div className="space-y-4">
           <h3 className="text-lg font-medium">Solicitações de Conexão</h3>
           <Card>
             <CardContent className="p-0">
@@ -387,44 +342,30 @@ const CompanyPsychologistsList: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pendingRequests.map((psychologist) => (
-                    <TableRow key={psychologist.id}>
+                  {pendingRequests.map(psychologist => <TableRow key={psychologist.id}>
                       <TableCell className="font-medium">{psychologist.nome}</TableCell>
                       <TableCell>{psychologist.email}</TableCell>
                       <TableCell>{psychologist.crp}</TableCell>
                       <TableCell>{psychologist.especialidade || 'Não especificada'}</TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button 
-                          variant="default" 
-                          size="sm" 
-                          className="bg-green-600 hover:bg-green-700"
-                          onClick={() => approvePsychologist(psychologist.id)}
-                        >
+                        <Button variant="default" size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => approvePsychologist(psychologist.id)}>
                           <UserCheck size={16} className="mr-1" />
                           Aprovar
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-red-500 border-red-300 hover:bg-red-50"
-                          onClick={() => rejectPsychologist(psychologist.id)}
-                        >
+                        <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => rejectPsychologist(psychologist.id)}>
                           <UserX size={16} className="mr-1" />
                           Rejeitar
                         </Button>
                       </TableCell>
-                    </TableRow>
-                  ))}
+                    </TableRow>)}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
-        </div>
-      )}
+        </div>}
 
       {/* Pending Invites Section */}
-      {pendingInvites.length > 0 && (
-        <div className="space-y-4">
+      {pendingInvites.length > 0 && <div className="space-y-4">
           <h3 className="text-lg font-medium">Convites Pendentes</h3>
           <Card>
             <CardContent className="p-0">
@@ -439,50 +380,35 @@ const CompanyPsychologistsList: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pendingInvites.map((psychologist) => (
-                    <TableRow key={psychologist.id}>
+                  {pendingInvites.map(psychologist => <TableRow key={psychologist.id}>
                       <TableCell className="font-medium">{psychologist.nome}</TableCell>
                       <TableCell>{psychologist.email}</TableCell>
                       <TableCell>{psychologist.crp}</TableCell>
                       <TableCell>{renderStatusBadge(psychologist.status)}</TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-red-500 border-red-300 hover:bg-red-50"
-                          onClick={() => disconnectPsychologist(psychologist.id)}
-                        >
+                        <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => disconnectPsychologist(psychologist.id)}>
                           <UserX size={16} className="mr-1" />
                           Cancelar
                         </Button>
                       </TableCell>
-                    </TableRow>
-                  ))}
+                    </TableRow>)}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
-        </div>
-      )}
+        </div>}
 
       {/* Active Psychologists Section */}
       <Card>
         <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-8 text-center">
+          {isLoading ? <div className="p-8 text-center">
               <p className="text-gray-500">Carregando psicólogos...</p>
-            </div>
-          ) : activePsychologists.length === 0 && pendingRequests.length === 0 && pendingInvites.length === 0 ? (
-            <div className="p-8 text-center">
+            </div> : activePsychologists.length === 0 && pendingRequests.length === 0 && pendingInvites.length === 0 ? <div className="p-8 text-center">
               <p className="text-gray-500">Nenhum psicólogo conectado à empresa.</p>
               <p className="text-sm text-gray-400 mt-2">Clique em "Adicionar Psicólogo" para conectar.</p>
-            </div>
-          ) : activePsychologists.length === 0 ? (
-            <div className="p-8 text-center">
+            </div> : activePsychologists.length === 0 ? <div className="p-8 text-center">
               <p className="text-gray-500">Nenhum psicólogo ativo no momento.</p>
-            </div>
-          ) : (
-            <>
+            </div> : <>
               <h3 className="text-lg font-medium p-4 border-b">Psicólogos Ativos</h3>
               <Table>
                 <TableHeader>
@@ -495,29 +421,21 @@ const CompanyPsychologistsList: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {activePsychologists.map((psychologist) => (
-                    <TableRow key={psychologist.id}>
+                  {activePsychologists.map(psychologist => <TableRow key={psychologist.id}>
                       <TableCell className="font-medium">{psychologist.nome}</TableCell>
                       <TableCell>{psychologist.email}</TableCell>
                       <TableCell>{psychologist.crp}</TableCell>
                       <TableCell>{psychologist.especialidade || 'Não especificada'}</TableCell>
                       <TableCell className="text-right">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-red-500 border-red-300 hover:bg-red-50"
-                          onClick={() => disconnectPsychologist(psychologist.id)}
-                        >
+                        <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => disconnectPsychologist(psychologist.id)}>
                           <UserX size={16} className="mr-1" />
                           Desconectar
                         </Button>
                       </TableCell>
-                    </TableRow>
-                  ))}
+                    </TableRow>)}
                 </TableBody>
               </Table>
-            </>
-          )}
+            </>}
         </CardContent>
       </Card>
 
@@ -533,27 +451,15 @@ const CompanyPsychologistsList: React.FC = () => {
           
           <div className="space-y-4 py-4">
             <div className="flex items-center gap-2">
-              <Input
-                placeholder="Buscar por nome, email ou CRP..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={searchPsychologists}
-                disabled={isSearching || !searchQuery.trim()}
-              >
+              <Input placeholder="Buscar por nome, email ou CRP..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+              <Button variant="outline" size="icon" onClick={searchPsychologists} disabled={isSearching || !searchQuery.trim()}>
                 <Search className="h-4 w-4" />
               </Button>
             </div>
 
-            {isSearching ? (
-              <div className="text-center py-4">
+            {isSearching ? <div className="text-center py-4">
                 <p className="text-gray-500">Buscando psicólogos...</p>
-              </div>
-            ) : searchResults.length > 0 ? (
-              <div className="max-h-[300px] overflow-y-auto">
+              </div> : searchResults.length > 0 ? <div className="max-h-[300px] overflow-y-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -563,34 +469,24 @@ const CompanyPsychologistsList: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {searchResults.map((psychologist) => (
-                      <TableRow key={psychologist.id}>
+                    {searchResults.map(psychologist => <TableRow key={psychologist.id}>
                         <TableCell className="font-medium">{psychologist.nome}</TableCell>
                         <TableCell>{psychologist.crp}</TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            size="sm"
-                            onClick={() => connectPsychologist(psychologist.id)}
-                          >
+                          <Button size="sm" onClick={() => connectPsychologist(psychologist.id)}>
                             <UserPlus size={16} className="mr-1" />
                             Conectar
                           </Button>
                         </TableCell>
-                      </TableRow>
-                    ))}
+                      </TableRow>)}
                   </TableBody>
                 </Table>
-              </div>
-            ) : searchQuery.trim() ? (
-              <div className="text-center py-4">
+              </div> : searchQuery.trim() ? <div className="text-center py-4">
                 <p className="text-gray-500">Nenhum psicólogo encontrado com este termo.</p>
-              </div>
-            ) : null}
+              </div> : null}
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 };
-
 export default CompanyPsychologistsList;
