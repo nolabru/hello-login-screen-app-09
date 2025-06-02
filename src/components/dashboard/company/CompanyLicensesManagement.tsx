@@ -64,7 +64,7 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
       
       <Card className="mb-6">
         <CardContent className="p-6">
-          <h3 className="text-lg font-medium mb-4">Resumo de Licenças</h3>
+          <h3 className="text-lg font-medium mb-4  text-neutral-700">Resumo de Licenças</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gray-50 p-4 rounded-md">
               <p className="text-sm text-gray-500">Licenças Totais</p>
@@ -82,7 +82,7 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
         </CardContent>
       </Card>
       
-      <h3 className="text-lg font-medium mb-4">Planos Ativos</h3>
+      <h3 className="text-lg font-medium mb-4  text-neutral-700">Planos Ativos</h3>
       {loading ? <p className="text-center py-8">Carregando...</p> : licenses.length === 0 ? <Card>
           <CardContent className="p-6 text-center">
             <p className="mb-4">Sua empresa ainda não possui planos de licença ativos.</p>
