@@ -49,7 +49,7 @@ const PsychologistForm: React.FC = () => {
               <Button type="button" variant="outline" onClick={() => navigate('/')}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="">
+              <Button type="submit" disabled={isSubmitting} className="bg-portal-purple">
                 {isSubmitting ? 'Criando Conta...' : 'Cadastrar'}
               </Button>
             </div>
