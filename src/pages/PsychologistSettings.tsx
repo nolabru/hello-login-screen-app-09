@@ -231,7 +231,7 @@ const PsychologistSettings = () => {
                       </FormItem>} />
                   
                   <div className="flex justify-end">
-                    <Button type="submit" disabled={isLoading}>
+                    <Button type="submit" disabled={isLoading} className="bg-portal-purple hover:bg-portal-purple-dark">
                       {isLoading ? 'Salvando...' : 'Salvar Alterações'}
                     </Button>
                   </div>
