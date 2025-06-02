@@ -17,7 +17,7 @@ const CompanyPsychologists: React.FC = () => {
               <p className="text-gray-500">Gerencie os psicólogos que atendem sua empresa</p>
             </div>
             
-            <Button className="bg-indigo-900 hover:bg-indigo-800">
+            <Button className="bg-portal-purple hover:bg-portal-purple-dark">
               <Search className="mr-2 h-4 w-4" />
               Buscar Psicólogos
             </Button>
