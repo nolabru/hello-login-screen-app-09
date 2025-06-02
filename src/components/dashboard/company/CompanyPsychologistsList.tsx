@@ -318,7 +318,7 @@ const CompanyPsychologistsList: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-medium  text-neutral-700">Psicólogos da Empresa</h2>
-          <p className="text-gray-500">Gerencie os psicólogos conectados à sua empresa</p>
+          
         </div>
         <Button onClick={() => setIsSearchDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark">
           <UserPlus size={16} className="mr-2" />
