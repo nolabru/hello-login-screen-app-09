@@ -74,11 +74,11 @@ const SentimentChart: React.FC = () => {
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="feliz" stackId="a" fill="#E8F5E8" stroke="#22c55e" strokeWidth={1} name="Feliz" />
-              <Bar dataKey="triste" stackId="a" fill="#E3F2FD" stroke="#3b82f6" strokeWidth={1} name="Triste" />
-              <Bar dataKey="ansioso" stackId="a" fill="#FFF3E0" stroke="#f97316" strokeWidth={1} name="Ansioso" />
-              <Bar dataKey="neutro" stackId="a" fill="#FFF5D3" stroke="#eab308" strokeWidth={1} name="Neutro" />
-              <Bar dataKey="irritado" stackId="a" fill="#FFEBEE" stroke="#ef4444" strokeWidth={1} name="Irritado" />
+              <Bar dataKey="feliz" stackId="a" fill="#E8F5E8" name="Feliz" />
+              <Bar dataKey="triste" stackId="a" fill="#E3F2FD" name="Triste" />
+              <Bar dataKey="ansioso" stackId="a" fill="#FFF3E0" name="Ansioso" />
+              <Bar dataKey="neutro" stackId="a" fill="#FFF5D3" name="Neutro" />
+              <Bar dataKey="irritado" stackId="a" fill="#FFEBEE" name="Irritado" />
             </BarChart>
           </ResponsiveContainer>
         </div>
