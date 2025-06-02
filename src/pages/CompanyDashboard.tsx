@@ -118,7 +118,7 @@ const CompanyDashboard: React.FC = () => {
             
             <TabsContent value="overview" className="space-y-8">
               <div className="flex justify-end gap-4 mb-6">
-                <Button className="bg-indigo-900 hover:bg-indigo-800" onClick={() => setIsAddEmployeeDialogOpen(true)} disabled={stats.availableLicenses <= 0} title={stats.availableLicenses <= 0 ? "Sem licenças disponíveis" : ""}>
+                <Button onClick={() => setIsAddEmployeeDialogOpen(true)} disabled={stats.availableLicenses <= 0} title={stats.availableLicenses <= 0 ? "Sem licenças disponíveis" : ""} className="bg-portal-purple hover:bg-portal-purple-dark">
                   Adicionar Funcionário
                 </Button>
                 <Button variant="outline" className="border-indigo-900 text-indigo-900 hover:bg-indigo-50">
@@ -139,7 +139,7 @@ const CompanyDashboard: React.FC = () => {
                       <div className="mb-2">
                         <h3 className="text-gray-700">Funcionários Ativos</h3>
                       </div>
-                      <p className="text-4xl font-bold text-blue-500">{stats.activeEmployees}</p>
+                      <p className="text-4xl font-bold text-portal-purple">{stats.activeEmployees}</p>
                       <p className="text-sm text-gray-500 mt-2">{stats.activeEmployees} funcionários usando o app</p>
                     </CardContent>
                   </Card>
@@ -150,7 +150,7 @@ const CompanyDashboard: React.FC = () => {
                       <div className="mb-2">
                         <h3 className="text-gray-700">Funcionários Pendentes</h3>
                       </div>
-                      <p className="text-4xl font-bold text-orange-500">{stats.pendingEmployees}</p>
+                      <p className="text-4xl font-bold text-portal-purple">{stats.pendingEmployees}</p>
                       <p className="text-sm text-gray-500 mt-2">Aguardando ativação de conta</p>
                     </CardContent>
                   </Card>
@@ -170,7 +170,7 @@ const CompanyDashboard: React.FC = () => {
                       <div className="mb-2">
                         <h3 className="text-gray-700">Psicólogos Associados</h3>
                       </div>
-                      <p className="text-4xl font-bold text-green-500">{stats.activePsychologists}</p>
+                      <p className="text-4xl font-bold text-portal-purple">{stats.activePsychologists}</p>
                       <p className="text-sm text-gray-500 mt-2">Profissionais ativos</p>
                     </CardContent>
                   </Card>
@@ -181,7 +181,7 @@ const CompanyDashboard: React.FC = () => {
                       <div className="mb-2">
                         <h3 className="text-gray-700">Psicólogos Pendentes</h3>
                       </div>
-                      <p className="text-4xl font-bold text-purple-500">{stats.pendingPsychologists}</p>
+                      <p className="text-4xl font-bold text-portal-purple">{stats.pendingPsychologists}</p>
                       <p className="text-sm text-gray-500 mt-2">Aguardando aprovação</p>
                     </CardContent>
                   </Card>
@@ -201,7 +201,7 @@ const CompanyDashboard: React.FC = () => {
                       <div className="mb-2">
                         <h3 className="text-gray-700">Licenças Disponíveis</h3>
                       </div>
-                      <p className="text-4xl font-bold text-indigo-500">{stats.availableLicenses}</p>
+                      <p className="text-4xl font-bold text-portal-purple">{stats.availableLicenses}</p>
                       <p className="text-sm text-gray-500 mt-2">De {stats.totalLicenses} licenças totais</p>
                     </CardContent>
                   </Card>
@@ -212,7 +212,7 @@ const CompanyDashboard: React.FC = () => {
                       <div className="mb-2">
                         <h3 className="text-gray-700">Índice de Bem-estar</h3>
                       </div>
-                      <p className="text-4xl font-bold text-indigo-500">{stats.wellBeingIndex}</p>
+                      <p className="text-4xl font-bold text-portal-purple">{stats.wellBeingIndex}</p>
                       <p className="text-sm text-gray-500 mt-2">Média atual da equipe</p>
                     </CardContent>
                   </Card>
