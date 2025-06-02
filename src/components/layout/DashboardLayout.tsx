@@ -148,7 +148,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </div>
           
           <div className="p-4 border-t">
-            <button onClick={handleLogout} className="flex items-center w-full px-4 py-3 text-sm text-purple-600 hover:bg-purple-50 rounded-md">
+            <button onClick={handleLogout} className="flex items-center w-full px-4 py-3 text-sm text-purple-600 hover:bg-purple-50 rounded-md font-medium">
               <LogOut className="h-5 w-5 mr-3" />
               Fazer Logout
             </button>
