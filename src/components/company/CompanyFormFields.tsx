@@ -36,7 +36,7 @@ const CompanyFormFields: React.FC<CompanyFormFieldsProps> = ({ form }) => {
               </FormLabel>
               <FormControl>
                 <Input 
-                  placeholder="Nome comercial" 
+                  placeholder="Nome Comercial" 
                   {...field}
                 />
               </FormControl>
@@ -56,7 +56,7 @@ const CompanyFormFields: React.FC<CompanyFormFieldsProps> = ({ form }) => {
               </FormLabel>
               <FormControl>
                 <Input 
-                  placeholder="Razão social completa" 
+                  placeholder="Razão Social Completa" 
                   {...field}
                 />
               </FormControl>
@@ -138,7 +138,7 @@ const CompanyFormFields: React.FC<CompanyFormFieldsProps> = ({ form }) => {
               </FormLabel>
               <FormControl>
                 <Input 
-                  placeholder="(XX) XXXXX-XXXX" 
+                  placeholder="(00) 00000-0000" 
                   {...field}
                 />
               </FormControl>
@@ -161,7 +161,7 @@ const CompanyFormFields: React.FC<CompanyFormFieldsProps> = ({ form }) => {
               </FormLabel>
               <FormControl>
                 <Input 
-                  placeholder="Digite sua senha" 
+                  placeholder="Senha (Mínimo 6 Caracteres)" 
                   type="password"
                   {...field}
                 />

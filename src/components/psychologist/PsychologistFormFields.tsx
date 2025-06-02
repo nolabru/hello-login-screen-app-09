@@ -32,7 +32,7 @@ const PsychologistFormFields: React.FC<PsychologistFormFieldsProps> = ({ control
               </FormLabel>
               <FormControl>
                 <Input 
-                  placeholder="Nome do psicólogo" 
+                  placeholder="Nome do Psicólogo" 
                   {...field} 
                 />
               </FormControl>
@@ -53,7 +53,7 @@ const PsychologistFormFields: React.FC<PsychologistFormFieldsProps> = ({ control
               <FormControl>
                 <Input 
                   type="email"
-                  placeholder="Email do psicólogo" 
+                  placeholder="Email do Psicólogo" 
                   {...field} 
                 />
               </FormControl>
@@ -115,7 +115,7 @@ const PsychologistFormFields: React.FC<PsychologistFormFieldsProps> = ({ control
             </FormLabel>
             <FormControl>
               <Input 
-                placeholder="Área de especialização" 
+                placeholder="Área de Especialização" 
                 {...field} 
               />
             </FormControl>
@@ -135,7 +135,7 @@ const PsychologistFormFields: React.FC<PsychologistFormFieldsProps> = ({ control
             </FormLabel>
             <FormControl>
               <Textarea 
-                placeholder="Breve biografia profissional (opcional)" 
+                placeholder="Biografia Profissional (Opcional)" 
                 className="min-h-[120px]"
                 {...field} 
                 value={field.value || ''}
@@ -158,7 +158,7 @@ const PsychologistFormFields: React.FC<PsychologistFormFieldsProps> = ({ control
             <FormControl>
               <Input 
                 type="password"
-                placeholder="Senha (mínimo 6 caracteres)" 
+                placeholder="Senha (Mínimo 6 Caracteres)" 
                 {...field} 
               />
             </FormControl>

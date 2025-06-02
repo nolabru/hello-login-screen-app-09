@@ -60,7 +60,7 @@ const PsychologistForm: React.FC = () => {
                 className="bg-gradient-button"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Salvando...' : 'Salvar'}
+                {isSubmitting ? 'Criando Conta...' : 'Cadastrar'}
               </Button>
             </div>
           </form>
@@ -68,7 +68,7 @@ const PsychologistForm: React.FC = () => {
 
         <div className="mt-10 pt-6 text-center border-t border-gray-200">
           <p className="text-sm text-gray-600">
-            Já possui uma conta? <Link to="/" className="text-portal-purple hover:text-portal-purple-dark font-medium">Faça login</Link>
+            Já possui uma conta? <Link to="/" className="text-portal-purple hover:text-portal-purple-dark font-medium">Faça Login</Link>
           </p>
         </div>
       </CardContent>
