@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -10,10 +9,12 @@ import { companyFormSchema, CompanyFormValues } from './CompanyFormSchema';
 import { useCompanyRegistration } from '@/hooks/useCompanyRegistration';
 import { Form } from '@/components/ui/form';
 import CompanyFormFields from './CompanyFormFields';
-
 const CompanyForm = () => {
-  const { handleSubmit: handleRegistrationSubmit, isSubmitting } = useCompanyRegistration();
-  
+  const {
+    handleSubmit: handleRegistrationSubmit,
+    isSubmitting
+  } = useCompanyRegistration();
+
   // Initialize form with react-hook-form and zod validation
   const form = useForm<CompanyFormValues>({
     resolver: zodResolver(companyFormSchema),
@@ -24,20 +25,17 @@ const CompanyForm = () => {
       cnpj: '',
       contactEmail: '',
       contactPhone: '',
-      password: '',
-    },
+      password: ''
+    }
   });
-
   const onSubmit = (data: CompanyFormValues) => {
     handleRegistrationSubmit(data);
   };
-
-  return (
-    <Card className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
+  return <Card className="w-full max-w-4xl bg-white rounded-xl shadow-lg overflow-hidden">
       <CardContent className="p-10">
         <div className="flex items-center justify-center gap-4 mb-8">
-          <Building size={32} className="text-portal-purple" />
-          <h1 className="text-2xl font-bold">Registro de Empresa</h1>
+          
+          <h1 className="font-semibold text-2xl text-portal-purple">Registro de Empresa</h1>
         </div>
         
         <p className="text-gray-600 mb-10 text-center">Preencha os dados para criar uma conta empresarial</p>
@@ -47,11 +45,7 @@ const CompanyForm = () => {
             <CompanyFormFields form={form} />
 
             <div className="flex justify-end pt-8">
-              <Button 
-                type="submit"
-                className="px-6 py-3 bg-gradient-button text-white rounded-lg hover:opacity-90 transition"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" disabled={isSubmitting} className="px-6 py-3 bg-portal-purple text-white rounded-lg hover:opacity-90 transition">
                 {isSubmitting ? 'Cadastrando...' : 'Cadastrar'}
               </Button>
             </div>
@@ -64,8 +58,6 @@ const CompanyForm = () => {
           </p>
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
-
 export default CompanyForm;
