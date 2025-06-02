@@ -205,7 +205,7 @@ const CompanyComplianceReport = () => {
               setActiveGroup(nextGroup.id);
               setActiveTab(nextGroup.tabs[0]);
             }
-          }} disabled={activeTab === "attachments"}>
+          }} disabled={activeTab === "attachments"} className="bg-portal-purple hover:bg-portal-purple-dark">
               Próximo
             </Button>
           </div>
