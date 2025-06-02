@@ -54,7 +54,7 @@ const CompanyForm = () => {
 
         <div className="text-center mt-10 pt-6 border-t border-gray-200">
           <p className="text-gray-600">
-            Já possui uma conta? <Link to="/" className="text-portal-purple hover:underline font-medium">Faça login</Link>
+            Já possui uma conta? <Link to="/" className="text-portal-purple hover:text-portal-purple-dark font-medium">Faça login</Link>
           </p>
         </div>
       </CardContent>
