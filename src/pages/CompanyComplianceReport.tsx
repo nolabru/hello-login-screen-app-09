@@ -124,7 +124,7 @@ const CompanyComplianceReport = () => {
               Preencha as informações abaixo para gerar seu relatório de conformidade
             </p>
           </div>
-          <Button onClick={handleDownloadPDF} className="gap-2">
+          <Button onClick={handleDownloadPDF} className="gap-2 bg-portal-purple hover:bg-portal-purple-dark">
             <Download className="h-4 w-4" />
             Baixar PDF
           </Button>
