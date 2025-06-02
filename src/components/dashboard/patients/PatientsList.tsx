@@ -158,10 +158,10 @@ const PatientsList: React.FC = () => {
   return <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex flex-col">
-          <h1 className="bg-clip-text bg-gradient-to-r from-portal-purple to-portal-purple-dark text-2xl font-medium text-neutral-700 mb-2">
+          <h1 className="bg-clip-text bg-gradient-to-r from-portal-purple to-portal-purple-dark text-2xl font-medium text-neutral-700">
             Seus Pacientes
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-gray-500">
             Gerencie seus pacientes e visualize seus históricos de interação com a AIA
           </p>
         </div>
