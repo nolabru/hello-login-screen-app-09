@@ -138,28 +138,22 @@ const PsychologistSettings = () => {
       setIsLoading(false);
     }
   };
-  return (
-    <DashboardLayout>
+  return <DashboardLayout>
       <div className="p-6">
         <h1 className="text-2xl font-medium text-neutral-700">Configurações</h1>
         <p className="text-gray-500 mb-6">Gerencie suas informações pessoais e preferências da conta.</p>
         
         <Card className="w-full max-w-3xl mx-auto">
           <CardHeader>
-            <CardTitle>Perfil</CardTitle>
+            <CardTitle className="text-neutral-700 text-xl font-medium">Perfil</CardTitle>
           </CardHeader>
           <CardContent>
-            {isLoading && !psychologistData ? (
-              <div className="text-center py-6">Carregando informações...</div>
-            ) : (
-              <Form {...form}>
+            {isLoading && !psychologistData ? <div className="text-center py-6">Carregando informações...</div> : <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                      control={form.control}
-                      name="nome"
-                      render={({ field }) => (
-                        <FormItem>
+                    <FormField control={form.control} name="nome" render={({
+                  field
+                }) => <FormItem>
                           <FormLabel className="flex items-center gap-2 text-sm font-medium text-gray-700">
                             <UserRound size={16} className="text-portal-purple" />
                             Nome completo
@@ -168,15 +162,11 @@ const PsychologistSettings = () => {
                             <Input {...field} />
                           </FormControl>
                           <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                        </FormItem>} />
                     
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
+                    <FormField control={form.control} name="email" render={({
+                  field
+                }) => <FormItem>
                           <FormLabel className="flex items-center gap-2 text-sm font-medium text-gray-700">
                             <Mail size={16} className="text-portal-purple" />
                             Email
@@ -185,15 +175,11 @@ const PsychologistSettings = () => {
                             <Input {...field} type="email" />
                           </FormControl>
                           <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                        </FormItem>} />
                     
-                    <FormField
-                      control={form.control}
-                      name="crp"
-                      render={({ field }) => (
-                        <FormItem>
+                    <FormField control={form.control} name="crp" render={({
+                  field
+                }) => <FormItem>
                           <FormLabel className="flex items-center gap-2 text-sm font-medium text-gray-700">
                             <FileText size={16} className="text-portal-purple" />
                             CRP
@@ -202,15 +188,11 @@ const PsychologistSettings = () => {
                             <Input {...field} />
                           </FormControl>
                           <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                        </FormItem>} />
                     
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
+                    <FormField control={form.control} name="phone" render={({
+                  field
+                }) => <FormItem>
                           <FormLabel className="flex items-center gap-2 text-sm font-medium text-gray-700">
                             <Phone size={16} className="text-portal-purple" />
                             Telefone
@@ -219,16 +201,12 @@ const PsychologistSettings = () => {
                             <Input {...field} />
                           </FormControl>
                           <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                        </FormItem>} />
                   </div>
                   
-                  <FormField
-                    control={form.control}
-                    name="especialidade"
-                    render={({ field }) => (
-                      <FormItem>
+                  <FormField control={form.control} name="especialidade" render={({
+                field
+              }) => <FormItem>
                         <FormLabel className="flex items-center gap-2 text-sm font-medium text-gray-700">
                           <FileText size={16} className="text-portal-purple" />
                           Especialidade
@@ -237,30 +215,20 @@ const PsychologistSettings = () => {
                           <Input {...field} />
                         </FormControl>
                         <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      </FormItem>} />
                   
-                  <FormField
-                    control={form.control}
-                    name="bio"
-                    render={({ field }) => (
-                      <FormItem>
+                  <FormField control={form.control} name="bio" render={({
+                field
+              }) => <FormItem>
                         <FormLabel className="flex items-center gap-2 text-sm font-medium text-gray-700">
                           <UserRound size={16} className="text-portal-purple" />
                           Biografia
                         </FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="Biografia Profissional (Opcional)"
-                            className="min-h-[120px]"
-                            {...field}
-                          />
+                          <Textarea placeholder="Biografia Profissional (Opcional)" className="min-h-[120px]" {...field} />
                         </FormControl>
                         <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                      </FormItem>} />
                   
                   <div className="flex justify-end">
                     <Button type="submit" disabled={isLoading}>
@@ -268,13 +236,10 @@ const PsychologistSettings = () => {
                     </Button>
                   </div>
                 </form>
-              </Form>
-            )}
+              </Form>}
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
-  );
+    </DashboardLayout>;
 };
-
 export default PsychologistSettings;
