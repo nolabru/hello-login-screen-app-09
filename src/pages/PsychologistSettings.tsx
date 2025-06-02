@@ -156,7 +156,7 @@ const PsychologistSettings = () => {
                 }) => <FormItem>
                           <FormLabel className="flex items-center gap-2 text-sm font-medium text-gray-700">
                             <UserRound size={16} className="text-portal-purple" />
-                            Nome completo
+                            Nome Completo
                           </FormLabel>
                           <FormControl>
                             <Input {...field} />
