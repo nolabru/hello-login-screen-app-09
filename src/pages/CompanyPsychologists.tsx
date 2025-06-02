@@ -13,7 +13,7 @@ const CompanyPsychologists: React.FC = () => {
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-2xl font-medium ">Psicólogos Parceiros</h1>
+              <h1 className="text-2xl font-medium   text-neutral-700">Psicólogos Parceiros</h1>
               <p className="text-gray-500">Gerencie os psicólogos que atendem sua empresa</p>
             </div>
             
