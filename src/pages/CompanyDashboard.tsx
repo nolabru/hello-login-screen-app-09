@@ -115,14 +115,7 @@ const CompanyDashboard: React.FC = () => {
             </TabsList>
             
             <TabsContent value="overview" className="space-y-8">
-              <div className="flex justify-end gap-4 mb-6">
-                <Button onClick={() => setIsAddEmployeeDialogOpen(true)} disabled={stats.availableLicenses <= 0} title={stats.availableLicenses <= 0 ? "Sem licenças disponíveis" : ""} className="bg-portal-purple hover:bg-portal-purple-dark">
-                  Adicionar Funcionário
-                </Button>
-                <Button variant="outline" className="border-indigo-900 text-indigo-900 hover:bg-indigo-50">
-                  Buscar Psicólogos
-                </Button>
-              </div>
+              
               
               {/* Primeira linha - Funcionários */}
               <div className="mb-8">
