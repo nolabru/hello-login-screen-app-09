@@ -141,7 +141,7 @@ const PsychologistSettings = () => {
     }
   };
   return <DashboardLayout>
-      <div className="container py-8">
+      <div className="container p-4">
         <h1 className="text-2xl font-medium text-neutral-700">Configurações</h1>
         
         <Card className="w-full max-w-3xl mx-auto">
