@@ -1,20 +1,16 @@
-
 import React from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import { CheckCircle, ArrowRight } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
-
 const EmailVerified = () => {
   const [searchParams] = useSearchParams();
-  
+
   // Extrair parâmetros da URL para verificação
   const type = searchParams.get('type');
   const token = searchParams.get('token');
-
-  return (
-    <>
+  return <>
       <Helmet>
         <title>E-mail Verificado - Portal Calma</title>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -44,34 +40,22 @@ const EmailVerified = () => {
             </h1>
             
             {/* Mensagem */}
-            <p className="text-gray-600 mb-6 leading-relaxed">
-              Seu e-mail foi confirmado com sucesso. Agora você pode acessar sua conta e começar a usar o Portal Calma.
-            </p>
+            <p className="text-gray-600 mb-6 leading-relaxed">Seu e-mail foi confirmado com sucesso. Agora você pode voltar ao aplicativo e finalizar o seu cadastro.</p>
             
             {/* Botões de ação */}
             <div className="space-y-3">
               <Link to="/" className="w-full">
-                <Button className="w-full bg-gradient-button hover:opacity-90 transition-opacity">
-                  Ir para Login
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
+                
               </Link>
             </div>
           </div>
           
           {/* Informações adicionais */}
           <div className="text-center mt-6">
-            <p className="text-sm text-gray-500">
-              Precisa de ajuda?{' '}
-              <a href="mailto:suporte@portalcalma.com" className="text-portal-purple hover:underline">
-                Entre em contato
-              </a>
-            </p>
+            
           </div>
         </div>
       </div>
-    </>
-  );
+    </>;
 };
-
 export default EmailVerified;
