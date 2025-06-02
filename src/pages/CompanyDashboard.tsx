@@ -93,7 +93,7 @@ const CompanyDashboard: React.FC = () => {
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-2xl font-medium">{companyName}</h1>
+              <h1 className="text-2xl font-medium text-neutral-700">{companyName}</h1>
               <p className="text-gray-500">{localStorage.getItem('companyEmail')}</p>
             </div>
             
@@ -126,7 +126,7 @@ const CompanyDashboard: React.FC = () => {
               
               {/* Primeira linha - Funcionários */}
               <div className="mb-8">
-                <h2 className="text-xl font-medium mb-4">
+                <h2 className="text-xl font-medium mb-4  text-neutral-700">
                   Funcionários
                 </h2>
                 
@@ -157,7 +157,7 @@ const CompanyDashboard: React.FC = () => {
               
               {/* Segunda linha - Psicólogos */}
               <div className="mb-8">
-                <h2 className="text-xl font-medium mb-4">
+                <h2 className="text-xl font-medium mb-4  text-neutral-700">
                   Psicólogos
                 </h2>
                 
@@ -188,7 +188,7 @@ const CompanyDashboard: React.FC = () => {
               
               {/* Terceira linha - Licenças e Índice */}
               <div className="mb-8">
-                <h2 className="text-xl font-medium mb-4">
+                <h2 className="text-xl font-medium mb-4  text-neutral-700">
                   Licenças e Bem-estar
                 </h2>
                 
@@ -218,7 +218,7 @@ const CompanyDashboard: React.FC = () => {
               </div>
               
               <div className="mb-6">
-                <h2 className="text-xl font-medium mb-4">
+                <h2 className="text-xl font-medium mb-4  text-neutral-700">
                   Tendências de Saúde Mental
                 </h2>
                 <Card>
