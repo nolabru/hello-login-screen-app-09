@@ -1,4 +1,3 @@
-
 import React, { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '@/components/Logo';
@@ -6,25 +5,25 @@ import { Home, Users, Building2, Settings, LogOut, Menu, X } from 'lucide-react'
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/components/ui/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
-
 interface DashboardLayoutProps {
   children: ReactNode;
 }
-
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({
+  children
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [userName, setUserName] = useState('');
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-
   useEffect(() => {
     // Verificar se há um psicólogo logado
     const checkAuth = async () => {
       const psychologistId = localStorage.getItem('psychologistId');
       const psychologistName = localStorage.getItem('psychologistName');
-      
       if (!psychologistId) {
         // Se não houver id do psicólogo, redirecionar para a página de login
         toast({
@@ -35,7 +34,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         navigate('/');
         return;
       }
-      
+
       // Se houver um nome salvo, use-o
       if (psychologistName) {
         setUserName(psychologistName);
@@ -43,13 +42,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         // Caso contrário, busque do banco de dados
         // Converting string to number with parseInt
         const psychologistIdNumber = parseInt(psychologistId, 10);
-        
-        const { data: psychologist } = await supabase
-          .from('psychologists')
-          .select('nome, name')
-          .eq('id', psychologistIdNumber)
-          .single();
-          
+        const {
+          data: psychologist
+        } = await supabase.from('psychologists').select('nome, name').eq('id', psychologistIdNumber).single();
         if (psychologist) {
           const displayName = psychologist.nome || psychologist.name;
           setUserName(displayName || 'Psicólogo');
@@ -57,7 +52,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         }
       }
     };
-    
     checkAuth();
   }, [navigate, toast]);
 
@@ -69,25 +63,33 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       setSidebarOpen(true);
     }
   }, [isMobile]);
-
-  const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: Home },
-    { path: '/pacientes', label: 'Pacientes', icon: Users },
-    { path: '/empresas', label: 'Empresas', icon: Building2 },
-    { path: '/configuracoes', label: 'Configurações', icon: Settings },
-  ];
-
+  const navItems = [{
+    path: '/dashboard',
+    label: 'Dashboard',
+    icon: Home
+  }, {
+    path: '/pacientes',
+    label: 'Pacientes',
+    icon: Users
+  }, {
+    path: '/empresas',
+    label: 'Empresas',
+    icon: Building2
+  }, {
+    path: '/configuracoes',
+    label: 'Configurações',
+    icon: Settings
+  }];
   const handleLogout = () => {
     try {
       // Limpar localStorage
       localStorage.removeItem('psychologistId');
       localStorage.removeItem('psychologistName');
-      
       toast({
         title: "Logout realizado",
-        description: "Sua sessão foi encerrada com sucesso.",
+        description: "Sua sessão foi encerrada com sucesso."
       });
-      
+
       // Redirect to login page
       navigate('/');
     } catch (err) {
@@ -95,17 +97,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       toast({
         variant: 'destructive',
         title: "Erro ao fazer logout",
-        description: "Ocorreu um erro inesperado. Tente novamente.",
+        description: "Ocorreu um erro inesperado. Tente novamente."
       });
     }
   };
-
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
-
-  return (
-    <div className="flex flex-col h-screen bg-gray-50 font-sans">
+  return <div className="flex flex-col h-screen bg-gray-50 font-sans">
       {/* Mobile Header */}
       <div className={`md:hidden flex items-center justify-between p-4 bg-white shadow-sm z-10`}>
         <div className="flex items-center space-x-2">
@@ -119,54 +118,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <div
-          className={`${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } md:translate-x-0 fixed md:relative z-20 w-64 h-full bg-white shadow-md transition-transform duration-300 ease-in-out`}
-        >
+        <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:relative z-20 w-64 h-full bg-white shadow-md transition-transform duration-300 ease-in-out`}>
           <div className="hidden md:block p-4 border-b">
             <Link to="/dashboard" className="flex items-center space-x-2">
               <Logo showTextLogo={false} size="sm" />
-              <span className="font-medium text-lg">Área do Psicólogo</span>
+              <span className="text-lg font-medium text-neutral-700">Área do Psicólogo</span>
             </Link>
           </div>
           
           <div className="p-4 border-b">
             <p className="text-sm text-gray-500">Bem-vindo(a),</p>
-            <h2 className="font-medium text-xl">{userName}</h2>
+            <h2 className="font-medium text-xl text-neutral-700">{userName}</h2>
           </div>
           
           <div className="py-4 overflow-y-auto flex-1">
             <nav>
               <ul>
-                {navItems.map((item) => {
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <li key={item.path}>
-                      <Link
-                        to={item.path}
-                        className={`flex items-center px-4 py-3 text-sm ${
-                          isActive
-                            ? 'bg-purple-50 text-portal-purple border-l-4 border-portal-purple'
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                        onClick={isMobile ? () => setSidebarOpen(false) : undefined}
-                      >
+                {navItems.map(item => {
+                const isActive = location.pathname === item.path;
+                return <li key={item.path}>
+                      <Link to={item.path} className={`flex items-center px-4 py-3 text-sm ${isActive ? 'bg-purple-50 text-portal-purple border-l-4 border-portal-purple' : 'text-gray-700 hover:bg-gray-100'}`} onClick={isMobile ? () => setSidebarOpen(false) : undefined}>
                         <item.icon className={`h-5 w-5 mr-3 ${isActive ? 'text-portal-purple' : 'text-gray-500'}`} />
                         {item.label}
                       </Link>
-                    </li>
-                  );
-                })}
+                    </li>;
+              })}
               </ul>
             </nav>
           </div>
           
           <div className="p-4 border-t">
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full px-4 py-3 text-sm text-purple-600 hover:bg-purple-50 rounded-md"
-            >
+            <button onClick={handleLogout} className="flex items-center w-full px-4 py-3 text-sm text-purple-600 hover:bg-purple-50 rounded-md">
               <LogOut className="h-5 w-5 mr-3" />
               Fazer Logout
             </button>
@@ -176,12 +158,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-hidden w-full">
           {/* Overlay for mobile when sidebar is open */}
-          {sidebarOpen && isMobile && (
-            <div 
-              className="fixed inset-0 bg-black bg-opacity-50 z-10"
-              onClick={() => setSidebarOpen(false)}
-            />
-          )}
+          {sidebarOpen && isMobile && <div className="fixed inset-0 bg-black bg-opacity-50 z-10" onClick={() => setSidebarOpen(false)} />}
           
           {/* Main content area */}
           <main className="flex-1 overflow-y-auto bg-gray-50 w-full">
@@ -189,8 +166,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           </main>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default DashboardLayout;

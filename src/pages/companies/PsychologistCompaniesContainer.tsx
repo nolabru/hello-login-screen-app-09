@@ -44,7 +44,7 @@ const PsychologistCompaniesContainer: React.FC = () => {
           <h1 className="text-2xl font-medium text-neutral-700">Empresas</h1>
           <p className="text-gray-500">Gerencie suas conexões com empresas</p>
         </div>
-        <Button className="bg-indigo-900 hover:bg-indigo-800 w-full md:w-auto" onClick={() => setIsSearchDialogOpen(true)}>
+        <Button onClick={() => setIsSearchDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark w-full md:w-auto">
           <UserPlus size={16} className="mr-2" />
           Solicitar Conexão
         </Button>
@@ -71,7 +71,7 @@ const PsychologistCompaniesContainer: React.FC = () => {
         </div>}
 
       <div className="mb-6">
-        <h2 className="text-lg font-medium mb-3">Empresas Conectadas</h2>
+        <h2 className="text-lg font-medium mb-3 text-neutral-700">Empresas Conectadas</h2>
         <CompanyList companies={activeCompanies} isLoading={isLoading} onViewDetails={handleViewCompanyDetails} refreshCompanies={loadCompanies} listType="active" />
       </div>
       
