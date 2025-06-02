@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import CompanyDashboardLayout from '@/components/layout/CompanyDashboardLayout';
@@ -12,9 +11,10 @@ import AddEmployeeDialog from '@/components/dashboard/company/AddEmployeeDialog'
 import CompanyLicensesManagement from '@/components/dashboard/company/CompanyLicensesManagement';
 import { checkLicenseAvailability } from '@/services/licenseService';
 import { useToast } from '@/components/ui/use-toast';
-
 const CompanyDashboard: React.FC = () => {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [companyName, setCompanyName] = useState('');
   const [stats, setStats] = useState({
     activeEmployees: 0,
@@ -29,47 +29,37 @@ const CompanyDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [companyId, setCompanyId] = useState<number | null>(null);
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
-
   useEffect(() => {
     const fetchCompanyData = async () => {
       setLoading(true);
       try {
         const companyId = localStorage.getItem('companyId');
         if (!companyId) return;
-        
         const companyIdNumber = parseInt(companyId, 10);
         setCompanyId(companyIdNumber);
-        
+
         // Get company name
-        const { data: company } = await supabase
-          .from('companies')
-          .select('name')
-          .eq('id', companyIdNumber)
-          .single();
-          
+        const {
+          data: company
+        } = await supabase.from('companies').select('name').eq('id', companyIdNumber).single();
         if (company) {
           setCompanyName(company.name);
         }
-        
+
         // Fetch real stats
-        const { data: employees } = await supabase
-          .from('user_profiles')
-          .select('id, status')
-          .eq('id_empresa', companyIdNumber);
-          
-        const { data: psychologists } = await supabase
-          .from('company_psychologist_associations')
-          .select('id, status')
-          .eq('id_empresa', companyIdNumber);
-        
+        const {
+          data: employees
+        } = await supabase.from('user_profiles').select('id, status').eq('id_empresa', companyIdNumber);
+        const {
+          data: psychologists
+        } = await supabase.from('company_psychologist_associations').select('id, status').eq('id_empresa', companyIdNumber);
         const activeEmps = employees?.filter(emp => emp.status).length || 0;
         const pendingEmps = employees?.filter(emp => !emp.status).length || 0;
         const activePsychs = psychologists?.filter(psy => psy.status === 'active').length || 0;
         const pendingPsychs = psychologists?.filter(psy => psy.status === 'pending').length || 0;
-        
+
         // Fetch license availability
         const licenseStats = await checkLicenseAvailability(companyIdNumber);
-        
         setStats({
           activeEmployees: activeEmps,
           pendingEmployees: pendingEmps,
@@ -79,28 +69,23 @@ const CompanyDashboard: React.FC = () => {
           availableLicenses: licenseStats.available,
           totalLicenses: licenseStats.total
         });
-        
       } catch (error) {
         console.error('Erro ao buscar dados da empresa:', error);
       } finally {
         setLoading(false);
       }
     };
-    
     fetchCompanyData();
   }, []);
-
   const handleLogout = () => {
     // Clear local storage
     localStorage.removeItem('companyId');
     localStorage.removeItem('companyEmail');
-    
+
     // Redirect to home page
     window.location.href = '/';
   };
-
-  return (
-    <>
+  return <>
       <Helmet>
         <title>Dashboard da Empresa</title>
       </Helmet>
@@ -108,14 +93,10 @@ const CompanyDashboard: React.FC = () => {
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h1 className="text-2xl font-medium mb-2">{companyName}</h1>
+              <h1 className="text-2xl font-medium">{companyName}</h1>
               <p className="text-gray-500">{localStorage.getItem('companyEmail')}</p>
             </div>
-            <Button 
-              variant="outline" 
-              className="border-red-500 text-red-500 hover:bg-red-50"
-              onClick={handleLogout}
-            >
+            <Button variant="outline" className="border-red-500 text-red-500 hover:bg-red-50" onClick={handleLogout}>
               <span className="mr-1">Sair</span>
             </Button>
           </div>
@@ -137,12 +118,7 @@ const CompanyDashboard: React.FC = () => {
             
             <TabsContent value="overview" className="space-y-8">
               <div className="flex justify-end gap-4 mb-6">
-                <Button 
-                  className="bg-indigo-900 hover:bg-indigo-800"
-                  onClick={() => setIsAddEmployeeDialogOpen(true)}
-                  disabled={stats.availableLicenses <= 0}
-                  title={stats.availableLicenses <= 0 ? "Sem licenças disponíveis" : ""}
-                >
+                <Button className="bg-indigo-900 hover:bg-indigo-800" onClick={() => setIsAddEmployeeDialogOpen(true)} disabled={stats.availableLicenses <= 0} title={stats.availableLicenses <= 0 ? "Sem licenças disponíveis" : ""}>
                   Adicionar Funcionário
                 </Button>
                 <Button variant="outline" className="border-indigo-900 text-indigo-900 hover:bg-indigo-50">
@@ -269,41 +245,28 @@ const CompanyDashboard: React.FC = () => {
           </Tabs>
         </div>
         
-        {companyId && (
-          <AddEmployeeDialog
-            open={isAddEmployeeDialogOpen}
-            onOpenChange={setIsAddEmployeeDialogOpen}
-            onEmployeeAdded={() => {
-              // Refresh the stats after adding an employee
-              const fetchStats = async () => {
-                const { data: employees } = await supabase
-                  .from('user_profiles')
-                  .select('id, status')
-                  .eq('id_empresa', companyId);
-                  
-                const activeEmps = employees?.filter(emp => emp.status).length || 0;
-                const pendingEmps = employees?.filter(emp => !emp.status).length || 0;
-                
-                // Also update license information
-                const licenseStats = await checkLicenseAvailability(companyId);
-                
-                setStats(prev => ({
-                  ...prev,
-                  activeEmployees: activeEmps,
-                  pendingEmployees: pendingEmps,
-                  availableLicenses: licenseStats.available,
-                  totalLicenses: licenseStats.total
-                }));
-              };
-              
-              fetchStats();
-            }}
-            companyId={companyId}
-          />
-        )}
-      </CompanyDashboardLayout>
-    </>
-  );
-};
+        {companyId && <AddEmployeeDialog open={isAddEmployeeDialogOpen} onOpenChange={setIsAddEmployeeDialogOpen} onEmployeeAdded={() => {
+        // Refresh the stats after adding an employee
+        const fetchStats = async () => {
+          const {
+            data: employees
+          } = await supabase.from('user_profiles').select('id, status').eq('id_empresa', companyId);
+          const activeEmps = employees?.filter(emp => emp.status).length || 0;
+          const pendingEmps = employees?.filter(emp => !emp.status).length || 0;
 
+          // Also update license information
+          const licenseStats = await checkLicenseAvailability(companyId);
+          setStats(prev => ({
+            ...prev,
+            activeEmployees: activeEmps,
+            pendingEmployees: pendingEmps,
+            availableLicenses: licenseStats.available,
+            totalLicenses: licenseStats.total
+          }));
+        };
+        fetchStats();
+      }} companyId={companyId} />}
+      </CompanyDashboardLayout>
+    </>;
+};
 export default CompanyDashboard;
