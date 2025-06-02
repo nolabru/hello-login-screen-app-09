@@ -37,7 +37,7 @@ const PsychologistForm: React.FC = () => {
       <CardContent className="p-10">
         <div className="flex items-center justify-center gap-4 mb-6">
           
-          <h1 className="text-2xl font-display text-portal-purple font-semibold">Registro de Psicólogo</h1>
+          <h1 className="font-display text-portal-purple text-2xl font-medium">Registro de Psicólogo</h1>
         </div>
         <p className="text-gray-600 mb-8 font-sans text-center">Preencha seus dados para criar uma conta profissional</p>
 
