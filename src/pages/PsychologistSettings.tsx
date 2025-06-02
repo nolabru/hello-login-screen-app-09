@@ -143,7 +143,7 @@ const PsychologistSettings = () => {
         <h1 className="text-2xl font-medium text-neutral-700">Configurações</h1>
         <p className="text-gray-500 mb-6">Gerencie suas informações pessoais e preferências da conta.</p>
         
-        <Card className="w-full max-w-3xl mx-auto">
+        <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-neutral-700 text-xl font-medium">Perfil</CardTitle>
           </CardHeader>
