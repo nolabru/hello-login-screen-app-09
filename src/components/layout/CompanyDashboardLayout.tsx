@@ -130,7 +130,7 @@ const CompanyDashboardLayout: React.FC<CompanyDashboardLayoutProps> = ({
           <div className="hidden md:block p-4 border-b">
             <Link to="/company/dashboard" className="flex items-center space-x-2">
               <Logo showTextLogo={false} size="sm" />
-              <span className="font-medium text-lg">Área da Empresa</span>
+              <span className="font-medium text-lg  text-neutral-700">Área da Empresa</span>
             </Link>
           </div>
           
