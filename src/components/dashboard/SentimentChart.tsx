@@ -1,26 +1,50 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { ChartContainer } from '@/components/ui/chart';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-
-const sentimentData = [
-  { name: 'Jan', positivo: 40, neutro: 24, negativo: 10 },
-  { name: 'Fev', positivo: 30, neutro: 25, negativo: 15 },
-  { name: 'Mar', positivo: 20, neutro: 30, negativo: 20 },
-  { name: 'Abr', positivo: 45, neutro: 20, negativo: 10 },
-  { name: 'Mai', positivo: 50, neutro: 15, negativo: 5 },
-  { name: 'Jun', positivo: 45, neutro: 20, negativo: 10 },
-];
-
+const sentimentData = [{
+  name: 'Jan',
+  positivo: 40,
+  neutro: 24,
+  negativo: 10
+}, {
+  name: 'Fev',
+  positivo: 30,
+  neutro: 25,
+  negativo: 15
+}, {
+  name: 'Mar',
+  positivo: 20,
+  neutro: 30,
+  negativo: 20
+}, {
+  name: 'Abr',
+  positivo: 45,
+  neutro: 20,
+  negativo: 10
+}, {
+  name: 'Mai',
+  positivo: 50,
+  neutro: 15,
+  negativo: 5
+}, {
+  name: 'Jun',
+  positivo: 45,
+  neutro: 20,
+  negativo: 10
+}];
 const SentimentChart: React.FC = () => {
-  return (
-    <Card className="w-full">
+  return <Card className="w-full">
       <CardContent className="p-6">
-        <h3 className="text-lg font-medium mb-6">Análise de Sentimentos</h3>
+        <h3 className="text-lg font-medium mb-6 text-neutral-700">Análise de Sentimentos</h3>
         <div className="w-full h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={sentimentData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+            <BarChart data={sentimentData} margin={{
+            top: 5,
+            right: 30,
+            left: 20,
+            bottom: 5
+          }}>
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
@@ -31,8 +55,6 @@ const SentimentChart: React.FC = () => {
           </ResponsiveContainer>
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
-
 export default SentimentChart;
