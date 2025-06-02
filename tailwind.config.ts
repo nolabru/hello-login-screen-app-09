@@ -60,8 +60,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["Roboto", "var(--font-sans)", ...fontFamily.sans],
-        display: ["Poppins", "sans-serif"],
+        sans: ["Roboto", ...fontFamily.sans],
+        display: ["Poppins", ...fontFamily.sans],
       },
       keyframes: {
         "accordion-down": {

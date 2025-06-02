@@ -100,17 +100,29 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-background text-foreground;
+    font-family: 'Roboto', sans-serif;
     letter-spacing: 0.01em;
     font-weight: 400;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-medium tracking-tight;
+    @apply font-display;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    letter-spacing: -0.025em;
   }
   
   input, textarea, select, button {
-    font-family: inherit;
+    font-family: 'Roboto', sans-serif;
+  }
+  
+  .font-display {
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  .font-sans {
+    font-family: 'Roboto', sans-serif;
   }
 }
 
