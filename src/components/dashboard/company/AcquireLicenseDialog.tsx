@@ -8,12 +8,14 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { fetchLicensePlans, acquireLicense, LicensePlan } from '@/services/licenseService';
 import { addMonths } from 'date-fns';
+
 interface AcquireLicenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   companyId: number;
   onLicenseAcquired: () => void;
 }
+
 const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
   open,
   onOpenChange,
@@ -100,18 +102,20 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
     };
   };
   const selectedPlanDetails = getSelectedPlanDetails();
-  return <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-xl">Adquirir Licenças</DialogTitle>
         </DialogHeader>
         
-        <div className="py-4">
+        <div className="flex-1 overflow-y-auto py-4">
           <h3 className="font-medium mb-4">Selecione um plano</h3>
           
           <RadioGroup value={selectedPlan?.toString()} onValueChange={value => setSelectedPlan(parseInt(value))}>
             <div className="space-y-4">
-              {plans.map(plan => <div key={plan.id} className="flex items-center">
+              {plans.map(plan => (
+                <div key={plan.id} className="flex items-center">
                   <RadioGroupItem id={`plan-${plan.id}`} value={plan.id.toString()} />
                   <Label htmlFor={`plan-${plan.id}`} className="ml-2 flex-1">
                     <Card className={`cursor-pointer p-3 ${selectedPlan === plan.id ? 'border-purple-500' : ''}`}>
@@ -134,17 +138,24 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
                       </CardContent>
                     </Card>
                   </Label>
-                </div>)}
+                </div>
+              ))}
             </div>
           </RadioGroup>
           
           <div className="mt-6">
             <h3 className="font-medium mb-4">Ciclo de cobrança</h3>
             <div className="flex space-x-4">
-              <Button variant={billingCycle === 'monthly' ? 'default' : 'outline'} onClick={() => setBillingCycle('monthly')}>
+              <Button 
+                variant={billingCycle === 'monthly' ? 'default' : 'outline'} 
+                onClick={() => setBillingCycle('monthly')}
+              >
                 Mensal
               </Button>
-              <Button variant={billingCycle === 'yearly' ? 'default' : 'outline'} onClick={() => setBillingCycle('yearly')}>
+              <Button 
+                variant={billingCycle === 'yearly' ? 'default' : 'outline'} 
+                onClick={() => setBillingCycle('yearly')}
+              >
                 Anual (10% de desconto)
               </Button>
             </div>
@@ -152,10 +163,16 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
           
           <div className="mt-6">
             <h3 className="font-medium mb-4">Quantidade de licenças</h3>
-            <Input type="number" value={licenseCount} onChange={e => setLicenseCount(Math.max(1, parseInt(e.target.value) || 1))} min="1" />
+            <Input 
+              type="number" 
+              value={licenseCount} 
+              onChange={e => setLicenseCount(Math.max(1, parseInt(e.target.value) || 1))} 
+              min="1" 
+            />
           </div>
           
-          {selectedPlanDetails && <div className="mt-6 pt-4 border-t border-gray-100">
+          {selectedPlanDetails && (
+            <div className="mt-6 pt-4 border-t border-gray-100">
               <div className="flex justify-between">
                 <span>Valor por licença:</span>
                 <span>R$ {selectedPlanDetails.price.toFixed(2)}</span>
@@ -167,16 +184,23 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
               <p className="text-xs text-gray-500 mt-2">
                 {billingCycle === 'yearly' ? 'Cobrado anualmente' : 'Cobrado mensalmente'}
               </p>
-            </div>}
+            </div>
+          )}
         </div>
         
-        <DialogFooter>
+        <DialogFooter className="flex-shrink-0 border-t pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={loading} className="bg-portal-purple hover:bg-portal-purple-dark">
+          <Button 
+            onClick={handleSubmit} 
+            disabled={loading} 
+            className="bg-portal-purple hover:bg-portal-purple-dark"
+          >
             {loading ? 'Processando...' : 'Adquirir Licenças'}
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
+
 export default AcquireLicenseDialog;
