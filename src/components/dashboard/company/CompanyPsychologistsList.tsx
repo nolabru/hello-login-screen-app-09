@@ -473,7 +473,7 @@ const CompanyPsychologistsList: React.FC = () => {
                         <TableCell className="font-medium">{psychologist.nome}</TableCell>
                         <TableCell>{psychologist.crp}</TableCell>
                         <TableCell className="text-right">
-                          <Button size="sm" onClick={() => connectPsychologist(psychologist.id)}>
+                          <Button size="sm" onClick={() => connectPsychologist(psychologist.id)} className="bg-portal-purple hover:bg-portal-purple-dark ">
                             <UserPlus size={16} className="mr-1" />
                             Conectar
                           </Button>
