@@ -404,7 +404,7 @@ const CompanyPsychologistsList: React.FC = () => {
           {isLoading ? <div className="p-8 text-center">
               <p className="text-gray-500">Carregando psicólogos...</p>
             </div> : activePsychologists.length === 0 && pendingRequests.length === 0 && pendingInvites.length === 0 ? <div className="p-8 text-center">
-              <p className="text-neutral-700 font-display text-lg font-medium">Nenhum Psicólogo conectado à empresa.</p>
+              <p className="text-neutral-700 font-display font-medium text-base">Nenhum Psicólogo conectado à empresa.</p>
               <p className="mt-2 text-slate-500 text-sm font-normal">Clique em "Adicionar Psicólogo" para conectar.</p>
             </div> : activePsychologists.length === 0 ? <div className="p-8 text-center">
               <p className="text-gray-500">Nenhum psicólogo ativo no momento.</p>
