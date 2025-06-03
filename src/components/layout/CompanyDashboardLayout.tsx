@@ -140,7 +140,7 @@ const CompanyDashboardLayout: React.FC<CompanyDashboardLayoutProps> = ({
             <p className="text-sm text-gray-500 mt-1 truncate">{companyEmail}</p>
           </div>
           
-          <div className="py-4 overflow-y-auto flex-1">
+          <div className="overflow-y-auto flex-1 py-0">
             <nav>
               <ul>
                 {navItems.map(item => {
