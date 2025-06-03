@@ -136,7 +136,7 @@ const PatientsList: React.FC = () => {
   const handlePatientRemoved = () => {
     fetchPacientes(); // Refresh the list
   };
-  return <div className="w-full">
+  return <div className="w-full p-6">
       <div className="flex justify-between items-center mb-6">
         <div className="flex flex-col">
           <h1 className="text-2xl font-medium text-neutral-700">
