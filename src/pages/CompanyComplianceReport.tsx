@@ -11,6 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import CompanyReportSection from '@/components/dashboard/company/CompanyReportSection';
 import { useReportData } from '@/hooks/useReportData';
 import jsPDF from 'jspdf';
+
 const CompanyComplianceReport = () => {
   const {
     toast
@@ -115,8 +116,9 @@ const CompanyComplianceReport = () => {
     challenges: "Desafios e Planos",
     attachments: "Anexos"
   };
-  return <CompanyDashboardLayout>
-      <div className="container p-6">
+  return (
+    <CompanyDashboardLayout>
+      <div className="w-full p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl tracking-tight font-medium  text-neutral-700">Relatório de Saúde Mental e Conformidade</h1>
@@ -133,84 +135,185 @@ const CompanyComplianceReport = () => {
         {/* Navegação entre grupos de abas */}
         <div className="mb-4">
           <div className="flex flex-wrap gap-2 mb-6">
-            {tabGroups.map(group => <Button key={group.id} variant={activeGroup === group.id ? "default" : "outline"} onClick={() => {
-            setActiveGroup(group.id);
-            setActiveTab(group.tabs[0]);
-          }} className="px-4 py-2">
+            {tabGroups.map(group => (
+              <Button
+                key={group.id}
+                variant={activeGroup === group.id ? "default" : "outline"}
+                onClick={() => {
+                  setActiveGroup(group.id);
+                  setActiveTab(group.tabs[0]);
+                }}
+                className="px-4 py-2"
+              >
                 {group.label}
-              </Button>)}
+              </Button>
+            ))}
           </div>
 
           {/* Navegação entre abas dentro do grupo selecionado */}
-          {tabGroups.map(group => activeGroup === group.id && <div key={`tabs-${group.id}`} className="mb-6">
+          {tabGroups.map(group => (
+            activeGroup === group.id && (
+              <div key={`tabs-${group.id}`} className="mb-6">
                 <div className="flex flex-wrap gap-2 border rounded-lg p-2 bg-muted/20">
-                  {group.tabs.map(tabId => <Button key={tabId} variant={activeTab === tabId ? "secondary" : "ghost"} onClick={() => setActiveTab(tabId)} className="px-4 py-2" size="sm">
+                  {group.tabs.map(tabId => (
+                    <Button
+                      key={tabId}
+                      variant={activeTab === tabId ? "secondary" : "ghost"}
+                      onClick={() => setActiveTab(tabId)}
+                      className="px-4 py-2"
+                      size="sm"
+                    >
                       {tabTitles[tabId]}
-                    </Button>)}
+                    </Button>
+                  ))}
                 </div>
-              </div>)}
+              </div>
+            )
+          ))}
         </div>
         
         {/* Conteúdo das abas */}
         <div className="mt-6">
-          {activeTab === "companyInfo" && <CompanyReportSection title="Identificação da Empresa" sectionKey="companyInfo" reportData={reportData} updateReportField={updateReportField} />}
+          {activeTab === "companyInfo" && (
+            <CompanyReportSection
+              title="Identificação da Empresa"
+              sectionKey="companyInfo"
+              reportData={reportData}
+              updateReportField={updateReportField}
+            />
+          )}
           
-          {activeTab === "execSummary" && <CompanyReportSection title="Resumo Executivo" sectionKey="execSummary" reportData={reportData} updateReportField={updateReportField} />}
+          {activeTab === "execSummary" && (
+            <CompanyReportSection
+              title="Resumo Executivo"
+              sectionKey="execSummary"
+              reportData={reportData}
+              updateReportField={updateReportField}
+            />
+          )}
           
-          {activeTab === "mentalHealthPolicies" && <CompanyReportSection title="Políticas de Saúde Mental" sectionKey="mentalHealthPolicies" reportData={reportData} updateReportField={updateReportField} />}
+          {activeTab === "mentalHealthPolicies" && (
+            <CompanyReportSection
+              title="Políticas de Saúde Mental"
+              sectionKey="mentalHealthPolicies"
+              reportData={reportData}
+              updateReportField={updateReportField}
+            />
+          )}
           
-          {activeTab === "programs" && <CompanyReportSection title="Programas e Atividades Realizadas" sectionKey="programs" reportData={reportData} updateReportField={updateReportField} />}
+          {activeTab === "programs" && (
+            <CompanyReportSection
+              title="Programas e Atividades Realizadas"
+              sectionKey="programs"
+              reportData={reportData}
+              updateReportField={updateReportField}
+            />
+          )}
           
-          {activeTab === "supportProtocols" && <CompanyReportSection title="Protocolos de Atendimento e Suporte" sectionKey="supportProtocols" reportData={reportData} updateReportField={updateReportField} />}
+          {activeTab === "supportProtocols" && (
+            <CompanyReportSection
+              title="Protocolos de Atendimento e Suporte"
+              sectionKey="supportProtocols"
+              reportData={reportData}
+              updateReportField={updateReportField}
+            />
+          )}
           
-          {activeTab === "workplaceFlex" && <CompanyReportSection title="Flexibilidade e Adaptações no Ambiente de Trabalho" sectionKey="workplaceFlex" reportData={reportData} updateReportField={updateReportField} />}
+          {activeTab === "workplaceFlex" && (
+            <CompanyReportSection
+              title="Flexibilidade e Adaptações no Ambiente de Trabalho"
+              sectionKey="workplaceFlex"
+              reportData={reportData}
+              updateReportField={updateReportField}
+            />
+          )}
           
-          {activeTab === "communication" && <CompanyReportSection title="Canais de Comunicação e Denúncia" sectionKey="communication" reportData={reportData} updateReportField={updateReportField} />}
+          {activeTab === "communication" && (
+            <CompanyReportSection
+              title="Canais de Comunicação e Denúncia"
+              sectionKey="communication"
+              reportData={reportData}
+              updateReportField={updateReportField}
+            />
+          )}
           
-          {activeTab === "indicators" && <CompanyReportSection title="Indicadores e Resultados" sectionKey="indicators" reportData={reportData} updateReportField={updateReportField} />}
+          {activeTab === "indicators" && (
+            <CompanyReportSection
+              title="Indicadores e Resultados"
+              sectionKey="indicators"
+              reportData={reportData}
+              updateReportField={updateReportField}
+            />
+          )}
           
-          {activeTab === "challenges" && <CompanyReportSection title="Desafios e Planos de Ação Futuros" sectionKey="challenges" reportData={reportData} updateReportField={updateReportField} />}
+          {activeTab === "challenges" && (
+            <CompanyReportSection
+              title="Desafios e Planos de Ação Futuros"
+              sectionKey="challenges"
+              reportData={reportData}
+              updateReportField={updateReportField}
+            />
+          )}
           
-          {activeTab === "attachments" && <CompanyReportSection title="Anexos" sectionKey="attachments" reportData={reportData} updateReportField={updateReportField} />}
+          {activeTab === "attachments" && (
+            <CompanyReportSection
+              title="Anexos"
+              sectionKey="attachments"
+              reportData={reportData}
+              updateReportField={updateReportField}
+            />
+          )}
         </div>
 
         {/* Progresso do preenchimento */}
         <div className="mt-8 flex justify-between items-center">
           <div className="flex gap-4">
-            <Button variant="outline" size="sm" onClick={() => {
-            const currentGroupIndex = tabGroups.findIndex(g => g.id === activeGroup);
-            const currentTabIndex = tabGroups[currentGroupIndex].tabs.indexOf(activeTab);
-            if (currentTabIndex > 0) {
-              // Navegar para a aba anterior dentro do mesmo grupo
-              setActiveTab(tabGroups[currentGroupIndex].tabs[currentTabIndex - 1]);
-            } else if (currentGroupIndex > 0) {
-              // Navegar para o último item do grupo anterior
-              const prevGroup = tabGroups[currentGroupIndex - 1];
-              setActiveGroup(prevGroup.id);
-              setActiveTab(prevGroup.tabs[prevGroup.tabs.length - 1]);
-            }
-          }} disabled={activeTab === "companyInfo"}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const currentGroupIndex = tabGroups.findIndex(g => g.id === activeGroup);
+                const currentTabIndex = tabGroups[currentGroupIndex].tabs.indexOf(activeTab);
+                if (currentTabIndex > 0) {
+                  // Navegar para a aba anterior dentro do mesmo grupo
+                  setActiveTab(tabGroups[currentGroupIndex].tabs[currentTabIndex - 1]);
+                } else if (currentGroupIndex > 0) {
+                  // Navegar para o último item do grupo anterior
+                  const prevGroup = tabGroups[currentGroupIndex - 1];
+                  setActiveGroup(prevGroup.id);
+                  setActiveTab(prevGroup.tabs[prevGroup.tabs.length - 1]);
+                }
+              }}
+              disabled={activeTab === "companyInfo"}
+            >
               Anterior
             </Button>
             
-            <Button size="sm" onClick={() => {
-            const currentGroupIndex = tabGroups.findIndex(g => g.id === activeGroup);
-            const currentTabIndex = tabGroups[currentGroupIndex].tabs.indexOf(activeTab);
-            if (currentTabIndex < tabGroups[currentGroupIndex].tabs.length - 1) {
-              // Navegar para a próxima aba dentro do mesmo grupo
-              setActiveTab(tabGroups[currentGroupIndex].tabs[currentTabIndex + 1]);
-            } else if (currentGroupIndex < tabGroups.length - 1) {
-              // Navegar para o primeiro item do próximo grupo
-              const nextGroup = tabGroups[currentGroupIndex + 1];
-              setActiveGroup(nextGroup.id);
-              setActiveTab(nextGroup.tabs[0]);
-            }
-          }} disabled={activeTab === "attachments"} className="bg-portal-purple hover:bg-portal-purple-dark">
+            <Button
+              size="sm"
+              onClick={() => {
+                const currentGroupIndex = tabGroups.findIndex(g => g.id === activeGroup);
+                const currentTabIndex = tabGroups[currentGroupIndex].tabs.indexOf(activeTab);
+                if (currentTabIndex < tabGroups[currentGroupIndex].tabs.length - 1) {
+                  // Navegar para a próxima aba dentro do mesmo grupo
+                  setActiveTab(tabGroups[currentGroupIndex].tabs[currentTabIndex + 1]);
+                } else if (currentGroupIndex < tabGroups.length - 1) {
+                  // Navegar para o primeiro item do próximo grupo
+                  const nextGroup = tabGroups[currentGroupIndex + 1];
+                  setActiveGroup(nextGroup.id);
+                  setActiveTab(nextGroup.tabs[0]);
+                }
+              }}
+              disabled={activeTab === "attachments"}
+              className="bg-portal-purple hover:bg-portal-purple-dark"
+            >
               Próximo
             </Button>
           </div>
         </div>
       </div>
-    </CompanyDashboardLayout>;
+    </CompanyDashboardLayout>
+  );
 };
+
 export default CompanyComplianceReport;
