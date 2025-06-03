@@ -198,7 +198,7 @@ const PatientsList: React.FC = () => {
 
           {!loading && filteredPatients.length === 0 && activeTab === 'all' && <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border border-dashed border-gray-300">
               <h3 className="text-xl font-medium text-gray-700 mb-2">Nenhum paciente encontrado</h3>
-              <p className="text-gray-500 text-center max-w-md">
+              <p className="text-gray-500 text-center max-w-md font-normal">
                 Você ainda não possui pacientes vinculados. Quando usuários começarem a interagir com a AIA, você poderá vinculá-los aqui.
               </p>
             </div>}
