@@ -91,7 +91,7 @@ const PsychologistDashboard: React.FC = () => {
       <DashboardLayout>
         <div className="p-6">
           <h1 className=" text-2xl font-medium text-neutral-700">Visão Geral</h1>
-          <p className="text-gray-500 mb-6">Acompanhe seus pacientes e sua interação com a AIA.</p>
+          <p className="text-gray-500 mb-6">Acompanhe seus pacientes e sua interação com a AIA</p>
           
           <div className="flex flex-col md:flex-row gap-6 mb-6">
             <PatientStatsCard />
