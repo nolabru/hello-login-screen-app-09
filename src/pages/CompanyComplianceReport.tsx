@@ -132,45 +132,42 @@ const CompanyComplianceReport = () => {
           </Button>
         </div>
 
-        {/* Navegação entre grupos de abas */}
-        <div className="mb-4">
-          <div className="flex flex-wrap gap-2 mb-6">
+        {/* Navegação entre grupos de abas usando Tabs */}
+        <Tabs value={activeGroup} onValueChange={(value) => {
+          setActiveGroup(value);
+          const group = tabGroups.find(g => g.id === value);
+          if (group) {
+            setActiveTab(group.tabs[0]);
+          }
+        }} className="space-y-4">
+          <TabsList>
             {tabGroups.map(group => (
-              <Button
-                key={group.id}
-                variant={activeGroup === group.id ? "default" : "outline"}
-                onClick={() => {
-                  setActiveGroup(group.id);
-                  setActiveTab(group.tabs[0]);
-                }}
-                className="px-4 py-2"
-              >
+              <TabsTrigger key={group.id} value={group.id}>
                 {group.label}
-              </Button>
+              </TabsTrigger>
             ))}
-          </div>
+          </TabsList>
 
           {/* Navegação entre abas dentro do grupo selecionado */}
           {tabGroups.map(group => (
             activeGroup === group.id && (
               <div key={`tabs-${group.id}`} className="mb-6">
-                <div className="flex flex-wrap gap-2 border rounded-lg p-2 bg-muted/20">
+                <TabsList className="w-full h-auto p-1">
                   {group.tabs.map(tabId => (
-                    <Button
+                    <TabsTrigger
                       key={tabId}
-                      variant={activeTab === tabId ? "secondary" : "ghost"}
+                      value={activeTab === tabId ? tabId : ''}
                       onClick={() => setActiveTab(tabId)}
-                      className="px-4 py-2"
-                      size="sm"
+                      className="flex-1 data-[state=active]:bg-background data-[state=active]:text-foreground"
                     >
                       {tabTitles[tabId]}
-                    </Button>
+                    </TabsTrigger>
                   ))}
-                </div>
+                </TabsList>
               </div>
             )
           ))}
-        </div>
+        </Tabs>
         
         {/* Conteúdo das abas */}
         <div className="mt-6">
