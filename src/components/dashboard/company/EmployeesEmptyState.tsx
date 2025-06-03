@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ const EmployeesEmptyState: React.FC<EmployeesEmptyStateProps> = ({
       <p className="text-gray-500">Nenhum Funcionário Encontrado.</p>
       <Button variant="outline" className="mt-4" onClick={onAddEmployee}>
         <UserPlus className="h-4 w-4 mr-2" />
-        Adicionar Funcionário
+        Convidar Funcionário
       </Button>
     </div>;
 };
