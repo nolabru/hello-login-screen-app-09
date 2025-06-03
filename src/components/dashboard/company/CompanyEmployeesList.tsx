@@ -11,7 +11,6 @@ import EmployeesCardView from './EmployeesCardView';
 import EmployeesEmptyState from './EmployeesEmptyState';
 import type { Employee } from './EmployeesTableView';
 import { updateEmployeeLicenseStatus } from '@/services/licenseService';
-
 const CompanyEmployeesList: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
@@ -114,10 +113,7 @@ const CompanyEmployeesList: React.FC = () => {
   return <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
         <h2 className="font-medium text-neutral-700 text-xl">Funcionários</h2>
-        <Button onClick={() => setIsAddDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark">
-          <Plus className="h-4 w-4 mr-2" />
-          Convidar Funcionário
-        </Button>
+        
       </div>
       
       <div className="flex justify-between items-center mb-4">
