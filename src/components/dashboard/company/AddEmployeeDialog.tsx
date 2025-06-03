@@ -184,7 +184,7 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
   return <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle className="text-xl   text-neutral-700">Adicionar Funcionário</DialogTitle>
+          <DialogTitle className="text-xl   text-neutral-700">Convidar Funcionário</DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

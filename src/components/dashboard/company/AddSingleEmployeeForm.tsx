@@ -56,13 +56,7 @@ const AddSingleEmployeeForm: React.FC<AddSingleEmployeeFormProps> = ({
         
         <FormField control={form.control} name="senha" render={({
         field
-      }) => <FormItem>
-              <FormLabel>Senha</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="Senha para primeiro acesso" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>} />
+      }) => {}} />
         
         <div className="pt-4">
           <Button type="submit" disabled={isSubmitting} className="w-full bg-portal-purple hover:bg-portal-purple-dark">
