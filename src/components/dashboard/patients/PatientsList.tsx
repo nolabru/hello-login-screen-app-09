@@ -175,11 +175,7 @@ const PatientsList: React.FC = () => {
         </TabsContent>
         
         <TabsContent value="pending">
-          <Card className="shadow-sm overflow-hidden border border-gray-200">
-            <CardContent className="p-0">
-              <PatientsTable patients={filteredPatients} loading={loading && activeTab === 'pending'} onPatientRemoved={handlePatientRemoved} />
-            </CardContent>
-          </Card>
+          
 
           {!loading && filteredPatients.length === 0 && activeTab === 'pending' && <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border">
               <h3 className="mb-2 text-neutral-700 text-lg font-medium">Nenhuma Solicitação Pendente</h3>
