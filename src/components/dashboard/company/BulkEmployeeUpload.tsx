@@ -270,7 +270,7 @@ const BulkEmployeeUpload: React.FC<BulkEmployeeUploadProps> = ({
         <Input type="file" accept=".csv" onChange={handleFileChange} className="hidden" id="csv-upload" />
         <label htmlFor="csv-upload">
           <Button variant="outline" className="cursor-pointer" asChild>
-            <span>Selecionar arquivo CSV</span>
+            <span className="bg-portal-purple hover:bg-portal-purple-dark text-white font-medium text-sm">Selecionar arquivo CSV</span>
           </Button>
         </label>
       </div>
