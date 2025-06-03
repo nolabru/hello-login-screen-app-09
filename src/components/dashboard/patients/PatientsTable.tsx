@@ -27,10 +27,7 @@ const PatientsTable: React.FC<PatientsTableProps> = ({
       </div>;
   }
   if (patients.length === 0) {
-    return <div className="text-center py-16">
-        <p className="text-gray-500 text-xl ">Nenhum paciente encontrado.</p>
-        <p className="text-gray-400 mt-2">Adicione pacientes para começar a acompanhá-los.</p>
-      </div>;
+    return;
   }
   return <div className="rounded-md overflow-hidden">
       <Table>
