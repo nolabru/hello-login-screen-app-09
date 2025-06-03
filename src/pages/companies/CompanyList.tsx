@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { TableCell, TableRow, TableBody, TableHead, TableHeader, Table } from '@/components/ui/table';
@@ -9,7 +8,6 @@ import { Company } from './types';
 import { useToast } from '@/components/ui/use-toast';
 import { disconnectFromCompany, acceptCompanyRequest } from './companiesService';
 import { useIsMobile } from '@/hooks/use-mobile';
-
 interface CompanyListProps {
   companies: Company[];
   isLoading: boolean;
@@ -17,33 +15,29 @@ interface CompanyListProps {
   refreshCompanies: () => void;
   listType?: 'pending' | 'requested' | 'active';
 }
-
-const CompanyList: React.FC<CompanyListProps> = ({ 
-  companies, 
-  isLoading, 
-  onViewDetails, 
+const CompanyList: React.FC<CompanyListProps> = ({
+  companies,
+  isLoading,
+  onViewDetails,
   refreshCompanies,
   listType = 'active'
 }) => {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const isMobile = useIsMobile();
-
   const handleDisconnect = async (companyId: number) => {
     if (!confirm('Tem certeza que deseja se desconectar desta empresa?')) {
       return;
     }
-
     try {
       const psychologistId = localStorage.getItem('psychologistId');
       if (!psychologistId) return;
-
       await disconnectFromCompany(companyId, psychologistId);
-      
       toast({
         title: "Desconexão bem-sucedida",
-        description: "Você foi desconectado da empresa com sucesso.",
+        description: "Você foi desconectado da empresa com sucesso."
       });
-      
       refreshCompanies();
     } catch (error) {
       console.error('Erro ao desconectar:', error);
@@ -54,19 +48,15 @@ const CompanyList: React.FC<CompanyListProps> = ({
       });
     }
   };
-
   const handleAcceptRequest = async (companyId: number) => {
     try {
       const psychologistId = localStorage.getItem('psychologistId');
       if (!psychologistId) return;
-
       await acceptCompanyRequest(companyId, psychologistId);
-      
       toast({
         title: "Empresa conectada",
-        description: "Conexão com a empresa aceita com sucesso.",
+        description: "Conexão com a empresa aceita com sucesso."
       });
-      
       refreshCompanies();
     } catch (error) {
       console.error('Erro ao aceitar conexão:', error);
@@ -77,7 +67,6 @@ const CompanyList: React.FC<CompanyListProps> = ({
       });
     }
   };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
@@ -90,49 +79,32 @@ const CompanyList: React.FC<CompanyListProps> = ({
         return <Badge variant="outline">Desconhecido</Badge>;
     }
   };
-
   if (isLoading) {
-    return (
-      <Card>
+    return <Card>
         <CardContent className="p-4 sm:p-6">
           <div className="p-8 text-center">
             <p className="text-gray-500">Carregando empresas...</p>
           </div>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
   if (companies.length === 0) {
-    return (
-      <Card>
+    return <Card>
         <CardContent className="p-4 sm:p-6">
           <div className="p-8 text-center">
             <p className="text-gray-500">
-              {listType === 'pending' 
-                ? 'Nenhum convite de empresa pendente.'
-                : listType === 'requested'
-                  ? 'Nenhuma solicitação de conexão enviada.'
-                  : 'Nenhuma empresa conectada.'}
+              {listType === 'pending' ? 'Nenhum convite de empresa pendente.' : listType === 'requested' ? 'Nenhuma solicitação de conexão enviada.' : 'Nenhuma empresa conectada.'}
             </p>
-            {listType === 'active' && (
-              <p className="text-sm text-gray-400 mt-2">
-                Use o botão "Solicitar Conexão" para buscar empresas.
-              </p>
-            )}
+            {listType === 'active' && <p className="text-sm text-gray-400 mt-2">Conecte-se com uma empresa para visualizá-la.</p>}
           </div>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
   if (isMobile) {
-    return (
-      <Card>
+    return <Card>
         <CardContent className="p-0">
           <div className="divide-y">
-            {companies.map((company) => (
-              <div key={company.id} className="p-4">
+            {companies.map(company => <div key={company.id} className="p-4">
                 <h3 className="font-medium text-lg">{company.name}</h3>
                 <p className="text-sm text-gray-600 mt-1">{company.contact_email}</p>
                 <div className="mt-2">
@@ -140,69 +112,35 @@ const CompanyList: React.FC<CompanyListProps> = ({
                 </div>
                 
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {company.connection_status === 'pending' ? (
-                    <>
-                      <Button 
-                        variant="default" 
-                        size="sm" 
-                        className="bg-green-600 hover:bg-green-700"
-                        onClick={() => handleAcceptRequest(company.id)}
-                      >
+                  {company.connection_status === 'pending' ? <>
+                      <Button variant="default" size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleAcceptRequest(company.id)}>
                         <UserCheck size={16} className="mr-1" />
                         Aceitar
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-red-500 border-red-300 hover:bg-red-50"
-                        onClick={() => handleDisconnect(company.id)}
-                      >
+                      <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => handleDisconnect(company.id)}>
                         <UserX size={16} className="mr-1" />
                         Recusar
                       </Button>
-                    </>
-                  ) : company.connection_status === 'active' ? (
-                    <>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => onViewDetails(company)}
-                      >
+                    </> : company.connection_status === 'active' ? <>
+                      <Button variant="outline" size="sm" onClick={() => onViewDetails(company)}>
                         <Eye size={16} className="mr-1" />
                         Detalhes
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-red-500 border-red-300 hover:bg-red-50"
-                        onClick={() => handleDisconnect(company.id)}
-                      >
+                      <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => handleDisconnect(company.id)}>
                         <UserMinus size={16} className="mr-1" />
                         Desconectar
                       </Button>
-                    </>
-                  ) : (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-red-500 border-red-300 hover:bg-red-50"
-                      onClick={() => handleDisconnect(company.id)}
-                    >
+                    </> : <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => handleDisconnect(company.id)}>
                       <UserX size={16} className="mr-1" />
                       Cancelar
-                    </Button>
-                  )}
+                    </Button>}
                 </div>
-              </div>
-            ))}
+              </div>)}
           </div>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
-  return (
-    <Card>
+  return <Card>
       <CardContent className="p-0">
         <Table>
           <TableHeader>
@@ -214,72 +152,38 @@ const CompanyList: React.FC<CompanyListProps> = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {companies.map((company) => (
-              <TableRow key={company.id}>
+            {companies.map(company => <TableRow key={company.id}>
                 <TableCell className="font-medium">{company.name}</TableCell>
                 <TableCell>{company.contact_email}</TableCell>
                 <TableCell>{getStatusBadge(company.connection_status)}</TableCell>
                 <TableCell className="text-right space-x-2">
-                  {company.connection_status === 'pending' ? (
-                    <>
-                      <Button 
-                        variant="default" 
-                        size="sm" 
-                        className="bg-green-600 hover:bg-green-700"
-                        onClick={() => handleAcceptRequest(company.id)}
-                      >
+                  {company.connection_status === 'pending' ? <>
+                      <Button variant="default" size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleAcceptRequest(company.id)}>
                         <UserCheck size={16} className="mr-1" />
                         Aceitar
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-red-500 border-red-300 hover:bg-red-50"
-                        onClick={() => handleDisconnect(company.id)}
-                      >
+                      <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => handleDisconnect(company.id)}>
                         <UserX size={16} className="mr-1" />
                         Recusar
                       </Button>
-                    </>
-                  ) : company.connection_status === 'active' ? (
-                    <>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => onViewDetails(company)}
-                      >
+                    </> : company.connection_status === 'active' ? <>
+                      <Button variant="outline" size="sm" onClick={() => onViewDetails(company)}>
                         <Eye size={16} className="mr-1" />
                         Detalhes
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-red-500 border-red-300 hover:bg-red-50"
-                        onClick={() => handleDisconnect(company.id)}
-                      >
+                      <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => handleDisconnect(company.id)}>
                         <UserMinus size={16} className="mr-1" />
                         Desconectar
                       </Button>
-                    </>
-                  ) : (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="text-red-500 border-red-300 hover:bg-red-50"
-                      onClick={() => handleDisconnect(company.id)}
-                    >
+                    </> : <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => handleDisconnect(company.id)}>
                       <UserX size={16} className="mr-1" />
                       Cancelar
-                    </Button>
-                  )}
+                    </Button>}
                 </TableCell>
-              </TableRow>
-            ))}
+              </TableRow>)}
           </TableBody>
         </Table>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
-
 export default CompanyList;
