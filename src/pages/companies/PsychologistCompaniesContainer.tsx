@@ -40,13 +40,10 @@ const PsychologistCompaniesContainer: React.FC = () => {
   const activeCompanies = filteredCompanies.filter(company => company.connection_status === 'active');
   return <div className="p-6">
       <h1 className="text-2xl font-medium text-neutral-700">Empresas</h1>
-      <p className="text-gray-500 mb-6">Gerencie suas conexões com empresas parceiras</p>
+      <p className="text-gray-500 mb-1">Gerencie suas conexões com empresas parceiras</p>
 
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-        <Button onClick={() => setIsSearchDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark w-full md:w-auto">
-          <UserPlus size={16} className="mr-2" />
-          Solicitar Conexão
-        </Button>
+        
       </div>
 
       <div className="mb-6">
