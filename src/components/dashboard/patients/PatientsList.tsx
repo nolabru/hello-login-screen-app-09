@@ -137,7 +137,8 @@ const PatientsList: React.FC = () => {
   const handlePatientRemoved = () => {
     fetchPacientes(); // Refresh the list
   };
-  return <div className="">
+  return (
+    <div className="w-full">
       <div className="flex justify-between items-center mb-6">
         <div className="flex flex-col">
           <h1 className="text-2xl font-medium text-neutral-700">
@@ -171,12 +172,14 @@ const PatientsList: React.FC = () => {
             </CardContent>
           </Card>
 
-          {!loading && filteredPatients.length === 0 && activeTab === 'active' && <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border border-dashed border-gray-300">
+          {!loading && filteredPatients.length === 0 && activeTab === 'active' && (
+            <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border border-dashed border-gray-300">
               <h3 className="text-xl font-medium text-gray-700 mb-2">Nenhum paciente ativo encontrado</h3>
               <p className="text-gray-500 text-center max-w-md">
-                Você ainda não possui pacientes ativos. Clique em "Procurar Paciente" para solicitar conexão com um novo paciente.
+                Você ainda não possui pacientes ativos. Clique em "Conectar com Paciente" para solicitar conexão com um novo paciente.
               </p>
-            </div>}
+            </div>
+          )}
         </TabsContent>
         
         <TabsContent value="pending">
@@ -186,12 +189,14 @@ const PatientsList: React.FC = () => {
             </CardContent>
           </Card>
 
-          {!loading && filteredPatients.length === 0 && activeTab === 'pending' && <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border border-dashed border-gray-300">
+          {!loading && filteredPatients.length === 0 && activeTab === 'pending' && (
+            <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border border-dashed border-gray-300">
               <h3 className="text-xl font-medium text-gray-700 mb-2">Nenhuma solicitação pendente</h3>
               <p className="text-gray-500 text-center max-w-md">
                 Você não possui solicitações de conexão pendentes no momento.
               </p>
-            </div>}
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="all">
@@ -201,17 +206,24 @@ const PatientsList: React.FC = () => {
             </CardContent>
           </Card>
 
-          {!loading && filteredPatients.length === 0 && activeTab === 'all' && <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border border-dashed border-gray-300">
+          {!loading && filteredPatients.length === 0 && activeTab === 'all' && (
+            <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border border-dashed border-gray-300">
               <h3 className="text-xl font-medium text-gray-700 mb-2">Nenhum paciente encontrado</h3>
               <p className="text-gray-500 text-center max-w-md">
                 Você ainda não possui pacientes vinculados. Quando usuários começarem a interagir com a AIA, você poderá vinculá-los aqui.
               </p>
-            </div>}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
       {/* Patient Search Dialog Component */}
-      <PatientSearchDialog isOpen={isSearchDialogOpen} onClose={() => setIsSearchDialogOpen(false)} onPatientAdded={handlePatientRemoved} />
-    </div>;
+      <PatientSearchDialog 
+        isOpen={isSearchDialogOpen} 
+        onClose={() => setIsSearchDialogOpen(false)} 
+        onPatientAdded={handlePatientRemoved} 
+      />
+    </div>
+  );
 };
 export default PatientsList;
