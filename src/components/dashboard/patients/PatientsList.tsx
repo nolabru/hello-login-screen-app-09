@@ -182,7 +182,7 @@ const PatientsList: React.FC = () => {
           </Card>
 
           {!loading && filteredPatients.length === 0 && activeTab === 'pending' && <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border">
-              <h3 className="mb-2 text-neutral-700 text-lg font-medium">Nenhuma solicitação pendente</h3>
+              <h3 className="mb-2 text-neutral-700 text-lg font-medium">Nenhuma Solicitação Pendente</h3>
               <p className="text-gray-500 text-center max-w-md">
                 Você não possui solicitações de conexão pendentes no momento.
               </p>
