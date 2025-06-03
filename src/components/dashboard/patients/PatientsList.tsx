@@ -9,7 +9,8 @@ import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PatientSearchDialog from './PatientSearchDialog';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Link } from 'lucide-react';
+
 type Patient = {
   id: number;
   nome: string;
@@ -147,8 +148,8 @@ const PatientsList: React.FC = () => {
           </p>
         </div>
         <Button onClick={() => setIsSearchDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark text-white">
-          <Search className="h-5 w-5 mr-2" /> 
-          Procurar Paciente
+          <Link className="h-5 w-5 mr-2" /> 
+          Conectar com Paciente
         </Button>
       </div>
       
