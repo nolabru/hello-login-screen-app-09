@@ -186,11 +186,7 @@ const PatientsList: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="all">
-          <Card className="shadow-sm overflow-hidden border border-gray-200">
-            <CardContent className="p-0">
-              <PatientsTable patients={filteredPatients} loading={loading && activeTab === 'all'} onPatientRemoved={handlePatientRemoved} />
-            </CardContent>
-          </Card>
+          
 
           {!loading && filteredPatients.length === 0 && activeTab === 'all' && <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border border-dashed border-gray-300">
               <h3 className="font-medium mb-2 text-lg text-neutral-700">Nenhum Paciente Encontrado</h3>
