@@ -8,6 +8,7 @@ import { Company } from './types';
 import { useToast } from '@/components/ui/use-toast';
 import { disconnectFromCompany, acceptCompanyRequest } from './companiesService';
 import { useIsMobile } from '@/hooks/use-mobile';
+
 interface CompanyListProps {
   companies: Company[];
   isLoading: boolean;
@@ -15,6 +16,7 @@ interface CompanyListProps {
   refreshCompanies: () => void;
   listType?: 'pending' | 'requested' | 'active';
 }
+
 const CompanyList: React.FC<CompanyListProps> = ({
   companies,
   isLoading,
@@ -92,7 +94,7 @@ const CompanyList: React.FC<CompanyListProps> = ({
     return <Card>
         <CardContent className="p-4 sm:p-6">
           <div className="p-8 text-center">
-            <p className="text-lg font-medium text-neutral-700">
+            <p className="text-lg font-medium text-neutral-700 font-display">
               {listType === 'pending' ? 'Nenhum convite de empresa pendente.' : listType === 'requested' ? 'Nenhuma solicitação de conexão enviada.' : 'Nenhuma empresa conectada.'}
             </p>
             {listType === 'active' && <p className="mt-2 text-sm font-normal text-gray-500">Conecte-se com uma empresa para visualizá-la.</p>}
@@ -186,4 +188,5 @@ const CompanyList: React.FC<CompanyListProps> = ({
       </CardContent>
     </Card>;
 };
+
 export default CompanyList;
