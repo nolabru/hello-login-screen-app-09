@@ -131,7 +131,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <h2 className="font-medium text-xl text-neutral-700">{userName}</h2>
           </div>
           
-          <div className="py-4 overflow-y-auto flex-1">
+          <div className="overflow-y-auto flex-1 py-0">
             <nav>
               <ul>
                 {navItems.map(item => {
