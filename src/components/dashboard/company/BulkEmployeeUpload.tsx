@@ -138,10 +138,10 @@ const BulkEmployeeUpload: React.FC<BulkEmployeeUploadProps> = ({
           const {
             error
           } = await supabase.from('user_profiles').insert({
-            nome: employee.nome,
+            name: employee.nome, // Usando 'name' no banco, mas 'nome' no CSV
             email: employee.email,
             cpf: employee.cpf,
-            senha: employee.senha,
+            password: employee.senha, // Usando 'password' no banco, mas 'senha' no CSV
             id_empresa: companyId,
             status: false,
             license_status: 'active' // Definir como active para consumir uma licença

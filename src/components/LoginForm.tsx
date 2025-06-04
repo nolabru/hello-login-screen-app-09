@@ -32,10 +32,12 @@ const LoginForm: React.FC = () => {
       if (adminMode) {
         if (email === 'admin@admin.com') {
           // Verificar se este admin existe e a senha está correta
-          const {
-            data: admin,
-            error: adminError
-          } = await supabase.from('user_profiles').select().eq('email', 'admin@admin.com').eq('senha', password).single();
+          // Usando uma abordagem mais simples para evitar erros de tipo
+          const { data: admin, error: adminError } = await supabase
+            .from('user_profiles')
+            .select('*')
+            .match({ email: 'admin@admin.com', password: password })
+            .single();
           if (adminError || !admin) {
             toast({
               title: "Credenciais de administrador inválidas",
@@ -47,7 +49,7 @@ const LoginForm: React.FC = () => {
 
           // Admin autenticado
           localStorage.setItem('adminId', admin.id.toString());
-          localStorage.setItem('adminName', admin.nome || 'Administrador');
+          localStorage.setItem('adminName', admin.name || 'Administrador');
           toast({
             title: "Login de administrador bem-sucedido",
             description: "Bem-vindo à área do administrador"
@@ -68,10 +70,12 @@ const LoginForm: React.FC = () => {
       // Regular login (Non-admin) continues with existing logic
       if (userType === 'psychologists') {
         // Verificar se o psicólogo existe na tabela psychologists
-        const {
-          data: psychologist,
-          error: fetchError
-        } = await supabase.from('psychologists').select().eq('email', email).eq('senha', password).single();
+        // Usando uma abordagem mais simples para evitar erros de tipo
+        const { data: psychologist, error: fetchError } = await supabase
+          .from('psychologists')
+          .select('*')
+          .match({ email: email, password: password })
+          .single();
         if (fetchError || !psychologist) {
           console.error('Erro ao fazer login:', fetchError);
           toast({
@@ -85,10 +89,10 @@ const LoginForm: React.FC = () => {
 
         // Psicólogo encontrado, salvar dados na sessão
         localStorage.setItem('psychologistId', psychologist.id.toString());
-        localStorage.setItem('psychologistName', psychologist.nome || psychologist.name || 'Psicólogo');
+        localStorage.setItem('psychologistName', psychologist.name || 'Psicólogo');
         toast({
           title: "Login bem-sucedido",
-          description: `Bem-vindo(a) de volta, ${psychologist.nome || psychologist.name || 'Psicólogo'}!`
+          description: `Bem-vindo(a) de volta, ${psychologist.name || 'Psicólogo'}!`
         });
         navigate('/dashboard');
       } else {
@@ -96,10 +100,24 @@ const LoginForm: React.FC = () => {
         console.log('Tentando fazer login como empresa');
 
         // Verificar se a empresa existe na tabela companies
-        const {
-          data: company,
-          error: fetchError
-        } = await supabase.from('companies').select().or(`email.eq.${email},contact_email.eq.${email}`).eq('senha', password).single();
+        // Primeiro tentamos com o email principal
+        let { data: company, error: fetchError } = await supabase
+          .from('companies')
+          .select('*')
+          .match({ email: email, password: password })
+          .single();
+          
+        // Se não encontrar, tentamos com o email corporativo
+        if (fetchError || !company) {
+          const result = await supabase
+            .from('companies')
+            .select('*')
+            .match({ corp_email: email, password: password })
+            .single();
+            
+          company = result.data;
+          fetchError = result.error;
+        }
         if (fetchError || !company) {
           console.error('Erro ao fazer login como empresa:', fetchError);
           toast({
@@ -115,7 +133,7 @@ const LoginForm: React.FC = () => {
         // Empresa encontrada, salvar dados na sessão
         localStorage.setItem('companyId', company.id.toString());
         localStorage.setItem('companyName', company.name || 'Empresa');
-        localStorage.setItem('companyEmail', company.email || company.contact_email || email);
+        localStorage.setItem('companyEmail', company.email || company.corp_email || email);
         toast({
           title: "Login bem-sucedido",
           description: `Bem-vindo(a) de volta, ${company.name || 'Empresa'}!`

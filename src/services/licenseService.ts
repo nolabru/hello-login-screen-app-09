@@ -151,10 +151,10 @@ export const fetchUsersWithLicense = async (
   licenseId: number
 ): Promise<Employee[]> => {
   try {
-    // Buscar usuários da empresa com status de licença 'active'
+  // Buscar usuários da empresa com status de licença 'active'
     const { data, error } = await supabase
       .from('user_profiles')
-      .select('id, nome, email, phone, status, license_status')
+      .select('id, name, email, phone, status, license_status')
       .eq('id_empresa', companyId)
       .eq('license_status', 'active');
       
@@ -162,7 +162,7 @@ export const fetchUsersWithLicense = async (
     
     return data.map(user => ({
       id: user.id,
-      nome: user.nome,
+      nome: user.name, // Mantendo 'nome' na interface Employee, mas usando 'name' do banco
       email: user.email,
       status: user.status,
       connection_status: user.license_status || 'inactive',

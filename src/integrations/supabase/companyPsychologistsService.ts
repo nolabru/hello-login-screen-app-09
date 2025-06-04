@@ -45,7 +45,7 @@ export const getCompanyPsychologists = async (companyId: number) => {
   // Get psychologist details
   const { data: psychologists, error: psychologistsError } = await supabase
     .from('psychologists')
-    .select('id, nome, email, crp, especialidade')
+    .select('id, name, email, crp, specialization')
     .in('id', psychologistIds);
 
   if (psychologistsError) {

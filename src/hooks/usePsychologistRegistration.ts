@@ -17,13 +17,13 @@ export const usePsychologistRegistration = () => {
       const { data: insertedData, error } = await supabase
         .from('psychologists')
         .insert({
-          nome: data.name,
+          name: data.name,
           email: data.email,
           phone: data.phone,
           crp: data.crp,
-          especialidade: data.specialization,
+          specialization: data.specialization,
           bio: data.biography,
-          senha: data.password,
+          password: data.password,
           status: true
         })
         .select();

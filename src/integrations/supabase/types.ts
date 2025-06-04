@@ -41,43 +41,43 @@ export type Database = {
       }
       companies: {
         Row: {
-          atualizado_em: string | null
           cnpj: string
-          contact_email: string
+          corp_email: string
           created_at: string | null
           email: string
-          email_de_contato: string | null
           id: number
+          legal_name: string
           name: string
-          razao_social: string
-          senha: string
+          password: string
+          phone: string | null
           status: boolean
+          updated_at: string | null
         }
         Insert: {
-          atualizado_em?: string | null
           cnpj: string
-          contact_email: string
+          corp_email: string
           created_at?: string | null
           email: string
-          email_de_contato?: string | null
           id?: number
+          legal_name: string
           name: string
-          razao_social: string
-          senha: string
+          password: string
+          phone?: string | null
           status?: boolean
+          updated_at?: string | null
         }
         Update: {
-          atualizado_em?: string | null
           cnpj?: string
-          contact_email?: string
+          corp_email?: string
           created_at?: string | null
           email?: string
-          email_de_contato?: string | null
           id?: number
+          legal_name?: string
           name?: string
-          razao_social?: string
-          senha?: string
+          password?: string
+          phone?: string | null
           status?: boolean
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -275,124 +275,97 @@ export type Database = {
       }
       psychologists: {
         Row: {
-          atualizado_em: string | null
           bio: string | null
           created_at: string | null
           crp: string
           email: string
-          especialidade: string | null
-          experiencia: string | null
           id: number
-          idade: number | null
-          name: string | null
-          nome: string
+          name: string
+          password: string
           phone: string | null
-          senha: string
           specialization: string | null
           status: boolean
+          updated_at: string | null
         }
         Insert: {
-          atualizado_em?: string | null
           bio?: string | null
           created_at?: string | null
           crp: string
           email: string
-          especialidade?: string | null
-          experiencia?: string | null
           id?: number
-          idade?: number | null
-          name?: string | null
-          nome: string
+          name: string
+          password: string
           phone?: string | null
-          senha: string
           specialization?: string | null
           status?: boolean
+          updated_at?: string | null
         }
         Update: {
-          atualizado_em?: string | null
           bio?: string | null
           created_at?: string | null
           crp?: string
           email?: string
-          especialidade?: string | null
-          experiencia?: string | null
           id?: number
-          idade?: number | null
-          name?: string | null
-          nome?: string
+          name?: string
+          password?: string
           phone?: string | null
-          senha?: string
           specialization?: string | null
           status?: boolean
+          updated_at?: string | null
         }
         Relationships: []
       }
       user_profiles: {
         Row: {
           age_range: string | null
-          atualizado_em: string | null
           cpf: string
           created_at: string | null
           email: string
           experience: string | null
           gender: string | null
-          genero: string | null
           id: number
           id_empresa: number | null
-          idade: number | null
           license_status: string | null
-          name: string | null
-          nome: string
+          name: string
           objective: string | null
+          password: string
           phone: string | null
-          questionario_inicial: string | null
-          senha: string
-          sobrenome: string | null
           status: boolean
+          updated_at: string | null
         }
         Insert: {
           age_range?: string | null
-          atualizado_em?: string | null
           cpf: string
           created_at?: string | null
           email: string
           experience?: string | null
           gender?: string | null
-          genero?: string | null
           id?: number
           id_empresa?: number | null
-          idade?: number | null
           license_status?: string | null
-          name?: string | null
-          nome: string
+          name: string
           objective?: string | null
+          password: string
           phone?: string | null
-          questionario_inicial?: string | null
-          senha: string
-          sobrenome?: string | null
           status?: boolean
+          updated_at?: string | null
         }
         Update: {
           age_range?: string | null
-          atualizado_em?: string | null
           cpf?: string
           created_at?: string | null
           email?: string
           experience?: string | null
           gender?: string | null
-          genero?: string | null
           id?: number
           id_empresa?: number | null
-          idade?: number | null
           license_status?: string | null
-          name?: string | null
-          nome?: string
+          name?: string
           objective?: string | null
+          password?: string
           phone?: string | null
-          questionario_inicial?: string | null
-          senha?: string
-          sobrenome?: string | null
           status?: boolean
+          updated_at?: string | null
         }
         Relationships: [
           {

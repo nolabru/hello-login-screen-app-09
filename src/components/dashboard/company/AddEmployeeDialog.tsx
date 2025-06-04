@@ -70,10 +70,10 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
       const {
         error
       } = await supabase.from('user_profiles').insert({
-        nome: data.nome,
+        name: data.nome, // Usando 'name' no banco, mas 'nome' no formulário
         email: data.email,
         cpf: data.cpf,
-        senha: data.senha,
+        password: data.senha, // Usando 'password' no banco, mas 'senha' no formulário
         id_empresa: companyId,
         status: false,
         license_status: 'active' // Definir como active para consumir uma licença

@@ -16,11 +16,12 @@ export const useCompanyRegistration = () => {
       // Insert the company data into the companies table
       const { error } = await supabase.from('companies').insert({
         name: data.companyName,
-        razao_social: data.legalName,
+        legal_name: data.legalName,
         email: data.corporateEmail,
         cnpj: data.cnpj,
-        contact_email: data.contactEmail,
-        senha: data.password // Use the password from form
+        corp_email: data.contactEmail,
+        password: data.password, // Use the password from form
+        phone: data.contactPhone // Adding phone field
       });
 
       if (error) throw error;
