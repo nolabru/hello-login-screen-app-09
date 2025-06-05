@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface SessionStats {
   sessionsCount: number;
@@ -8,22 +9,19 @@ interface SessionStats {
 const useSessionStats = (): SessionStats => {
   const [sessionsCount, setSessionsCount] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
+  const [subscription, setSubscription] = useState<RealtimeChannel | null>(null);
 
   // Função para buscar os dados das sessões
   const fetchSessionStats = async (psychologistId: string) => {
     try {
-      // Usar o ID diretamente como string UUID
-      // Não converter para número, pois é um UUID
+      // Comentando o filtro de data temporariamente para verificar se é o problema
+      // const sevenDaysAgo = new Date();
+      // sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      // const formattedDate = sevenDaysAgo.toISOString();
       
-      // Obter a data de 7 dias atrás
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const formattedDate = sevenDaysAgo.toISOString();
-      
-      // Buscar sessões dos pacientes vinculados a este psicólogo nos últimos 7 dias
-      // Primeiro, obter os IDs dos pacientes vinculados ao psicólogo
+      // Buscar pacientes vinculados a este psicólogo
       const patientsResponse = await fetch(
-        `https://ygafwrebafehwaomibmm.supabase.co/rest/v1/user_profiles?psychologist_id=eq.${psychologistId}&select=id`,
+        `https://ygafwrebafehwaomibmm.supabase.co/rest/v1/user_profiles?psychologist_id=eq.${psychologistId}&select=user_id`,
         {
           headers: {
             'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnYWZ3cmViYWZlaHdhb21pYm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTQyNjQsImV4cCI6MjA2MjM3MDI2NH0.tD90iyVXxrt1HJlzz_LV-SLY5usqC4cwmLEXe9hWEvo',
@@ -45,18 +43,40 @@ const useSessionStats = (): SessionStats => {
         return;
       }
       
-      // Extrair os IDs dos pacientes
-      const patientIds = patients.map(patient => patient.id);
+      // Extrair os IDs dos pacientes e formatá-los corretamente para a cláusula in
+      const patientUserIds = patients.map(patient => `"${patient.user_id}"`); // Adicionar aspas
       
-      // Contar o número de sessões para esses pacientes nos últimos 7 dias
-      // Nota: Estamos simulando isso porque não temos acesso à tabela real de sessões
-      // Em um ambiente real, você faria uma consulta à tabela de sessões
+      console.log('IDs dos pacientes vinculados ao psicólogo:', patientUserIds);
       
-      // Simulação: 1-3 sessões por paciente nos últimos 7 dias
-      const totalSessions = patientIds.reduce((total) => {
-        const sessionsPerPatient = Math.floor(Math.random() * 3) + 1;
-        return total + sessionsPerPatient;
-      }, 0);
+      // Buscar todas as sessões para esses pacientes (sem filtro de data)
+      // Usando o operador in para buscar sessões para qualquer um dos pacientes
+      const sessionsUrl = `https://ygafwrebafehwaomibmm.supabase.co/rest/v1/call_sessions?user_id=in.(${patientUserIds.join(',')})&select=id,created_at,user_id`;
+      console.log('URL da requisição de sessões (sem filtro de data):', sessionsUrl);
+      
+      // Adicionar consulta SQL equivalente para verificação manual
+      console.log('Consulta SQL equivalente:');
+      console.log(`SELECT id, created_at, user_id FROM call_sessions WHERE user_id IN (${patientUserIds.join(',')});`);
+      
+      const sessionsResponse = await fetch(
+        sessionsUrl,
+        {
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnYWZ3cmViYWZlaHdhb21pYm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTQyNjQsImV4cCI6MjA2MjM3MDI2NH0.tD90iyVXxrt1HJlzz_LV-SLY5usqC4cwmLEXe9hWEvo',
+            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnYWZ3cmViYWZlaHdhb21pYm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTQyNjQsImV4cCI6MjA2MjM3MDI2NH0.tD90iyVXxrt1HJlzz_LV-SLY5usqC4cwmLEXe9hWEvo`,
+          },
+        }
+      );
+      
+      if (!sessionsResponse.ok) {
+        throw new Error(`Erro na requisição de sessões: ${sessionsResponse.status}`);
+      }
+      
+      const sessions = await sessionsResponse.json();
+      
+      console.log('Sessões encontradas:', sessions);
+      
+      // Contar o número total de sessões
+      const totalSessions = Array.isArray(sessions) ? sessions.length : 0;
       
       setSessionsCount(totalSessions);
     } catch (error) {
@@ -80,14 +100,40 @@ const useSessionStats = (): SessionStats => {
     // Buscar dados iniciais
     fetchSessionStats(psychologistId);
     
-    // Configurar um intervalo para atualizar os dados a cada 30 segundos
-    const intervalId = setInterval(() => {
-      fetchSessionStats(psychologistId);
-    }, 30000);
+    // Importar o cliente Supabase para configurar a assinatura em tempo real
+    import('@/integrations/supabase/client').then(({ supabase }) => {
+      console.log('Configurando assinatura em tempo real para a tabela call_sessions');
+      
+      // Configurar assinatura em tempo real para a tabela call_sessions
+      const channel = supabase
+        .channel('call_sessions_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // Escutar todos os eventos (INSERT, UPDATE, DELETE)
+            schema: 'public',
+            table: 'call_sessions'
+          },
+          (payload) => {
+            console.log('Mudança detectada na tabela call_sessions:', payload);
+            // Atualizar os dados quando houver mudanças
+            fetchSessionStats(psychologistId);
+          }
+        )
+        .subscribe();
+      
+      setSubscription(channel);
+      console.log('Assinatura em tempo real configurada com sucesso');
+    }).catch(error => {
+      console.error('Erro ao configurar assinatura em tempo real:', error);
+    });
     
-    // Limpar intervalo quando o componente for desmontado
+    // Limpar assinatura quando o componente for desmontado
     return () => {
-      clearInterval(intervalId);
+      if (subscription) {
+        console.log('Cancelando assinatura em tempo real');
+        subscription.unsubscribe();
+      }
     };
   }, []);
 
