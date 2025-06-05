@@ -3,7 +3,6 @@ import React from 'react';
 import { Helmet } from 'react-helmet';
 import AdminDashboardLayout from '@/components/layout/AdminDashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import AIPromptManager from '@/components/admin/AIPromptManager';
 
 const AdminSettings: React.FC = () => {
   return (
@@ -20,11 +19,11 @@ const AdminSettings: React.FC = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Prompt da AIA</CardTitle>
-              <CardDescription>Configure os prompts usados pelo assistente de IA</CardDescription>
+              <CardTitle>Configurações</CardTitle>
+              <CardDescription>Configure as opções do sistema</CardDescription>
             </CardHeader>
             <CardContent>
-              <AIPromptManager />
+              <p>Não há configurações disponíveis no momento.</p>
             </CardContent>
           </Card>
         </div>

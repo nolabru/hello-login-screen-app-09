@@ -9,36 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      ai_prompts: {
-        Row: {
-          content: string
-          created_at: string | null
-          created_by: string
-          id: string
-          is_active: boolean | null
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          content: string
-          created_at?: string | null
-          created_by: string
-          id?: string
-          is_active?: boolean | null
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          content?: string
-          created_at?: string | null
-          created_by?: string
-          id?: string
-          is_active?: boolean | null
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       companies: {
         Row: {
           cnpj: string
@@ -138,48 +108,6 @@ export type Database = {
           },
         ]
       }
-      company_psychologist_associations: {
-        Row: {
-          created_at: string | null
-          id: number
-          id_empresa: number
-          id_psicologo: number
-          status: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          id?: number
-          id_empresa: number
-          id_psicologo: number
-          status?: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          id?: number
-          id_empresa?: number
-          id_psicologo?: number
-          status?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "company_psychologist_associations_id_empresa_fkey"
-            columns: ["id_empresa"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "company_psychologist_associations_id_psicologo_fkey"
-            columns: ["id_psicologo"]
-            isOneToOne: false
-            referencedRelation: "psychologists"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       license_plans: {
         Row: {
           active: boolean | null
@@ -215,63 +143,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
-      }
-      psychologist_patient_notes: {
-        Row: {
-          atualizado_em: string | null
-          conteudo: string
-          created_at: string | null
-          criado_em: string | null
-          id: number
-          id_psicologo: number
-          id_usuario: number
-          note: string | null
-          patient_id: number | null
-          psychologist_id: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          atualizado_em?: string | null
-          conteudo: string
-          created_at?: string | null
-          criado_em?: string | null
-          id?: number
-          id_psicologo: number
-          id_usuario: number
-          note?: string | null
-          patient_id?: number | null
-          psychologist_id?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          atualizado_em?: string | null
-          conteudo?: string
-          created_at?: string | null
-          criado_em?: string | null
-          id?: number
-          id_psicologo?: number
-          id_usuario?: number
-          note?: string | null
-          patient_id?: number | null
-          psychologist_id?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "psychologist_patient_notes_id_psicologo_fkey"
-            columns: ["id_psicologo"]
-            isOneToOne: false
-            referencedRelation: "psychologists"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "psychologist_patient_notes_id_usuario_fkey"
-            columns: ["id_usuario"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       psychologists: {
         Row: {
@@ -373,66 +244,6 @@ export type Database = {
             columns: ["id_empresa"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_psychologist_associations: {
-        Row: {
-          atualizado_em: string | null
-          created_at: string | null
-          historico: string | null
-          hora_criacao: string | null
-          id: number | null
-          id_psicologo: number
-          id_relacao: number
-          id_usuario: number
-          notes: string | null
-          psychologist_id: number | null
-          status: string
-          user_id: number | null
-        }
-        Insert: {
-          atualizado_em?: string | null
-          created_at?: string | null
-          historico?: string | null
-          hora_criacao?: string | null
-          id?: number | null
-          id_psicologo: number
-          id_relacao?: number
-          id_usuario: number
-          notes?: string | null
-          psychologist_id?: number | null
-          status?: string
-          user_id?: number | null
-        }
-        Update: {
-          atualizado_em?: string | null
-          created_at?: string | null
-          historico?: string | null
-          hora_criacao?: string | null
-          id?: number | null
-          id_psicologo?: number
-          id_relacao?: number
-          id_usuario?: number
-          notes?: string | null
-          psychologist_id?: number | null
-          status?: string
-          user_id?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_psychologist_associations_id_psicologo_fkey"
-            columns: ["id_psicologo"]
-            isOneToOne: false
-            referencedRelation: "psychologists"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_psychologist_associations_id_usuario_fkey"
-            columns: ["id_usuario"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
             referencedColumns: ["id"]
           },
         ]

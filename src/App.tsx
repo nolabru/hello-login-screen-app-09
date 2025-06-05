@@ -27,6 +27,8 @@ import AdminEmployees from "./pages/admin/AdminEmployees";
 import AdminLicenses from "./pages/admin/AdminLicenses";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSettings from "./pages/admin/AdminSettings";
+import PsychologistInviteHandler from "./pages/PsychologistInviteHandler";
+import RedirectInvite from "./pages/RedirectInvite";
 
 // Create a new QueryClient instance outside the component
 const queryClient = new QueryClient();
@@ -44,6 +46,8 @@ const App = () => {
               <Route path="/email-verificado" element={<EmailVerified />} />
               <Route path="/register/psychologist" element={<PsychologistRegistration />} />
               <Route path="/register/company" element={<CompanyRegistration />} />
+              <Route path="/redirect-invite" element={<RedirectInvite />} />
+              <Route path="/psychologist/enter-code" element={<PsychologistInviteHandler />} />
               
               {/* Psychologist Routes */}
               <Route path="/dashboard" element={<PsychologistDashboard />} />

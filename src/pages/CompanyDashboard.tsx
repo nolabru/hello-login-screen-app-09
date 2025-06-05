@@ -50,13 +50,12 @@ const CompanyDashboard: React.FC = () => {
         const {
           data: employees
         } = await supabase.from('user_profiles').select('id, status').eq('id_empresa', companyIdNumber);
-        const {
-          data: psychologists
-        } = await supabase.from('company_psychologist_associations').select('id, status').eq('id_empresa', companyIdNumber);
+        
+        // Psicólogos não estão mais associados a empresas
         const activeEmps = employees?.filter(emp => emp.status).length || 0;
         const pendingEmps = employees?.filter(emp => !emp.status).length || 0;
-        const activePsychs = psychologists?.filter(psy => psy.status === 'active').length || 0;
-        const pendingPsychs = psychologists?.filter(psy => psy.status === 'pending').length || 0;
+        const activePsychs = 0; // Não há mais associações entre empresas e psicólogos
+        const pendingPsychs = 0; // Não há mais associações entre empresas e psicólogos
 
         // Fetch license availability
         const licenseStats = await checkLicenseAvailability(companyIdNumber);

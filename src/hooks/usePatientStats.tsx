@@ -1,6 +1,5 @@
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 
 interface PatientStats {
   totalPatients: number;
@@ -14,37 +13,16 @@ const usePatientStats = (): PatientStats => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchPatientStats = async () => {
-      try {
-        const psychologistId = localStorage.getItem('psychologistId');
-        if (!psychologistId) return;
-        
-        // Convert to number
-        const psychologistIdNumber = parseInt(psychologistId, 10);
-        
-        // Fetch all associated patients EXCLUDING pending status
-        const { data: allPatients, error: allError } = await supabase
-          .from('user_psychologist_associations')
-          .select('id_relacao, status')
-          .eq('id_psicologo', psychologistIdNumber)
-          .neq('status', 'pending'); // Exclude pending status
-        
-        if (allError) throw allError;
-        
-        // Filter active patients (with status 'active' or 'Active')
-        const activeOnes = allPatients?.filter(p => 
-          p.status === 'active' || p.status === 'Active') || [];
-        
-        setTotalPatients(allPatients?.length || 0);
-        setActivePatients(activeOnes.length);
-      } catch (error) {
-        console.error('Erro ao buscar estatísticas de pacientes:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Simular carregamento para manter a experiência do usuário
+    const timer = setTimeout(() => {
+      // A funcionalidade de associação entre psicólogos e pacientes foi removida
+      // Retornando valores zerados
+      setTotalPatients(0);
+      setActivePatients(0);
+      setLoading(false);
+    }, 500);
     
-    fetchPatientStats();
+    return () => clearTimeout(timer);
   }, []);
 
   return { totalPatients, activePatients, loading };

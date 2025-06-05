@@ -11,17 +11,17 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 
 interface PendingAction {
   id: number;
-  type: 'license' | 'connection';
+  type: 'license';
   title: string;
   description: string;
 }
 
 interface Psychologist {
   id: number;
-  nome: string;
+  name: string;
   email: string;
   crp: string;
-  especialidade?: string;
+  specialization?: string;
   bio?: string;
   phone?: string;
 }
@@ -31,8 +31,8 @@ interface Company {
   name: string;
   email: string;
   cnpj: string;
-  razao_social: string;
-  contact_email: string;
+  legal_name: string;
+  corp_email: string;
 }
 
 interface License {
@@ -92,34 +92,8 @@ const AdminDashboard = () => {
         if (licError) throw licError;
         setLicensesCount(licCount || 0);
 
-        // Fetch pending actions: pending connection requests
-        const pendingItems: PendingAction[] = [];
-        
-        // Fetch pending connections
-        const { data: pendingConnections, error: pendingConnError } = await supabase
-          .from('company_psychologist_associations')
-          .select(`
-            id,
-            psychologist:id_psicologo(nome, email),
-            company:id_empresa(name, email)
-          `)
-          .eq('status', 'pending')
-          .limit(5);
-        
-        if (pendingConnError) throw pendingConnError;
-        
-        if (pendingConnections) {
-          pendingConnections.forEach(conn => {
-            pendingItems.push({
-              id: conn.id,
-              type: 'connection',
-              title: 'Nova conexão',
-              description: `${conn.psychologist?.nome || 'Psicólogo'} solicitou conexão com ${conn.company?.name || 'Empresa'}`
-            });
-          });
-        }
-        
-        setPendingActions(pendingItems);
+        // Não há mais ações pendentes relacionadas a conexões
+        setPendingActions([]);
 
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -136,9 +110,6 @@ const AdminDashboard = () => {
     fetchDashboardData();
   }, [toast]);
 
-  const handleViewConnections = () => {
-    navigate('/admin/connections');
-  };
 
   const handleCardClick = async (type: 'psychologists' | 'companies' | 'licenses') => {
     setDialogType(type);
@@ -148,8 +119,8 @@ const AdminDashboard = () => {
       if (type === 'psychologists') {
         const { data, error } = await supabase
           .from('psychologists')
-          .select('id, nome, email, crp, especialidade, bio, phone')
-          .order('nome', { ascending: true });
+          .select('id, name, email, crp, specialization, bio, phone')
+          .order('name', { ascending: true });
         
         if (error) throw error;
         setPsychologists(data || []);
@@ -157,7 +128,7 @@ const AdminDashboard = () => {
       else if (type === 'companies') {
         const { data, error } = await supabase
           .from('companies')
-          .select('id, name, email, cnpj, razao_social, contact_email')
+          .select('id, name, email, cnpj, legal_name, corp_email')
           .order('name', { ascending: true });
         
         if (error) throw error;
@@ -284,15 +255,6 @@ const AdminDashboard = () => {
                             <p className="text-sm font-medium">{item.title}</p>
                             <p className="text-xs text-muted-foreground">{item.description}</p>
                           </div>
-                          {item.type === 'connection' && (
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={handleViewConnections}
-                            >
-                              Ver
-                            </Button>
-                          )}
                         </div>
                       ))}
                     </>
@@ -340,10 +302,10 @@ const AdminDashboard = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {psychologists.map((psych) => (
                       <tr key={psych.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{psych.nome}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{psych.name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{psych.email}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{psych.crp}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{psych.especialidade || 'Não especificado'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{psych.specialization || 'Não especificado'}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{psych.phone || 'Não informado'}</td>
                       </tr>
                     ))}
@@ -370,10 +332,10 @@ const AdminDashboard = () => {
                     {companies.map((company) => (
                       <tr key={company.id}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{company.name}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{company.razao_social}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{company.legal_name}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{company.cnpj}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{company.email}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{company.contact_email}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{company.corp_email}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -49,6 +49,84 @@ export const usePsychologistRegistration = () => {
         return;
       }
 
+      // Get the inserted psychologist ID
+      const psychologistId = insertedData?.[0]?.id?.toString();
+      
+      if (psychologistId) {
+        // Store psychologist ID in localStorage
+        localStorage.setItem('psychologistId', psychologistId);
+        localStorage.setItem('psychologistName', data.name || 'Psicólogo');
+        
+        // Check if there's an invite code in localStorage
+        let inviteCode = localStorage.getItem('inviteCode');
+        
+        // If there's no direct code but there's a token, try to get the code by email
+        if (!inviteCode) {
+          const inviteToken = localStorage.getItem('inviteToken');
+          if (inviteToken) {
+            try {
+              // Get the invite code by email
+              const response = await fetch(`http://192.168.0.73:3000/get-invite-by-email?email=${encodeURIComponent(data.email)}`);
+              const inviteData = await response.json();
+              
+              if (inviteData.success && inviteData.code) {
+                inviteCode = inviteData.code;
+                localStorage.setItem('inviteCode', inviteCode);
+                localStorage.removeItem('inviteToken'); // Clear the token after getting the code
+              }
+            } catch (error) {
+              console.error('Error getting invite by email:', error);
+            }
+          }
+        }
+        
+        if (inviteCode) {
+          try {
+            // Process the invite
+            const processResponse = await fetch('http://192.168.0.73:3000/process-invite', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ 
+                code: inviteCode, 
+                psychologistId 
+              }),
+            });
+            
+            const processData = await processResponse.json();
+            
+            if (processData.success) {
+              toast({
+                title: "Convite aceito com sucesso",
+                description: "Você foi vinculado ao paciente que enviou o convite."
+              });
+              
+              // Clear the invite code from localStorage
+              localStorage.removeItem('inviteCode');
+              
+              // Navigate to dashboard immediately
+              navigate('/dashboard');
+              return;
+            } else {
+              console.error('Erro ao processar convite:', processData.error);
+              toast({
+                variant: 'destructive',
+                title: "Erro ao processar convite",
+                description: processData.error || "Ocorreu um erro ao processar o convite."
+              });
+            }
+          } catch (error) {
+            console.error('Erro ao processar convite:', error);
+            toast({
+              variant: 'destructive',
+              title: "Erro ao processar convite",
+              description: "Ocorreu um erro ao processar o convite. Tente novamente mais tarde."
+            });
+          }
+        }
+      }
+      
       // Success message
       toast({
         title: "Cadastro enviado!",
