@@ -30,27 +30,15 @@ export function usePatientInsights(userId: string | null) {
         setLoading(true);
         console.log('Buscando insights para o usuário:', userId);
         
-        // Obter a URL e a chave do Supabase do cliente
-        const supabaseUrl = "https://ygafwrebafehwaomibmm.supabase.co";
-        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnYWZ3cmViYWZlaHdhb21pYm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTQyNjQsImV4cCI6MjA2MjM3MDI2NH0.tD90iyVXxrt1HJlzz_LV-SLY5usqC4cwmLEXe9hWEvo";
+        // Buscar sessões do usuário usando o cliente Supabase
+        const { data: sessions, error: sessionsError } = await supabase
+          .from('call_sessions')
+          .select('id, mood, summary, started_at')
+          .eq('user_id', userId);
         
-        // Buscar sessões do usuário com os campos adicionais usando fetch
-        const sessionsResponse = await fetch(
-          `${supabaseUrl}/rest/v1/call_sessions?user_id=eq.${userId}&select=id,mood,summary,started_at`,
-          {
-            headers: {
-              'apikey': supabaseKey,
-              'Authorization': `Bearer ${supabaseKey}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        
-        if (!sessionsResponse.ok) {
-          throw new Error(`Erro ao buscar sessões: ${sessionsResponse.status} - ${sessionsResponse.statusText}`);
+        if (sessionsError) {
+          throw new Error(`Erro ao buscar sessões: ${sessionsError.message}`);
         }
-        
-        const sessions = await sessionsResponse.json();
         console.log('Sessões encontradas:', sessions);
         
         if (!sessions || sessions.length === 0) {
@@ -64,30 +52,16 @@ export function usePatientInsights(userId: string | null) {
         const sessionIds = sessions.map((session: any) => session.id);
         console.log('IDs das sessões:', sessionIds);
         
-        // Buscar insights das sessões usando fetch com operador IN
-        // Tentar uma abordagem diferente para a formatação da cláusula in
-        const formattedSessionIds = sessionIds.join(',');
-        // Construir a URL com parâmetros para a cláusula IN
-        const insightsUrl = `${supabaseUrl}/rest/v1/session_insights?session_id=in.(${formattedSessionIds})&order=created_at.desc`;
-        console.log('URL da consulta de insights:', insightsUrl);
-        console.log('SQL equivalente:', `SELECT * FROM session_insights WHERE session_id IN (${formattedSessionIds}) ORDER BY created_at DESC`);
+        // Buscar insights das sessões usando o cliente Supabase
+        const { data: insightsData, error: insightsError } = await supabase
+          .from('session_insights')
+          .select('*')
+          .in('session_id', sessionIds)
+          .order('created_at', { ascending: false });
         
-        const insightsResponse = await fetch(
-          insightsUrl,
-          {
-            headers: {
-              'apikey': supabaseKey,
-              'Authorization': `Bearer ${supabaseKey}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        
-        if (!insightsResponse.ok) {
-          throw new Error(`Erro ao buscar insights: ${insightsResponse.status} - ${insightsResponse.statusText}`);
+        if (insightsError) {
+          throw new Error(`Erro ao buscar insights: ${insightsError.message}`);
         }
-        
-        const insightsData = await insightsResponse.json();
         console.log('Insights encontrados:', insightsData);
         
         // Criar um mapa de sessões para fácil acesso

@@ -9,6 +9,38 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      call_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          mood: string | null
+          started_at: string
+          summary: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          mood?: string | null
+          started_at?: string
+          summary?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          mood?: string | null
+          started_at?: string
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          }
+        ]
+      }
       companies: {
         Row: {
           cnpj: string
@@ -144,6 +176,41 @@ export type Database = {
         }
         Relationships: []
       }
+      session_insights: {
+        Row: {
+          id: number
+          session_id: string
+          created_at: string
+          topics: string[]
+          ai_advice: string
+          long_summary: string
+        }
+        Insert: {
+          id?: number
+          session_id: string
+          created_at?: string
+          topics?: string[]
+          ai_advice?: string
+          long_summary?: string
+        }
+        Update: {
+          id?: number
+          session_id?: string
+          created_at?: string
+          topics?: string[]
+          ai_advice?: string
+          long_summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_insights_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "call_sessions"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       psychologists: {
         Row: {
           bio: string | null
@@ -195,6 +262,7 @@ export type Database = {
           experience: string | null
           gender: string | null
           id: number
+          user_id: string
           company_id: string | null
           license_status: string | null
           name: string
@@ -212,6 +280,7 @@ export type Database = {
           experience?: string | null
           gender?: string | null
           id?: number
+          user_id?: string
           company_id?: string | null
           license_status?: string | null
           name: string
@@ -229,6 +298,7 @@ export type Database = {
           experience?: string | null
           gender?: string | null
           id?: number
+          user_id?: string
           company_id?: string | null
           license_status?: string | null
           name?: string

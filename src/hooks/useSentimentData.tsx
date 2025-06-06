@@ -28,23 +28,15 @@ export function useSentimentData(period: 'month' | 'week' = 'month') {
         
         console.log('Buscando dados de sentimentos para o psicólogo:', psychologistId);
         
-        // 1. Buscar pacientes vinculados ao psicólogo
-        const patientsResponse = await fetch(
-          `https://ygafwrebafehwaomibmm.supabase.co/rest/v1/user_profiles?psychologist_id=eq.${psychologistId}&select=id,user_id,preferred_name,full_name`,
-          {
-            headers: {
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnYWZ3cmViYWZlaHdhb21pYm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTQyNjQsImV4cCI6MjA2MjM3MDI2NH0.tD90iyVXxrt1HJlzz_LV-SLY5usqC4cwmLEXe9hWEvo',
-              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnYWZ3cmViYWZlaHdhb21pYm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTQyNjQsImV4cCI6MjA2MjM3MDI2NH0.tD90iyVXxrt1HJlzz_LV-SLY5usqC4cwmLEXe9hWEvo`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
+        // 1. Buscar pacientes vinculados ao psicólogo usando o cliente Supabase
+        const { data: patients, error: patientsError } = await supabase
+          .from('user_profiles')
+          .select('id, user_id, preferred_name, full_name')
+          .eq('psychologist_id', psychologistId);
         
-        if (!patientsResponse.ok) {
-          throw new Error(`Erro ao buscar pacientes: ${patientsResponse.status} - ${patientsResponse.statusText}`);
+        if (patientsError) {
+          throw new Error(`Erro ao buscar pacientes: ${patientsError.message}`);
         }
-        
-        const patients = await patientsResponse.json();
         console.log('Pacientes encontrados:', patients);
         
         if (!patients || patients.length === 0) {
@@ -68,30 +60,15 @@ export function useSentimentData(period: 'month' | 'week' = 'month') {
           return;
         }
         
-        // 3. Buscar sessões desses pacientes com mood
-        // Tentar uma abordagem diferente para a formatação da cláusula in
-        const formattedUserIds = patientUserIds.join(',');
-        const sessionsUrl = `https://ygafwrebafehwaomibmm.supabase.co/rest/v1/call_sessions?user_id=in.(${formattedUserIds})&select=id,user_id,mood,started_at`;
-        console.log('URL da consulta de sessões (sem aspas):', sessionsUrl);
+        // 3. Buscar sessões desses pacientes com mood usando o cliente Supabase
+        const { data: sessions, error: sessionsError } = await supabase
+          .from('call_sessions')
+          .select('id, user_id, mood, started_at')
+          .in('user_id', patientUserIds);
         
-        const sessionsResponse = await fetch(
-          sessionsUrl,
-          {
-            headers: {
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnYWZ3cmViYWZlaHdhb21pYm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTQyNjQsImV4cCI6MjA2MjM3MDI2NH0.tD90iyVXxrt1HJlzz_LV-SLY5usqC4cwmLEXe9hWEvo',
-              'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnYWZ3cmViYWZlaHdhb21pYm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTQyNjQsImV4cCI6MjA2MjM3MDI2NH0.tD90iyVXxrt1HJlzz_LV-SLY5usqC4cwmLEXe9hWEvo`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        
-        console.log('Status da resposta de sessões:', sessionsResponse.status, sessionsResponse.statusText);
-        
-        if (!sessionsResponse.ok) {
-          throw new Error(`Erro ao buscar sessões: ${sessionsResponse.status} - ${sessionsResponse.statusText}`);
+        if (sessionsError) {
+          throw new Error(`Erro ao buscar sessões: ${sessionsError.message}`);
         }
-        
-        const sessions = await sessionsResponse.json();
         console.log('Sessões encontradas:', sessions);
         
         if (!sessions || sessions.length === 0) {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SessionStats {
   sessionsCount: number;
@@ -19,22 +20,15 @@ const useSessionStats = (): SessionStats => {
       // sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       // const formattedDate = sevenDaysAgo.toISOString();
       
-      // Buscar pacientes vinculados a este psicólogo
-      const patientsResponse = await fetch(
-        `https://ygafwrebafehwaomibmm.supabase.co/rest/v1/user_profiles?psychologist_id=eq.${psychologistId}&select=user_id`,
-        {
-          headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnYWZ3cmViYWZlaHdhb21pYm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTQyNjQsImV4cCI6MjA2MjM3MDI2NH0.tD90iyVXxrt1HJlzz_LV-SLY5usqC4cwmLEXe9hWEvo',
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnYWZ3cmViYWZlaHdhb21pYm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTQyNjQsImV4cCI6MjA2MjM3MDI2NH0.tD90iyVXxrt1HJlzz_LV-SLY5usqC4cwmLEXe9hWEvo`,
-          },
-        }
-      );
+      // Buscar pacientes vinculados a este psicólogo usando o cliente Supabase
+      const { data: patients, error: patientsError } = await supabase
+        .from('user_profiles')
+        .select('user_id')
+        .eq('psychologist_id', psychologistId);
       
-      if (!patientsResponse.ok) {
-        throw new Error(`Erro na requisição de pacientes: ${patientsResponse.status} - ${patientsResponse.statusText}`);
+      if (patientsError) {
+        throw new Error(`Erro na requisição de pacientes: ${patientsError.message}`);
       }
-      
-      const patients = await patientsResponse.json();
       
       // Se não houver pacientes, retornar 0 sessões
       if (!Array.isArray(patients) || patients.length === 0) {
@@ -44,44 +38,32 @@ const useSessionStats = (): SessionStats => {
       }
       
       // Extrair os IDs dos pacientes e filtrar valores nulos/indefinidos
-      const patientUserIds = patients
-        .map(patient => patient.user_id)
+      // Convertendo para string para compatibilidade com o método .in() do Supabase
+      const patientIds = patients
+        .map(patient => String(patient.user_id))
         .filter(Boolean); // Remove valores nulos/undefined/vazios
       
-      console.log('IDs dos pacientes vinculados ao psicólogo:', patientUserIds);
+      console.log('IDs dos pacientes vinculados ao psicólogo:', patientIds);
       
       // Se não houver IDs válidos, retornar 0 sessões
-      if (patientUserIds.length === 0) {
+      if (patientIds.length === 0) {
         setSessionsCount(0);
         setLoading(false);
         return;
       }
       
-      // Buscar todas as sessões para esses pacientes (sem filtro de data)
-      // Tentar uma abordagem diferente para a formatação da cláusula in
-      const formattedUserIds = patientUserIds.join(',');
-      const sessionsUrl = `https://ygafwrebafehwaomibmm.supabase.co/rest/v1/call_sessions?user_id=in.(${formattedUserIds})&select=id,started_at,user_id`;
-      console.log('URL da requisição de sessões (sem filtro de data):', sessionsUrl);
+      // Buscar todas as sessões para esses pacientes usando o cliente Supabase
+      console.log('Buscando sessões para os pacientes com IDs:', patientIds);
       
-      // Adicionar consulta SQL equivalente para verificação manual
-      console.log('Consulta SQL equivalente:');
-      console.log(`SELECT id, started_at, user_id FROM call_sessions WHERE user_id IN (${formattedUserIds});`);
+      // Usar o cliente Supabase para buscar as sessões
+      const { data: sessions, error: sessionsError } = await supabase
+        .from('call_sessions')
+        .select('id, started_at, user_id')
+        .in('user_id', patientIds);
       
-      const sessionsResponse = await fetch(
-        sessionsUrl,
-        {
-          headers: {
-            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnYWZ3cmViYWZlaHdhb21pYm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTQyNjQsImV4cCI6MjA2MjM3MDI2NH0.tD90iyVXxrt1HJlzz_LV-SLY5usqC4cwmLEXe9hWEvo',
-            'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnYWZ3cmViYWZlaHdhb21pYm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTQyNjQsImV4cCI6MjA2MjM3MDI2NH0.tD90iyVXxrt1HJlzz_LV-SLY5usqC4cwmLEXe9hWEvo`,
-          },
-        }
-      );
-      
-      if (!sessionsResponse.ok) {
-        throw new Error(`Erro na requisição de sessões: ${sessionsResponse.status}`);
+      if (sessionsError) {
+        throw new Error(`Erro na requisição de sessões: ${sessionsError.message}`);
       }
-      
-      const sessions = await sessionsResponse.json();
       
       console.log('Sessões encontradas:', sessions);
       
