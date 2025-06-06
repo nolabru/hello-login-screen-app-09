@@ -31,7 +31,7 @@ const useSessionStats = (): SessionStats => {
       );
       
       if (!patientsResponse.ok) {
-        throw new Error(`Erro na requisição de pacientes: ${patientsResponse.status}`);
+        throw new Error(`Erro na requisição de pacientes: ${patientsResponse.status} - ${patientsResponse.statusText}`);
       }
       
       const patients = await patientsResponse.json();
@@ -43,19 +43,29 @@ const useSessionStats = (): SessionStats => {
         return;
       }
       
-      // Extrair os IDs dos pacientes e formatá-los corretamente para a cláusula in
-      const patientUserIds = patients.map(patient => `"${patient.user_id}"`); // Adicionar aspas
+      // Extrair os IDs dos pacientes e filtrar valores nulos/indefinidos
+      const patientUserIds = patients
+        .map(patient => patient.user_id)
+        .filter(Boolean); // Remove valores nulos/undefined/vazios
       
       console.log('IDs dos pacientes vinculados ao psicólogo:', patientUserIds);
       
+      // Se não houver IDs válidos, retornar 0 sessões
+      if (patientUserIds.length === 0) {
+        setSessionsCount(0);
+        setLoading(false);
+        return;
+      }
+      
       // Buscar todas as sessões para esses pacientes (sem filtro de data)
-      // Usando o operador in para buscar sessões para qualquer um dos pacientes
-      const sessionsUrl = `https://ygafwrebafehwaomibmm.supabase.co/rest/v1/call_sessions?user_id=in.(${patientUserIds.join(',')})&select=id,created_at,user_id`;
+      // Tentar uma abordagem diferente para a formatação da cláusula in
+      const formattedUserIds = patientUserIds.join(',');
+      const sessionsUrl = `https://ygafwrebafehwaomibmm.supabase.co/rest/v1/call_sessions?user_id=in.(${formattedUserIds})&select=id,started_at,user_id`;
       console.log('URL da requisição de sessões (sem filtro de data):', sessionsUrl);
       
       // Adicionar consulta SQL equivalente para verificação manual
       console.log('Consulta SQL equivalente:');
-      console.log(`SELECT id, created_at, user_id FROM call_sessions WHERE user_id IN (${patientUserIds.join(',')});`);
+      console.log(`SELECT id, started_at, user_id FROM call_sessions WHERE user_id IN (${formattedUserIds});`);
       
       const sessionsResponse = await fetch(
         sessionsUrl,

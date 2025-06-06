@@ -47,7 +47,7 @@ export function usePatientInsights(userId: string | null) {
         );
         
         if (!sessionsResponse.ok) {
-          throw new Error(`Erro ao buscar sessões: ${sessionsResponse.statusText}`);
+          throw new Error(`Erro ao buscar sessões: ${sessionsResponse.status} - ${sessionsResponse.statusText}`);
         }
         
         const sessions = await sessionsResponse.json();
@@ -65,9 +65,12 @@ export function usePatientInsights(userId: string | null) {
         console.log('IDs das sessões:', sessionIds);
         
         // Buscar insights das sessões usando fetch com operador IN
+        // Tentar uma abordagem diferente para a formatação da cláusula in
+        const formattedSessionIds = sessionIds.join(',');
         // Construir a URL com parâmetros para a cláusula IN
-        const insightsUrl = `${supabaseUrl}/rest/v1/session_insights?session_id=in.(${sessionIds.join(',')})&order=created_at.desc`;
+        const insightsUrl = `${supabaseUrl}/rest/v1/session_insights?session_id=in.(${formattedSessionIds})&order=created_at.desc`;
         console.log('URL da consulta de insights:', insightsUrl);
+        console.log('SQL equivalente:', `SELECT * FROM session_insights WHERE session_id IN (${formattedSessionIds}) ORDER BY created_at DESC`);
         
         const insightsResponse = await fetch(
           insightsUrl,
@@ -81,7 +84,7 @@ export function usePatientInsights(userId: string | null) {
         );
         
         if (!insightsResponse.ok) {
-          throw new Error(`Erro ao buscar insights: ${insightsResponse.statusText}`);
+          throw new Error(`Erro ao buscar insights: ${insightsResponse.status} - ${insightsResponse.statusText}`);
         }
         
         const insightsData = await insightsResponse.json();

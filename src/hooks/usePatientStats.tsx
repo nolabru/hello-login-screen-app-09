@@ -31,7 +31,7 @@ const usePatientStats = (): PatientStats => {
       );
       
       if (!response.ok) {
-        throw new Error(`Erro na requisição: ${response.status}`);
+        throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
       }
       
       const data = await response.json();
