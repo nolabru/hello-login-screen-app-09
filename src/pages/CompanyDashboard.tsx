@@ -10,6 +10,7 @@ import CompanyEmployeesList from '@/components/dashboard/company/CompanyEmployee
 import AddEmployeeDialog from '@/components/dashboard/company/AddEmployeeDialog';
 import CompanyLicensesManagement from '@/components/dashboard/company/CompanyLicensesManagement';
 import { checkLicenseAvailability } from '@/services/licenseService';
+import { fetchCompanyPsychologists } from '@/integrations/supabase/companyPsychologistsService';
 import { useToast } from '@/components/ui/use-toast';
 const CompanyDashboard: React.FC = () => {
   const {
@@ -55,10 +56,10 @@ const CompanyDashboard: React.FC = () => {
         // Contagem total de funcionários vinculados à empresa
         const totalEmployees = employees?.length || 0;
         
-        // Psicólogos não estão mais associados a empresas diretamente no banco
-        // Usamos o serviço companyPsychologistsService para isso
+        // Buscar psicólogos diretamente usando o serviço
         console.log('Buscando psicólogos para a empresa:', companyIdStr);
-        const activePsychs = 0; // Valor será atualizado pelo componente CompanyPsychologistsList
+        const psychologists = await fetchCompanyPsychologists(companyIdStr);
+        const activePsychs = psychologists.length;
         const pendingPsychs = 0; // Não estamos mais usando a distinção entre ativos e pendentes
 
         // Fetch license availability
@@ -211,7 +212,14 @@ const CompanyDashboard: React.FC = () => {
             </TabsContent>
             
             <TabsContent value="psychologists">
-              <CompanyPsychologistsList />
+              <CompanyPsychologistsList 
+                onPsychologistsLoaded={(count) => {
+                  setStats(prev => ({
+                    ...prev,
+                    activePsychologists: count
+                  }));
+                }}
+              />
             </TabsContent>
             
             <TabsContent value="licenses">

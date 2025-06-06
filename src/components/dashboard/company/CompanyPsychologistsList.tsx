@@ -10,7 +10,13 @@ import { fetchCompanyPsychologists, disassociatePsychologistFromCompany, Company
 import { supabase } from '@/integrations/supabase/client';
 import PsychologistSearchDialog from './PsychologistSearchDialog';
 
-const CompanyPsychologistsList: React.FC = () => {
+interface CompanyPsychologistsListProps {
+  onPsychologistsLoaded?: (count: number) => void;
+}
+
+const CompanyPsychologistsList: React.FC<CompanyPsychologistsListProps> = ({
+  onPsychologistsLoaded
+}) => {
   const [psychologists, setPsychologists] = useState<CompanyPsychologist[]>([]);
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -38,6 +44,11 @@ const CompanyPsychologistsList: React.FC = () => {
     try {
       const data = await fetchCompanyPsychologists(companyId);
       setPsychologists(data);
+      
+      // Atualizar o contador no dashboard
+      if (onPsychologistsLoaded) {
+        onPsychologistsLoaded(data.length);
+      }
     
     } catch (error) {
       console.error('Erro ao carregar psicólogos:', error);
