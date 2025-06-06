@@ -56,7 +56,7 @@ const PatientDetails: React.FC = () => {
           <PatientInfoSection patient={patient} />
         </TabsContent>
         
-        <TabsContent value="insights">
+        <TabsContent value="insights" className='rounded-lg border bg-card text-card-foreground shadow-sm'>
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold mb-4">Insights das Sessões</h2>
             

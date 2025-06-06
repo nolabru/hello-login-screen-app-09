@@ -208,17 +208,6 @@ const CompanyDashboard: React.FC = () => {
                   </Card>
                 </div>
               </div>
-              
-              <div className="mb-6">
-                <h2 className="text-xl font-medium mb-4  text-neutral-700">
-                  Tendências de Saúde Mental
-                </h2>
-                <Card>
-                  <CardContent className="p-6 h-60 flex items-center justify-center">
-                    <p className="text-gray-500">Dados anonimizados do grupo</p>
-                  </CardContent>
-                </Card>
-              </div>
             </TabsContent>
             
             <TabsContent value="employees">

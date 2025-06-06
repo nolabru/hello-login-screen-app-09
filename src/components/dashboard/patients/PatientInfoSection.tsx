@@ -40,7 +40,7 @@ const PatientInfoSection: React.FC<PatientInfoSectionProps> = ({ patient }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Informações do Paciente</CardTitle>
+        <CardTitle className='text-xl font-semibold'>Informações do Paciente</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         <div className="space-y-1">
