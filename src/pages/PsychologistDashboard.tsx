@@ -60,7 +60,7 @@ const PsychologistDashboard: React.FC = () => {
                   </div>
                   <div className="flex-1">
                     <h4 className="text-sm font-medium mb-3 text-neutral-700">
-                      Interações AIA-paciente em {date?.toLocaleDateString('pt-BR', {
+                      Interações AIA - Pacientes em {date?.toLocaleDateString('pt-BR', {
                       day: '2-digit',
                       month: 'long',
                       year: 'numeric'
@@ -76,8 +76,8 @@ const PsychologistDashboard: React.FC = () => {
                             </div>
                           </div>)}
                       </div> : <div className="text-center py-8 border rounded-md">
-                        <p className="text-amber-500 font-medium mb-2">Funcionalidade Indisponível</p>
-                        <p className="text-gray-500">A funcionalidade de associação entre psicólogos e pacientes foi removida do sistema.</p>
+                        <p className="text-amber-500 font-medium mb-2">Funcionalidade em Breve</p>
+                        <p className="text-gray-500">Estamos trabalhando para implementar a visualização de interações.</p>
                       </div>}
                   </div>
                 </div>

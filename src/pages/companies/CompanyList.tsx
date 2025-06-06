@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Eye, UserMinus, UserCheck, UserX } from 'lucide-react';
 import { Company } from './types';
 import { useToast } from '@/components/ui/use-toast';
-import { disconnectFromCompany, acceptCompanyRequest } from './companiesService';
+import { disconnectFromCompany, acceptCompanyRequest } from '@/integrations/supabase/companyPsychologistsService';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface CompanyListProps {
@@ -108,7 +108,7 @@ const CompanyList: React.FC<CompanyListProps> = ({
           <div className="divide-y">
             {companies.map(company => <div key={company.id} className="p-4">
                 <h3 className="font-medium text-lg">{company.name}</h3>
-                <p className="text-sm text-gray-600 mt-1">{company.contact_email}</p>
+                <p className="text-sm text-gray-600 mt-1">{company.corp_email}</p>
                 <div className="mt-2">
                   {getStatusBadge(company.connection_status)}
                 </div>
@@ -156,7 +156,7 @@ const CompanyList: React.FC<CompanyListProps> = ({
           <TableBody>
             {companies.map(company => <TableRow key={company.id}>
                 <TableCell className="font-medium">{company.name}</TableCell>
-                <TableCell>{company.contact_email}</TableCell>
+                <TableCell>{company.corp_email}</TableCell>
                 <TableCell>{getStatusBadge(company.connection_status)}</TableCell>
                 <TableCell className="text-right space-x-2">
                   {company.connection_status === 'pending' ? <>

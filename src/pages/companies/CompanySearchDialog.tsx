@@ -73,7 +73,7 @@ const CompanySearchDialog: React.FC<CompanySearchDialogProps> = ({
                   {searchResults.map((company) => (
                     <TableRow key={company.id}>
                       <TableCell className="font-medium">{company.name}</TableCell>
-                      <TableCell>{company.contact_email}</TableCell>
+                      <TableCell>{company.corp_email}</TableCell>
                       <TableCell className="text-right">
                         <Button 
                           size="sm"

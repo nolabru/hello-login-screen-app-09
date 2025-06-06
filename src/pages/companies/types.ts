@@ -2,7 +2,7 @@
 export type Company = {
   id: number;
   name: string;
-  contact_email: string;
+  corp_email: string;
   status: boolean;
   connection_status: string;
   created_at?: string;
@@ -11,14 +11,14 @@ export type Company = {
 export type CompanySearchResult = {
   id: number;
   name: string;
-  contact_email: string;
+  corp_email: string;
   status: boolean;
 };
 
 export type CompanyDetail = {
   id: number;
   name: string;
-  contact_email: string;
+  corp_email: string;
   status: boolean;
   connection_status: string;
   created_at?: string;

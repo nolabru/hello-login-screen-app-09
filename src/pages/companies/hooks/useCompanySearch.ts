@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { searchAvailableCompanies, requestCompanyConnection } from '../companiesService';
+import { searchAvailableCompanies, requestCompanyConnection } from '@/integrations/supabase/companyPsychologistsService';
 import { CompanySearchResult } from '../types';
 
 export const useCompanySearch = (onSuccess: () => void) => {

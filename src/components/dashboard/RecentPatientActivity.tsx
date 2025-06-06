@@ -27,10 +27,10 @@ const RecentPatientActivity: React.FC = () => {
               </div>)}
           </div> : <div className="flex flex-col items-center justify-center text-center py-8">
             <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
-            <h3 className="text-lg font-medium mb-2">Funcionalidade Indisponível</h3>
+            <h3 className="text-lg font-medium mb-2">Funcionalidade em Breve</h3>
             <p className="text-gray-500 max-w-md">
-              A funcionalidade de associação entre psicólogos e pacientes foi removida do sistema.
-              Entre em contato com o suporte para mais informações.
+              Estamos trabalhando em uma nova funcionalidade que vai melhorar ainda mais sua experiência!
+              Em breve, você poderá acessar as Atividades Recentes de forma prática, rápida e intuitiva.
             </p>
           </div>}
       </CardContent>

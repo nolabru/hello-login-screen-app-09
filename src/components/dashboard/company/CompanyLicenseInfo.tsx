@@ -105,7 +105,7 @@ const CompanyLicenseInfo: React.FC<CompanyLicenseInfoProps> = ({ license, onLice
           <div className="space-y-4">
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium">Licenças utilizadas</span>
+                <span className="text-sm font-medium">Licenças Utilizadas</span>
                 <span className="text-sm font-medium">{license.used_licenses} / {license.total_licenses}</span>
               </div>
               <Progress
@@ -128,7 +128,7 @@ const CompanyLicenseInfo: React.FC<CompanyLicenseInfoProps> = ({ license, onLice
             <div className="mt-2 pt-4 border-t border-gray-100">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="text-sm text-gray-500">Status do pagamento</p>
+                  <p className="text-sm text-gray-500 mb-2">Status do Pagamento</p>
                   <Badge variant={
                     isPaymentPositive ? 'outline' : 
                     license.payment_status === 'pending' ? 'secondary' : 

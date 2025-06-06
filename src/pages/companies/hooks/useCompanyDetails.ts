@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { Company, CompanyDetail } from '../types';
-import { fetchCompanyDetails } from '../companiesService';
+import { fetchCompanyDetails } from '@/integrations/supabase/companyPsychologistsService';
 
 export const useCompanyDetails = () => {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);

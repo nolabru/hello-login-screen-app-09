@@ -36,7 +36,7 @@ const CompanyDetailDialog: React.FC<CompanyDetailDialogProps> = ({
           
           <div className="space-y-2">
             <h3 className="font-medium">Email de contato</h3>
-            <p>{company.contact_email}</p>
+            <p>{company.corp_email}</p>
           </div>
           
           <div className="space-y-2">

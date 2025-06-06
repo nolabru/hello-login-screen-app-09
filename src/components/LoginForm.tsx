@@ -157,8 +157,8 @@ const LoginForm: React.FC = () => {
         }
         
         toast({
-          title: "Login bem-sucedido",
-          description: `Bem-vindo(a) de volta, ${psychologist.name || 'Psicólogo'}!`
+          title: "Login Bem-Sucedido",
+          description: `Bem-Vindo(a) de Volta, ${psychologist.name || 'Psicólogo'}!`
         });
         navigate('/dashboard');
       } else {
@@ -201,8 +201,8 @@ const LoginForm: React.FC = () => {
         localStorage.setItem('companyName', company.name || 'Empresa');
         localStorage.setItem('companyEmail', company.email || company.corp_email || email);
         toast({
-          title: "Login bem-sucedido",
-          description: `Bem-vindo(a) de volta, ${company.name || 'Empresa'}!`
+          title: "Login Bem-Sucedido",
+          description: `Bem-Vindo(a) de Volta, ${company.name || 'Empresa'}!`
         });
         navigate('/company/dashboard');
       }
