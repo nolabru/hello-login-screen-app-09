@@ -89,6 +89,9 @@ const PatientCard: React.FC<PatientProps> = ({ patient }) => {
               <AvatarImage 
                 src={imageUrl} 
                 alt={patient.full_name || patient.preferred_name}
+                style={{
+                  objectFit: 'cover'
+                }}
                 onError={(e) => {
                   console.log('Erro ao carregar imagem de perfil:', e);
                   console.log('URL da imagem que falhou:', imageUrl);
