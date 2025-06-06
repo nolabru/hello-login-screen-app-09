@@ -126,7 +126,7 @@ const CompanyDashboard: React.FC = () => {
                         <h3 className="text-gray-700">Funcionários Ativos</h3>
                       </div>
                       <p className="text-4xl font-bold text-portal-purple">{stats.activeEmployees}</p>
-                      <p className="text-sm text-gray-500 mt-2">{stats.activeEmployees} funcionários usando o app</p>
+                      <p className="text-sm text-gray-500 mt-2">{stats.activeEmployees} Funcionários Usando o App</p>
                     </CardContent>
                   </Card>
                   
@@ -137,7 +137,7 @@ const CompanyDashboard: React.FC = () => {
                         <h3 className="text-gray-700">Funcionários Pendentes</h3>
                       </div>
                       <p className="text-4xl font-bold text-portal-purple">{stats.pendingEmployees}</p>
-                      <p className="text-sm text-gray-500 mt-2">Aguardando ativação de conta</p>
+                      <p className="text-sm text-gray-500 mt-2">Aguardando Ativação de Conta</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -157,7 +157,7 @@ const CompanyDashboard: React.FC = () => {
                         <h3 className="text-gray-700">Psicólogos Associados</h3>
                       </div>
                       <p className="text-4xl font-bold text-portal-purple">{stats.activePsychologists}</p>
-                      <p className="text-sm text-gray-500 mt-2">Profissionais ativos</p>
+                      <p className="text-sm text-gray-500 mt-2">Profissionais Ativos</p>
                     </CardContent>
                   </Card>
                   
@@ -168,7 +168,7 @@ const CompanyDashboard: React.FC = () => {
                         <h3 className="text-gray-700">Psicólogos Pendentes</h3>
                       </div>
                       <p className="text-4xl font-bold text-portal-purple">{stats.pendingPsychologists}</p>
-                      <p className="text-sm text-gray-500 mt-2">Aguardando aprovação</p>
+                      <p className="text-sm text-gray-500 mt-2">Aguardando Aprovação</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -188,7 +188,7 @@ const CompanyDashboard: React.FC = () => {
                         <h3 className="text-gray-700">Licenças Disponíveis</h3>
                       </div>
                       <p className="text-4xl font-bold text-portal-purple">{stats.availableLicenses}</p>
-                      <p className="text-sm text-gray-500 mt-2">De {stats.totalLicenses} licenças totais</p>
+                      <p className="text-sm text-gray-500 mt-2">De {stats.totalLicenses} Licenças Totais</p>
                     </CardContent>
                   </Card>
                   
@@ -199,7 +199,7 @@ const CompanyDashboard: React.FC = () => {
                         <h3 className="text-gray-700">Índice de Bem-Estar</h3>
                       </div>
                       <p className="text-4xl font-bold text-portal-purple">{stats.wellBeingIndex}</p>
-                      <p className="text-sm text-gray-500 mt-2">Média atual da equipe</p>
+                      <p className="text-sm text-gray-500 mt-2">Média Atual da Equipe</p>
                     </CardContent>
                   </Card>
                 </div>

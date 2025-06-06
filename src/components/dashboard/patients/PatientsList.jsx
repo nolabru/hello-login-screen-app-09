@@ -100,7 +100,7 @@ const PatientsList = () => {
           </div>
         ) : patients.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border">
-            <h3 className="text-lg font-medium mb-2">Nenhum paciente encontrado</h3>
+            <h3 className="text-lg font-medium mb-2">Nenhum Paciente Encontrado</h3>
             <p className="text-gray-500 text-center max-w-md">
               Você ainda não possui pacientes vinculados. Quando um paciente enviar um convite e você aceitá-lo, ele aparecerá aqui.
             </p>

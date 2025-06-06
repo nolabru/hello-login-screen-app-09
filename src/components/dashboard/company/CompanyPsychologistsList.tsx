@@ -8,12 +8,14 @@ import { UserPlus, UserMinus, Mail, Phone } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { fetchCompanyPsychologists, disassociatePsychologistFromCompany, CompanyPsychologist } from '@/integrations/supabase/companyPsychologistsService';
 import { supabase } from '@/integrations/supabase/client';
+import PsychologistSearchDialog from './PsychologistSearchDialog';
 
 const CompanyPsychologistsList: React.FC = () => {
   const [psychologists, setPsychologists] = useState<CompanyPsychologist[]>([]);
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [profileImageUrls, setProfileImageUrls] = useState<Record<string, string>>({});
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -86,10 +88,7 @@ const CompanyPsychologistsList: React.FC = () => {
   };
 
   const handleAddPsychologist = () => {
-    toast({
-      title: 'Funcionalidade em desenvolvimento',
-      description: 'A funcionalidade de adicionar psicólogos será implementada em breve.',
-    });
+    setIsSearchDialogOpen(true);
   };
 
   if (loading) {
@@ -194,6 +193,15 @@ const CompanyPsychologistsList: React.FC = () => {
             </Table>
           </CardContent>
         </Card>
+      )}
+
+      {companyId && (
+        <PsychologistSearchDialog
+          open={isSearchDialogOpen}
+          onOpenChange={setIsSearchDialogOpen}
+          companyId={companyId}
+          onPsychologistAdded={loadPsychologists}
+        />
       )}
     </div>
   );

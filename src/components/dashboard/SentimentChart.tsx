@@ -195,7 +195,7 @@ const SentimentChart: React.FC = () => {
             {usingFallback && (
               <p className="text-sm text-amber-500 flex items-center gap-1 mt-1">
                 <AlertCircle size={14} />
-                Exibindo dados de exemplo (nenhum dado real encontrado)
+                Exibindo Dados de Exemplo ( Nenhum dos seus Pacientes Conversou com a AIA )
               </p>
             )}
 

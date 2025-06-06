@@ -95,7 +95,7 @@ const CompanyList: React.FC<CompanyListProps> = ({
         <CardContent className="p-4 sm:p-6">
           <div className="p-8 text-center">
             <p className="text-lg font-medium text-neutral-700 font-display">
-              {listType === 'pending' ? 'Nenhum convite de empresa pendente.' : listType === 'requested' ? 'Nenhuma solicitação de conexão enviada.' : 'Nenhuma empresa conectada.'}
+              {listType === 'pending' ? 'Nenhum convite de empresa pendente.' : listType === 'requested' ? 'Nenhuma solicitação de conexão enviada.' : 'Nenhuma Empresa Conectada.'}
             </p>
             {listType === 'active' && <p className="mt-2 text-sm font-normal text-gray-500">Conecte-se com uma empresa para visualizá-la.</p>}
           </div>

@@ -2,6 +2,15 @@
 import { supabase } from './client';
 import { Company, CompanySearchResult, CompanyDetail } from '@/pages/companies/types';
 
+// Tipo para representar um psicólogo nos resultados da busca
+export interface PsychologistSearchResult {
+  id: string;
+  name: string;
+  email: string;
+  crp?: string;
+  specialization?: string;
+}
+
 // Tipo para representar um psicólogo associado a uma empresa
 export interface CompanyPsychologist {
   id: string;
@@ -388,6 +397,72 @@ export const fetchCompanyDetails = async (company: Company, psychologistId: stri
     };
   } catch (error) {
     console.error('Erro ao buscar detalhes da empresa:', error);
+    throw error;
+  }
+};
+
+/**
+ * Busca todos os psicólogos disponíveis para conexão com uma empresa
+ * @param companyId ID da empresa
+ * @returns Lista de psicólogos disponíveis
+ */
+export const fetchAllAvailablePsychologists = async (companyId: string): Promise<PsychologistSearchResult[]> => {
+  try {
+    // Buscar todos os psicólogos ativos
+    const { data, error } = await supabaseAny
+      .from('psychologists')
+      .select('id, name, email, crp, specialization')
+      .eq('status', true)
+      .limit(50); // Limitamos a 50 para evitar carregar muitos dados
+
+    if (error) throw error;
+    
+    if (!data || data.length === 0) {
+      return [];
+    }
+    
+    // Buscar psicólogos já conectados à empresa
+    const companyPsychologists = await fetchCompanyPsychologists(companyId);
+    const connectedPsychologistIds = companyPsychologists.map(cp => cp.psychologist_id);
+    
+    // Filtrar psicólogos já conectados
+    return data.filter(psychologist => !connectedPsychologistIds.includes(psychologist.id));
+  } catch (error) {
+    console.error('Erro ao buscar psicólogos:', error);
+    throw error;
+  }
+};
+
+/**
+ * Busca psicólogos disponíveis para conexão com uma empresa
+ * @param query Termo de busca (nome, email ou CRP)
+ * @param companyId ID da empresa
+ * @returns Lista de psicólogos que correspondem à busca
+ */
+export const searchAvailablePsychologists = async (query: string, companyId: string): Promise<PsychologistSearchResult[]> => {
+  try {
+    // Buscar psicólogos que correspondem à pesquisa
+    const { data, error } = await supabaseAny
+      .from('psychologists')
+      .select('id, name, email, crp, specialization')
+      .or(`name.ilike.%${query}%,email.ilike.%${query}%,crp.ilike.%${query}%`)
+      .eq('status', true)
+      .limit(10);
+
+    if (error) throw error;
+    
+    if (!data || data.length === 0) {
+      return [];
+    }
+    
+    // Buscar psicólogos já conectados à empresa
+    const companyPsychologists = await fetchCompanyPsychologists(companyId);
+    const connectedPsychologistIds = companyPsychologists.map(cp => cp.psychologist_id);
+    
+    // Filtrar psicólogos já conectados
+    return data.filter(psychologist => !connectedPsychologistIds.includes(psychologist.id));
+  } catch (error) {
+    console.error('Erro ao buscar psicólogos:', error);
     throw error;
   }
 };
