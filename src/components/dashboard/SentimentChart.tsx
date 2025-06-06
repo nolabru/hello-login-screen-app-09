@@ -187,7 +187,7 @@ const SentimentChart: React.FC = () => {
   return (
     <Card className="w-full">
       <CardContent className="p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4 ">
           <div>
             <h3 className="text-lg font-medium text-neutral-700">
               Análise de Sentimentos

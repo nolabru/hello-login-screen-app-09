@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import PatientCard from './PatientCard';
 
@@ -64,13 +66,19 @@ const PatientsList = () => {
 
   return (
     <div className="w-full p-6">
-      <div className="flex flex-col mb-6">
-        <h1 className="text-2xl font-medium text-neutral-700">
-          Seus Pacientes
-        </h1>
-        <p className="text-gray-500">
-          Gerencie seus pacientes e visualize seus históricos de interação com a AIA
-        </p>
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h1 className="text-2xl font-medium text-neutral-700">
+            Seus Pacientes
+          </h1>
+          <p className="text-gray-500">
+            Gerencie seus pacientes e visualize seus históricos de interação com a AIA
+          </p>
+        </div>
+        <Button className="bg-portal-purple hover:bg-portal-purple-dark text-white">
+          <UserPlus size={16} className="mr-2" />
+          Adicionar Paciente
+        </Button>
       </div>
 
       <Tabs defaultValue="active" value={activeTab} onValueChange={setActiveTab} className="w-full">
