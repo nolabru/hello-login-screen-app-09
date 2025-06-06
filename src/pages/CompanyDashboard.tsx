@@ -27,41 +27,43 @@ const CompanyDashboard: React.FC = () => {
   });
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
-  const [companyId, setCompanyId] = useState<number | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   useEffect(() => {
     const fetchCompanyData = async () => {
       setLoading(true);
       try {
-        const companyId = localStorage.getItem('companyId');
-        if (!companyId) return;
-        const companyIdNumber = parseInt(companyId, 10);
-        setCompanyId(companyIdNumber);
+        const companyIdStr = localStorage.getItem('companyId');
+        if (!companyIdStr) return;
+        setCompanyId(companyIdStr);
 
-        // Get company name
+        // Get company name - convertendo o ID para número para a consulta
+        const companyIdNum = parseInt(companyIdStr, 10);
         const {
           data: company
-        } = await supabase.from('companies').select('name').eq('id', companyIdNumber).single();
+        } = await supabase.from('companies').select('name').eq('id', companyIdNum).single();
         if (company) {
           setCompanyName(company.name);
         }
 
-        // Fetch real stats
+        // Fetch real stats - contagem de funcionários sem filtrar por status
         const {
           data: employees
-        } = await supabase.from('user_profiles').select('id, status').eq('id_empresa', companyIdNumber);
+        } = await supabase.from('user_profiles').select('id')
+          .eq('company_id', companyIdStr);
+        
+        // Contagem total de funcionários vinculados à empresa
+        const totalEmployees = employees?.length || 0;
         
         // Psicólogos não estão mais associados a empresas
-        const activeEmps = employees?.filter(emp => emp.status).length || 0;
-        const pendingEmps = employees?.filter(emp => !emp.status).length || 0;
         const activePsychs = 0; // Não há mais associações entre empresas e psicólogos
         const pendingPsychs = 0; // Não há mais associações entre empresas e psicólogos
 
         // Fetch license availability
-        const licenseStats = await checkLicenseAvailability(companyIdNumber);
+        const licenseStats = await checkLicenseAvailability(companyIdStr);
         setStats({
-          activeEmployees: activeEmps,
-          pendingEmployees: pendingEmps,
+          activeEmployees: totalEmployees, // Todos os funcionários vinculados à empresa
+          pendingEmployees: 0, // Não estamos mais usando a distinção entre ativos e pendentes
           activePsychologists: activePsychs,
           pendingPsychologists: pendingPsychs,
           wellBeingIndex: 'N/A',
@@ -229,16 +231,16 @@ const CompanyDashboard: React.FC = () => {
         const fetchStats = async () => {
           const {
             data: employees
-          } = await supabase.from('user_profiles').select('id, status').eq('id_empresa', companyId);
-          const activeEmps = employees?.filter(emp => emp.status).length || 0;
-          const pendingEmps = employees?.filter(emp => !emp.status).length || 0;
+          } = await supabase.from('user_profiles').select('id')
+            .eq('company_id', companyId);
+          const totalEmployees = employees?.length || 0;
 
           // Also update license information
           const licenseStats = await checkLicenseAvailability(companyId);
           setStats(prev => ({
             ...prev,
-            activeEmployees: activeEmps,
-            pendingEmployees: pendingEmps,
+            activeEmployees: totalEmployees,
+            pendingEmployees: 0, // Não estamos mais usando a distinção entre ativos e pendentes
             availableLicenses: licenseStats.available,
             totalLicenses: licenseStats.total
           }));

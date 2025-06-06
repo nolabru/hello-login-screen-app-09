@@ -8,7 +8,7 @@ import { checkLicenseAvailability } from '@/services/licenseService';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 interface BulkEmployeeUploadProps {
-  companyId: number;
+  companyId: string;
   onComplete: () => void;
   isSubmitting: boolean;
   setIsSubmitting: (value: boolean) => void;
@@ -134,6 +134,8 @@ const BulkEmployeeUpload: React.FC<BulkEmployeeUploadProps> = ({
       for (let i = 0; i < parsedData.length; i++) {
         const employee = parsedData[i];
         try {
+          console.log(`Adicionando funcionário ${i+1}/${parsedData.length} com company_id:`, companyId, 'tipo:', typeof companyId);
+          
           // Inserir novo funcionário
           const {
             error
@@ -142,8 +144,8 @@ const BulkEmployeeUpload: React.FC<BulkEmployeeUploadProps> = ({
             email: employee.email,
             cpf: employee.cpf,
             password: employee.senha, // Usando 'password' no banco, mas 'senha' no CSV
-            id_empresa: companyId,
-            status: false,
+            company_id: companyId,
+            status: true, // Definir como true por padrão, já que não usamos mais a distinção na interface
             license_status: 'active' // Definir como active para consumir uma licença
           });
           if (error) throw error;

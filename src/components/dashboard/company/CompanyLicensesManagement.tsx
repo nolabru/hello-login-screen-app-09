@@ -7,7 +7,7 @@ import CompanyLicenseInfo from './CompanyLicenseInfo';
 import AcquireLicenseDialog from './AcquireLicenseDialog';
 import { CirclePlus } from 'lucide-react';
 interface CompanyLicensesManagementProps {
-  companyId: number;
+  companyId: string;
 }
 const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
   companyId

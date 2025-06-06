@@ -12,7 +12,7 @@ interface AddEmployeeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEmployeeAdded: () => void;
-  companyId: number;
+  companyId: string;
 }
 const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
   open,
@@ -66,6 +66,8 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
         return;
       }
 
+      console.log('Adicionando novo funcionário com company_id:', companyId, 'tipo:', typeof companyId);
+      
       // Inserir novo funcionário
       const {
         error
@@ -74,8 +76,8 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
         email: data.email,
         cpf: data.cpf,
         password: data.senha, // Usando 'password' no banco, mas 'senha' no formulário
-        id_empresa: companyId,
-        status: false,
+        company_id: companyId,
+        status: true, // Definir como true por padrão, já que não usamos mais a distinção na interface
         license_status: 'active' // Definir como active para consumir uma licença
       });
       if (error) throw error;
@@ -117,7 +119,7 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
       const {
         data: existingUser,
         error: searchError
-      } = await supabase.from('user_profiles').select('id, id_empresa').eq('email', data.email).single();
+      } = await supabase.from('user_profiles').select('id, company_id').eq('email', data.email).single();
       if (searchError) {
         if (searchError.code === 'PGRST116') {
           toast({
@@ -130,7 +132,7 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
         }
         return;
       }
-      if (existingUser.id_empresa) {
+      if (existingUser.company_id) {
         toast({
           title: "Usuário já vinculado",
           description: "Este usuário já está vinculado a uma empresa.",
@@ -139,11 +141,13 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
         return;
       }
 
+      console.log('Vinculando usuário existente com company_id:', companyId, 'tipo:', typeof companyId);
+      
       // Vincular usuário à empresa
       const {
         error: updateError
       } = await supabase.from('user_profiles').update({
-        id_empresa: companyId,
+        company_id: companyId,
         license_status: 'active' // Definir como active para consumir uma licença
       }).eq('id', existingUser.id);
       if (updateError) throw updateError;

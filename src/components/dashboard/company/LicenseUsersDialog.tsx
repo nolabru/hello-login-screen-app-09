@@ -15,7 +15,7 @@ import { Employee } from '@/pages/companies/types';
 interface LicenseUsersDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  companyId: number;
+  companyId: string | number;
   licenseId: number;
   planName: string;
 }
@@ -39,7 +39,9 @@ const LicenseUsersDialog: React.FC<LicenseUsersDialogProps> = ({
   const fetchLicensedUsers = async () => {
     setLoading(true);
     try {
+      console.log('Buscando usuários com licença para company_id:', companyId, 'tipo:', typeof companyId);
       const usersData = await fetchUsersWithLicense(companyId, licenseId);
+      console.log('Usuários encontrados:', usersData);
       setUsers(usersData);
     } catch (error) {
       console.error('Erro ao buscar usuários com licença:', error);

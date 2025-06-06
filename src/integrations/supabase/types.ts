@@ -53,7 +53,7 @@ export type Database = {
       }
       company_licenses: {
         Row: {
-          company_id: number
+          company_id: string
           created_at: string | null
           expiry_date: string
           id: number
@@ -66,7 +66,7 @@ export type Database = {
           used_licenses: number | null
         }
         Insert: {
-          company_id: number
+          company_id: string
           created_at?: string | null
           expiry_date: string
           id?: number
@@ -79,7 +79,7 @@ export type Database = {
           used_licenses?: number | null
         }
         Update: {
-          company_id?: number
+          company_id?: string
           created_at?: string | null
           expiry_date?: string
           id?: number
@@ -195,7 +195,7 @@ export type Database = {
           experience: string | null
           gender: string | null
           id: number
-          id_empresa: number | null
+          company_id: string | null
           license_status: string | null
           name: string
           objective: string | null
@@ -212,7 +212,7 @@ export type Database = {
           experience?: string | null
           gender?: string | null
           id?: number
-          id_empresa?: number | null
+          company_id?: string | null
           license_status?: string | null
           name: string
           objective?: string | null
@@ -229,7 +229,7 @@ export type Database = {
           experience?: string | null
           gender?: string | null
           id?: number
-          id_empresa?: number | null
+          company_id?: string | null
           license_status?: string | null
           name?: string
           objective?: string | null
@@ -240,8 +240,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "user_profiles_id_empresa_fkey"
-            columns: ["id_empresa"]
+            foreignKeyName: "user_profiles_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]

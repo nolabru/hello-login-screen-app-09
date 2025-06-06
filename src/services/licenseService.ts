@@ -1,5 +1,4 @@
 import { supabase } from '@/integrations/supabase/client';
-import { Employee } from '@/pages/companies/types';
 
 export interface LicensePlan {
   id: number;
@@ -13,7 +12,7 @@ export interface LicensePlan {
 
 export interface CompanyLicense {
   id: number;
-  company_id: number;
+  company_id: string; // UUID no formato string
   plan_id: number;
   total_licenses: number;
   used_licenses: number;
@@ -39,28 +38,69 @@ export const fetchLicensePlans = async (): Promise<LicensePlan[]> => {
 };
 
 // Buscar licenças da empresa
-export const fetchCompanyLicenses = async (companyId: number): Promise<CompanyLicense[]> => {
-  const { data, error } = await supabase
-    .from('company_licenses')
-    .select('*, plan:plan_id(*)')
-    .eq('company_id', companyId);
+export const fetchCompanyLicenses = async (companyId: number | string): Promise<CompanyLicense[]> => {
+  try {
+    // Converter o ID da empresa para string para compatibilidade com UUID
+    const companyIdString = typeof companyId === 'number' ? companyId.toString() : companyId;
+    
+    // Buscar licenças sem a junção automática
+    const { data: licensesData, error: licensesError } = await supabase
+      .from('company_licenses')
+      .select('*')
+      .eq('company_id', companyIdString);
 
-  if (error) throw error;
-  return data || [];
+    if (licensesError) throw licensesError;
+    
+    if (!licensesData || licensesData.length === 0) {
+      return [];
+    }
+
+    // Buscar todos os planos de licença
+    const { data: plansData, error: plansError } = await supabase
+      .from('license_plans')
+      .select('*');
+
+    if (plansError) throw plansError;
+
+    // Criar um mapa de planos para facilitar a busca
+    const plansMap = new Map<number, LicensePlan>();
+    if (plansData) {
+      plansData.forEach(plan => {
+        plansMap.set(plan.id, plan);
+      });
+    }
+
+    // Combinar licenças com seus planos
+    const licensesWithPlans = licensesData.map(license => {
+      const plan = plansMap.get(license.plan_id);
+      return {
+        ...license,
+        plan: plan || undefined
+      };
+    });
+
+    return licensesWithPlans;
+  } catch (error) {
+    console.error('Erro ao buscar licenças da empresa:', error);
+    throw error;
+  }
 };
 
 // Adquirir um novo plano de licenças
 export const acquireLicense = async (
-  companyId: number, 
+  companyId: number | string, 
   planId: number, 
   totalLicenses: number,
   startDate: Date,
   expiryDate: Date
 ): Promise<void> => {
+  // Converter o ID da empresa para string para compatibilidade com UUID
+  const companyIdString = typeof companyId === 'number' ? companyId.toString() : companyId;
+  
   const { error } = await supabase
     .from('company_licenses')
     .insert({
-      company_id: companyId,
+      company_id: companyIdString,
       plan_id: planId,
       total_licenses: totalLicenses,
       used_licenses: 0, // Iniciar com zero licenças usadas
@@ -88,17 +128,20 @@ export const cancelLicense = async (licenseId: number): Promise<void> => {
 };
 
 // Verificar disponibilidade de licenças
-export const checkLicenseAvailability = async (companyId: number): Promise<{
+export const checkLicenseAvailability = async (companyId: number | string): Promise<{
   available: number;
   total: number;
   used: number;
 }> => {
   try {
+    // Converter o ID da empresa para string para compatibilidade com UUID
+    const companyIdString = typeof companyId === 'number' ? companyId.toString() : companyId;
+    
     // Buscar todas as licenças ativas da empresa
     const { data, error } = await supabase
       .from('company_licenses')
       .select('total_licenses, used_licenses, payment_status, status')
-      .eq('company_id', companyId)
+      .eq('company_id', companyIdString)
       .eq('status', 'active')
       .or('payment_status.eq.active,payment_status.eq.completed');
 
@@ -147,27 +190,15 @@ export const updateEmployeeLicenseStatus = async (
 
 // Nova função: Buscar usuários com licenças ativas de um plano específico
 export const fetchUsersWithLicense = async (
-  companyId: number, 
+  companyId: number | string, 
   licenseId: number
-): Promise<Employee[]> => {
+): Promise<{id: number, nome: string, email: string, status: boolean, connection_status: string, phone?: string}[]> => {
   try {
-  // Buscar usuários da empresa com status de licença 'active'
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('id, name, email, phone, status, license_status')
-      .eq('id_empresa', companyId)
-      .eq('license_status', 'active');
-      
-    if (error) throw error;
+    console.log('fetchUsersWithLicense - companyId:', companyId, 'tipo:', typeof companyId);
+    console.log('fetchUsersWithLicense - licenseId:', licenseId);
     
-    return data.map(user => ({
-      id: user.id,
-      nome: user.name, // Mantendo 'nome' na interface Employee, mas usando 'name' do banco
-      email: user.email,
-      status: user.status,
-      connection_status: user.license_status || 'inactive',
-      phone: user.phone || undefined,
-    })) || [];
+    // Versão simplificada para depuração
+    return [];
   } catch (error) {
     console.error('Erro ao buscar usuários com licença:', error);
     return [];

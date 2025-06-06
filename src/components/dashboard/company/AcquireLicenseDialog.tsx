@@ -12,7 +12,7 @@ import { addMonths } from 'date-fns';
 interface AcquireLicenseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  companyId: number;
+  companyId: string | number;
   onLicenseAcquired: () => void;
 }
 
@@ -70,6 +70,8 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
     }
     setLoading(true);
     try {
+      console.log('Adquirindo licenças com company_id:', companyId, 'tipo:', typeof companyId);
+      
       const startDate = new Date();
       // Data de expiração (1 ano se for plano anual, 1 mês se for plano mensal)
       const expiryDate = billingCycle === 'yearly' ? addMonths(startDate, 12) : addMonths(startDate, 1);

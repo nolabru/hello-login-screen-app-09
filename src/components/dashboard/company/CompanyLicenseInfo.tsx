@@ -13,7 +13,7 @@ import LicenseUsersDialog from './LicenseUsersDialog';
 interface CompanyLicenseInfoProps {
   license: CompanyLicense;
   onLicenseUpdated?: () => void;
-  companyId: number;
+  companyId: string;
 }
 
 const CompanyLicenseInfo: React.FC<CompanyLicenseInfoProps> = ({ license, onLicenseUpdated, companyId }) => {

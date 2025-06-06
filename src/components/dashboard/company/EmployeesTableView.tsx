@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { User } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { User, Phone, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   Table,
@@ -11,7 +11,8 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import EmployeeStatusBadge from './EmployeeStatusBadge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { supabase } from '@/integrations/supabase/client';
 
 export type Employee = {
   id: number;
@@ -21,6 +22,12 @@ export type Employee = {
   connection_status: string;
   phone?: string;
   company_name?: string;
+  // Novos campos adicionados
+  profile_photo?: string;
+  gender?: string;
+  age_range?: string;
+  created_at?: string;
+  license_status?: string;
 };
 
 interface EmployeesTableViewProps {
@@ -32,42 +39,99 @@ const EmployeesTableView: React.FC<EmployeesTableViewProps> = ({
   employees,
   onRemoveEmployee
 }) => {
+  // Estado para armazenar as URLs das imagens de perfil
+  const [profileImageUrls, setProfileImageUrls] = useState<Record<string, string>>({});
+  
+  // Função para obter as iniciais do nome
+  const getInitials = (name: string) => {
+    if (!name) return "??";
+    
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+  
+  // Função para obter a URL pública da imagem usando a API do Supabase
+  useEffect(() => {
+    const getProfilePhotoUrls = async () => {
+      const urls: Record<string, string> = {};
+      
+      for (const employee of employees) {
+        if (employee.profile_photo) {
+          try {
+            // Usar a API oficial do Supabase para obter a URL pública
+            const { data } = supabase.storage.from('profiles').getPublicUrl(employee.profile_photo);
+            
+            if (data?.publicUrl) {
+              urls[employee.id] = data.publicUrl;
+            } else {
+              // Tentar construir a URL manualmente como fallback
+              const supabaseUrl = "https://ygafwrebafehwaomibmm.supabase.co";
+              urls[employee.id] = `${supabaseUrl}/storage/v1/object/public/profiles/${employee.profile_photo}`;
+            }
+          } catch (error) {
+            console.error('Erro ao obter URL da imagem:', error);
+          }
+        }
+      }
+      
+      setProfileImageUrls(urls);
+    };
+    
+    if (employees.length > 0) {
+      getProfilePhotoUrls();
+    }
+  }, [employees]);
+
   return (
     <Table>
       <TableHeader>
         <TableRow className="bg-gray-50">
           <TableHead className="font-medium">Nome</TableHead>
           <TableHead className="font-medium">Email</TableHead>
-          {employees.some(e => e.company_name) && (
-            <TableHead className="font-medium text-center">Empresa</TableHead>
-          )}
-          <TableHead className="font-medium">Status</TableHead>
+          <TableHead className="font-medium">Telefone</TableHead>
           <TableHead className="text-right font-medium">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {employees.map((employee) => (
           <TableRow key={employee.id}>
-            <TableCell className="font-medium flex items-center">
-              <User className="h-4 w-4 text-gray-500 mr-2" />
-              {employee.nome}
+            <TableCell className="font-medium">
+              <div className="flex items-center gap-2">
+                <Avatar className="h-8 w-8">
+                  {profileImageUrls[employee.id] ? (
+                    <AvatarImage 
+                      src={profileImageUrls[employee.id]} 
+                      alt={employee.nome}
+                      style={{ objectFit: 'cover' }}
+                      onError={(e) => {
+                        console.log('Erro ao carregar imagem de perfil:', e);
+                        // Converter e.target para HTMLImageElement
+                        const imgElement = e.target as HTMLImageElement;
+                        imgElement.style.display = 'none'; // Esconde a imagem com erro
+                      }}
+                    />
+                  ) : (
+                    <AvatarFallback className="bg-portal-purple text-white text-xs">
+                      {getInitials(employee.nome)}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div>
+                  <div>{employee.nome}</div>
+                  {employee.gender && employee.age_range && (
+                    <div className="text-xs text-gray-500">
+                      {employee.gender} • {employee.age_range}
+                    </div>
+                  )}
+                </div>
+              </div>
             </TableCell>
             <TableCell>{employee.email}</TableCell>
-            {employees.some(e => e.company_name) && (
-              <TableCell className="text-center">
-                {employee.company_name && (
-                  <Badge 
-                    variant="indigo"
-                    className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-3 py-1.5 flex flex-col items-center justify-center w-40 mx-auto"
-                  >
-                    {employee.company_name}
-                  </Badge>
-                )}
-              </TableCell>
-            )}
-            <TableCell>
-              <EmployeeStatusBadge status={employee.status} />
-            </TableCell>
+            <TableCell>{employee.phone || 'Não informado'}</TableCell>
             <TableCell className="text-right">
               <Button 
                 variant="outline" 

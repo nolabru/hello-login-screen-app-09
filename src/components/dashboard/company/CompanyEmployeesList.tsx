@@ -21,12 +21,12 @@ const CompanyEmployeesList: React.FC = () => {
   const {
     toast
   } = useToast();
-  const [companyId, setCompanyId] = useState<number | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   useEffect(() => {
     const storedCompanyId = localStorage.getItem('companyId');
     if (storedCompanyId) {
-      setCompanyId(parseInt(storedCompanyId, 10));
+      setCompanyId(storedCompanyId);
     }
   }, []);
   useEffect(() => {
@@ -46,17 +46,60 @@ const CompanyEmployeesList: React.FC = () => {
     if (!companyId) return;
     setIsLoading(true);
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('user_profiles').select('*').eq('id_empresa', companyId);
+      console.log('Buscando funcionários para a empresa ID:', companyId);
+      console.log('Tipo do companyId:', typeof companyId);
+      
+      // Tentar converter para número para ver se isso resolve o problema
+      const companyIdNum = parseInt(companyId, 10);
+      console.log('companyId convertido para número:', companyIdNum);
+      
+      // Primeiro, vamos tentar com o ID como string
+      let { data, error } = await supabase.from('user_profiles').select('*')
+        .eq('company_id', companyId);
+        
+      console.log('Resultado da consulta com ID como string:', { data, error });
+      
+      // Se não funcionou com string, tentar com número convertido para string
+      if (!data || data.length === 0) {
+        console.log('Tentando consulta com ID como número convertido para string...');
+        const companyIdNumStr = companyIdNum.toString();
+        const result = await supabase.from('user_profiles').select('*')
+          .eq('company_id', companyIdNumStr);
+          
+        data = result.data;
+        error = result.error;
+        console.log('Resultado da consulta com ID como número:', { data, error });
+      }
+      
       if (error) throw error;
+      
+      console.log('Dados retornados pela consulta:', data);
+      console.log('Número de funcionários encontrados:', data?.length || 0);
 
-      // Map the data to include connection_status
-      const mappedEmployees = data?.map(employee => ({
-        ...employee,
-        connection_status: employee.status ? 'approved' : 'pending'
-      })) || [];
+      // Map the data to include only necessary fields and map correct fields from database
+      const mappedEmployees = data?.map(employee => {
+        console.log('Mapeando funcionário:', employee);
+        
+        // Usar uma abordagem segura para acessar os campos, já que a estrutura pode variar
+        const employeeData = employee as any; // Usar any para evitar erros de tipo
+        
+        return {
+          id: employeeData.id,
+          nome: employeeData.full_name || employeeData.preferred_name || employeeData.name || 'Nome não disponível',
+          email: employeeData.email || employeeData.user_id || '',
+          status: true, // Mantemos o campo para compatibilidade, mas não o usamos na interface
+          connection_status: 'active', // Mantemos o campo para compatibilidade, mas não o usamos na interface
+          phone: employeeData.phone_number || employeeData.phone || undefined,
+          profile_photo: employeeData.profile_photo,
+          gender: employeeData.gender,
+          age_range: employeeData.age_range,
+          created_at: employeeData.created_at,
+          license_status: employeeData.license_status
+        };
+      }) || [];
+      
+      console.log('Funcionários mapeados:', mappedEmployees);
+      
       setEmployees(mappedEmployees);
       setFilteredEmployees(mappedEmployees);
     } catch (error) {
@@ -83,7 +126,7 @@ const CompanyEmployeesList: React.FC = () => {
       const {
         error
       } = await supabase.from('user_profiles').update({
-        id_empresa: null
+        company_id: null
       }).eq('id', employeeId);
       if (error) throw error;
       toast({
