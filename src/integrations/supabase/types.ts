@@ -217,7 +217,7 @@ export type Database = {
           created_at: string | null
           crp: string
           email: string
-          id: number
+          id: string
           name: string
           password: string
           phone: string | null
@@ -230,7 +230,7 @@ export type Database = {
           created_at?: string | null
           crp: string
           email: string
-          id?: number
+          id?: string
           name: string
           password: string
           phone?: string | null
@@ -243,7 +243,7 @@ export type Database = {
           created_at?: string | null
           crp?: string
           email?: string
-          id?: number
+          id?: string
           name?: string
           password?: string
           phone?: string | null

@@ -14,7 +14,7 @@ import { UserRound, Mail, Phone, FileText } from 'lucide-react';
 
 // Define the form schema for psychologist profile
 const profileSchema = z.object({
-  nome: z.string().min(2, {
+  name: z.string().min(2, {
     message: 'Nome deve ter pelo menos 2 caracteres'
   }),
   email: z.string().email({
@@ -24,7 +24,7 @@ const profileSchema = z.object({
     message: 'CRP inválido'
   }),
   phone: z.string().optional(),
-  especialidade: z.string().optional(),
+  specialization: z.string().optional(),
   bio: z.string().optional()
 });
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -39,11 +39,11 @@ const PsychologistSettings = () => {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      nome: '',
+      name: '',
       email: '',
       crp: '',
       phone: '',
-      especialidade: '',
+      specialization: '',
       bio: ''
     }
   });
@@ -63,23 +63,22 @@ const PsychologistSettings = () => {
           return;
         }
 
-        // Converting string to number with parseInt
-        const psychologistIdNumber = parseInt(psychologistId, 10);
+        // Use the ID directly as string (UUID)
         const {
           data,
           error
-        } = await supabase.from('psychologists').select('nome, email, crp, phone, especialidade, bio').eq('id', psychologistIdNumber).single();
+        } = await supabase.from('psychologists').select('name, email, crp, phone, specialization, bio').eq('id', psychologistId).single();
         if (error) {
           throw error;
         }
         if (data) {
           setPsychologistData(data);
           form.reset({
-            nome: data.nome || '',
+            name: data.name || '',
             email: data.email || '',
             crp: data.crp || '',
             phone: data.phone || '',
-            especialidade: data.especialidade || '',
+            specialization: data.specialization || '',
             bio: data.bio || ''
           });
         }
@@ -106,23 +105,22 @@ const PsychologistSettings = () => {
         throw new Error('Usuário não autenticado');
       }
 
-      // Converting string to number with parseInt
-      const psychologistIdNumber = parseInt(psychologistId, 10);
+      // Use the ID directly as string (UUID)
       const {
         error
       } = await supabase.from('psychologists').update({
-        nome: values.nome,
+        name: values.name,
         email: values.email,
         crp: values.crp,
         phone: values.phone || null,
-        especialidade: values.especialidade || null,
+        specialization: values.specialization || null,
         bio: values.bio || null,
-        atualizado_em: new Date().toISOString()
-      }).eq('id', psychologistIdNumber);
+        updated_at: new Date().toISOString()
+      }).eq('id', psychologistId);
       if (error) {
         throw error;
       }
-      localStorage.setItem('psychologistName', values.nome);
+      localStorage.setItem('psychologistName', values.name);
       toast({
         title: "Perfil atualizado",
         description: "Suas informações foram atualizadas com sucesso"
@@ -151,7 +149,7 @@ const PsychologistSettings = () => {
             {isLoading && !psychologistData ? <div className="text-center py-6">Carregando informações...</div> : <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField control={form.control} name="nome" render={({
+                    <FormField control={form.control} name="name" render={({
                   field
                 }) => <FormItem>
                           <FormLabel className="flex items-center gap-2 text-sm font-medium text-gray-700">
@@ -204,7 +202,7 @@ const PsychologistSettings = () => {
                         </FormItem>} />
                   </div>
                   
-                  <FormField control={form.control} name="especialidade" render={({
+                  <FormField control={form.control} name="specialization" render={({
                 field
               }) => <FormItem>
                         <FormLabel className="flex items-center gap-2 text-sm font-medium text-gray-700">
