@@ -78,8 +78,8 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
         cpf: data.cpf,
         password: data.senha, // Usando 'password' no banco, mas 'senha' no formulário
         company_id: companyId,
-        status: true // Definir como true por padrão, já que não usamos mais a distinção na interface
-        // Removido license_status que não existe na tabela user_profiles
+        status: true, // Definir como true por padrão, já que não usamos mais a distinção na interface
+        employee_status: 'active' // Definir como 'active' quando vinculado a uma empresa
       });
       if (error) throw error;
       toast({

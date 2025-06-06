@@ -13,6 +13,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { supabase } from '@/integrations/supabase/client';
+import EmployeeStatusBadge from './EmployeeStatusBadge';
 
 export type Employee = {
   id: number;
@@ -28,6 +29,7 @@ export type Employee = {
   age_range?: string;
   created_at?: string;
   license_status?: string;
+  employee_status?: string; // Novo campo para rastrear o status do funcionário
 };
 
 interface EmployeesTableViewProps {
@@ -93,6 +95,7 @@ const EmployeesTableView: React.FC<EmployeesTableViewProps> = ({
           <TableHead className="font-medium">Nome</TableHead>
           <TableHead className="font-medium">Email</TableHead>
           <TableHead className="font-medium">Telefone</TableHead>
+          <TableHead className="font-medium">Status</TableHead>
           <TableHead className="text-right font-medium">Ações</TableHead>
         </TableRow>
       </TableHeader>
@@ -132,6 +135,9 @@ const EmployeesTableView: React.FC<EmployeesTableViewProps> = ({
             </TableCell>
             <TableCell>{employee.email}</TableCell>
             <TableCell>{employee.phone || 'Não informado'}</TableCell>
+            <TableCell>
+              <EmployeeStatusBadge status={employee.employee_status} />
+            </TableCell>
             <TableCell className="text-right">
               <Button 
                 variant="outline" 

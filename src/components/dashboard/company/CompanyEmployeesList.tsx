@@ -87,7 +87,8 @@ const CompanyEmployeesList: React.FC = () => {
           id: employeeData.id,
           nome: employeeData.full_name || employeeData.preferred_name || employeeData.name || 'Nome não disponível',
           email: employeeData.email || employeeData.user_id || '',
-          status: true, // Mantemos o campo para compatibilidade, mas não o usamos na interface
+          status: employeeData.employee_status === 'active', // Converter para booleano para compatibilidade
+          employee_status: employeeData.employee_status || 'pending', // Usar o novo campo diretamente
           connection_status: 'active', // Mantemos o campo para compatibilidade, mas não o usamos na interface
           phone: employeeData.phone_number || employeeData.phone || undefined,
           profile_photo: employeeData.profile_photo,
@@ -126,7 +127,8 @@ const CompanyEmployeesList: React.FC = () => {
       const {
         error
       } = await supabase.from('user_profiles').update({
-        company_id: null
+        company_id: null,
+        employee_status: 'pending' // Atualizar para 'pending' quando desvinculado
       }).eq('id', employeeId);
       if (error) throw error;
       toast({
