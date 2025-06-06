@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Phone, Calendar } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PatientProps {
   patient: {
@@ -11,6 +12,60 @@ interface PatientProps {
 }
 
 const PatientCard: React.FC<PatientProps> = ({ patient }) => {
+  // Estado para armazenar a URL da imagem
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  
+  // Log para depuração
+  console.log('Dados do paciente:', patient);
+  console.log('Nome do arquivo da foto:', patient.profile_photo);
+  console.log('Tipo do profile_photo:', typeof patient.profile_photo);
+  
+  // Função para obter a URL pública da imagem usando a API do Supabase
+  useEffect(() => {
+    const getProfilePhotoUrl = async () => {
+      if (!patient.profile_photo) return;
+      
+      try {
+        // Se o valor já for uma URL completa
+        if (typeof patient.profile_photo === 'string' && patient.profile_photo.startsWith('http')) {
+          console.log('profile_photo já é uma URL completa');
+          setImageUrl(patient.profile_photo);
+          return;
+        }
+        
+        // Se for um objeto com uma propriedade path ou url
+        if (typeof patient.profile_photo === 'object' && patient.profile_photo !== null) {
+          const path = patient.profile_photo.path || patient.profile_photo.url;
+          if (path) {
+            console.log('profile_photo é um objeto com path/url:', path);
+            setImageUrl(path);
+            return;
+          }
+        }
+        
+        // Usar a API oficial do Supabase para obter a URL pública
+        console.log('Tentando obter URL pública via API Supabase');
+        const { data } = supabase.storage.from('profiles').getPublicUrl(patient.profile_photo);
+        console.log('URL pública obtida via API:', data?.publicUrl);
+        
+        if (data?.publicUrl) {
+          setImageUrl(data.publicUrl);
+        } else {
+          // Tentar construir a URL manualmente como fallback
+          const supabaseUrl = "https://ygafwrebafehwaomibmm.supabase.co";
+          const fallbackUrl = `${supabaseUrl}/storage/v1/object/public/profiles/${patient.profile_photo}`;
+          console.log('Fallback URL:', fallbackUrl);
+          setImageUrl(fallbackUrl);
+        }
+      } catch (error) {
+        console.error('Erro ao obter URL da imagem:', error);
+        setImageUrl(null);
+      }
+    };
+    
+    getProfilePhotoUrl();
+  }, [patient.profile_photo]);
+  
   // Função para obter as iniciais do nome
   const getInitials = () => {
     const nameToUse = patient.full_name || patient.preferred_name;
@@ -30,12 +85,13 @@ const PatientCard: React.FC<PatientProps> = ({ patient }) => {
       <CardContent className="p-0">
         <div className="bg-portal-purple/10 p-4 flex items-center gap-4">
           <Avatar className="h-16 w-16 border-2 border-white">
-            {patient.profile_photo ? (
+            {imageUrl ? (
               <AvatarImage 
-                src={patient.profile_photo} 
+                src={imageUrl} 
                 alt={patient.full_name || patient.preferred_name}
                 onError={(e) => {
                   console.log('Erro ao carregar imagem de perfil:', e);
+                  console.log('URL da imagem que falhou:', imageUrl);
                   // Converter e.target para HTMLImageElement
                   const imgElement = e.target as HTMLImageElement;
                   imgElement.style.display = 'none'; // Esconde a imagem com erro

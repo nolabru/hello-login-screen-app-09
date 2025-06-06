@@ -39,6 +39,16 @@ const PatientsList = () => {
       
       console.log('Pacientes encontrados:', data);
       console.log('Estrutura do primeiro paciente:', data && data.length > 0 ? JSON.stringify(data[0], null, 2) : 'Nenhum paciente encontrado');
+      
+      // Verificar campos específicos
+      if (data && data.length > 0) {
+        const firstPatient = data[0];
+        console.log('Campos do primeiro paciente:');
+        console.log('- profile_photo:', firstPatient.profile_photo);
+        console.log('- profile:', firstPatient.profile);
+        console.log('- profilePhotoPath:', firstPatient.profilePhotoPath);
+        console.log('- profile_photo_path:', firstPatient.profile_photo_path);
+      }
       setPatients(data || []);
     } catch (error) {
       console.error('Erro ao buscar pacientes:', error);
