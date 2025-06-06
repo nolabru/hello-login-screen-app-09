@@ -124,10 +124,6 @@ const CompanyList: React.FC<CompanyListProps> = ({
                         Recusar
                       </Button>
                     </> : company.connection_status === 'active' ? <>
-                      <Button variant="outline" size="sm" onClick={() => onViewDetails(company)}>
-                        <Eye size={16} className="mr-1" />
-                        Detalhes
-                      </Button>
                       <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => handleDisconnect(company.id)}>
                         <UserMinus size={16} className="mr-1" />
                         Desconectar
@@ -169,10 +165,6 @@ const CompanyList: React.FC<CompanyListProps> = ({
                         Recusar
                       </Button>
                     </> : company.connection_status === 'active' ? <>
-                      <Button variant="outline" size="sm" onClick={() => onViewDetails(company)}>
-                        <Eye size={16} className="mr-1" />
-                        Detalhes
-                      </Button>
                       <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => handleDisconnect(company.id)}>
                         <UserMinus size={16} className="mr-1" />
                         Desconectar
