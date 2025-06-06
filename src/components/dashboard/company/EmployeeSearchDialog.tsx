@@ -209,8 +209,8 @@ const EmployeeSearchDialog: React.FC<EmployeeSearchDialogProps> = ({
       const { error } = await supabase
         .from('user_profiles')
         .update({
-          company_id: companyId,
-          license_status: 'active' // Definir como active para consumir uma licença
+          company_id: companyId
+          // Removido license_status que não existe na tabela user_profiles
         })
         .eq('id', selectedEmployee);
 

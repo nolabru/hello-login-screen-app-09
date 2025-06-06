@@ -242,6 +242,10 @@ export const checkLicenseAvailability = async (companyId: number | string): Prom
 };
 
 // Atualizar status da licença de um funcionário
+// Nota: Esta função está comentada porque a coluna license_status não existe na tabela user_profiles
+// Quando for necessário implementar esta funcionalidade, será preciso criar uma tabela separada
+// para rastrear a relação entre funcionários e licenças
+/*
 export const updateEmployeeLicenseStatus = async (
   employeeId: number,
   status: 'active' | 'inactive'
@@ -252,6 +256,24 @@ export const updateEmployeeLicenseStatus = async (
     .eq('id', employeeId);
 
   if (error) throw error;
+};
+*/
+
+// Versão temporária que apenas remove o company_id para "desativar" a licença
+export const updateEmployeeLicenseStatus = async (
+  employeeId: number,
+  status: 'active' | 'inactive'
+): Promise<void> => {
+  // Se o status for 'inactive', removemos a associação com a empresa
+  if (status === 'inactive') {
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ company_id: null })
+      .eq('id', employeeId);
+
+    if (error) throw error;
+  }
+  // Se for 'active', não fazemos nada, pois a associação já deve existir
 };
 
 // Nova função: Buscar usuários com licenças ativas de um plano específico
