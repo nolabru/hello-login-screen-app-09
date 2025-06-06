@@ -62,53 +62,6 @@ const PatientInfoSection: React.FC<PatientInfoSectionProps> = ({ patient }) => {
           {renderInfoField("Experiência com Saúde Mental", patient.mental_health_experience)}
           {renderArrayField("Objetivos com a AIA", patient.aia_objectives)}
         </div>
-        
-        <div className="space-y-1 pt-4">
-          <h3 className="text-sm font-medium text-gray-900">Informações do Sistema</h3>
-          <Separator />
-          
-          {renderInfoField("ID do Usuário", patient.user_id)}
-          {renderInfoField("ID do Perfil", patient.id)}
-          {renderInfoField("Data de Criação", patient.created_at ? new Date(patient.created_at).toLocaleString('pt-BR') : null)}
-          {renderInfoField("Última Atualização", patient.updated_at ? new Date(patient.updated_at).toLocaleString('pt-BR') : null)}
-        </div>
-        
-        {/* Renderizar todos os outros campos que não foram explicitamente incluídos acima */}
-        <div className="space-y-1 pt-4">
-          <h3 className="text-sm font-medium text-gray-900">Dados Adicionais</h3>
-          <Separator />
-          
-          {Object.entries(patient).map(([key, value]) => {
-            // Ignorar campos que já foram renderizados acima
-            const ignoredFields = [
-              'id', 'user_id', 'full_name', 'preferred_name', 'email', 'phone_number',
-              'gender', 'age_range', 'mental_health_experience', 'aia_objectives',
-              'created_at', 'updated_at', 'profile_photo'
-            ];
-            
-            if (ignoredFields.includes(key)) return null;
-            
-            // Renderizar campos de array
-            if (Array.isArray(value)) {
-              return renderArrayField(key, value as string[]);
-            }
-            
-            // Renderizar campos de objeto
-            if (typeof value === 'object' && value !== null) {
-              return (
-                <div key={key} className="py-2">
-                  <span className="text-sm font-medium text-gray-500">{key}</span>
-                  <pre className="mt-1 text-xs bg-gray-50 p-2 rounded overflow-auto">
-                    {JSON.stringify(value, null, 2)}
-                  </pre>
-                </div>
-              );
-            }
-            
-            // Renderizar campos simples
-            return renderInfoField(key, value);
-          })}
-        </div>
       </CardContent>
     </Card>
   );
