@@ -55,9 +55,11 @@ const CompanyDashboard: React.FC = () => {
         // Contagem total de funcionários vinculados à empresa
         const totalEmployees = employees?.length || 0;
         
-        // Psicólogos não estão mais associados a empresas
-        const activePsychs = 0; // Não há mais associações entre empresas e psicólogos
-        const pendingPsychs = 0; // Não há mais associações entre empresas e psicólogos
+        // Psicólogos não estão mais associados a empresas diretamente no banco
+        // Usamos o serviço companyPsychologistsService para isso
+        console.log('Buscando psicólogos para a empresa:', companyIdStr);
+        const activePsychs = 0; // Valor será atualizado pelo componente CompanyPsychologistsList
+        const pendingPsychs = 0; // Não estamos mais usando a distinção entre ativos e pendentes
 
         // Fetch license availability
         const licenseStats = await checkLicenseAvailability(companyIdStr);
@@ -92,16 +94,8 @@ const CompanyDashboard: React.FC = () => {
       </Helmet>
       <CompanyDashboardLayout>
         <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-2xl font-medium text-neutral-700">{companyName}</h1>
-              <p className="text-gray-500">{localStorage.getItem('companyEmail')}</p>
-            </div>
-            
-          </div>
-          
           <div className="bg-purple-50 border border-purple-100 rounded-lg p-6 mb-8">
-            <h2 className="font-medium text-lg text-purple-800 mb-2">Bem-vindo(a) ao painel da sua empresa!</h2>
+            <h2 className="font-medium text-lg text-purple-800 mb-2">Bem-vindo(a) ao Painel da sua Empresa!</h2>
             <p className="text-purple-700">
               Aqui você acompanha, de forma <strong>anonimizada</strong>, o bem-estar do seu grupo de funcionários no app, sempre respeitando a privacidade individual.
             </p>

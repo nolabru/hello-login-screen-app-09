@@ -19,20 +19,43 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
   const [licenseStats, setLicenseStats] = useState({
     available: 0,
     total: 0,
-    used: 0
+    used: 0,
+    pending: 0
   });
   const [loading, setLoading] = useState(true);
   const [isAcquireDialogOpen, setIsAcquireDialogOpen] = useState(false);
   const fetchLicenses = async () => {
     setLoading(true);
     try {
+      console.log('CompanyLicensesManagement - Buscando licenças para a empresa:', companyId);
+      
       const data = await fetchCompanyLicenses(companyId);
+      console.log('CompanyLicensesManagement - Licenças retornadas:', data.length);
+      
       // Filter out licenses that have been canceled
       const activeLicenses = data.filter(license => !(license.payment_status === 'canceled' || license.status === 'canceled'));
+      console.log('CompanyLicensesManagement - Licenças ativas após filtro:', activeLicenses.length);
+      
+      // Log de cada licença ativa
+      activeLicenses.forEach((license, index) => {
+        console.log(`CompanyLicensesManagement - Licença ${index + 1}:`, {
+          id: license.id,
+          plan_id: license.plan_id,
+          status: license.status,
+          payment_status: license.payment_status,
+          total_licenses: license.total_licenses,
+          used_licenses: license.used_licenses,
+          plan: license.plan ? `${license.plan.name} (${license.plan.id})` : 'Plano não encontrado'
+        });
+      });
+      
       setLicenses(activeLicenses);
 
       // Buscar estatísticas de disponibilidade
+      console.log('CompanyLicensesManagement - Buscando estatísticas de disponibilidade');
       const availabilityStats = await checkLicenseAvailability(companyId);
+      console.log('CompanyLicensesManagement - Estatísticas de disponibilidade:', availabilityStats);
+      
       setLicenseStats(availabilityStats);
     } catch (error) {
       console.error('Erro ao buscar licenças:', error);
@@ -64,8 +87,8 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
       
       <Card className="mb-6">
         <CardContent className="p-6">
-          <h3 className="text-lg font-medium mb-4  text-neutral-700">Resumo de Licenças</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <h3 className="text-lg font-medium mb-4 text-neutral-700">Resumo de Licenças</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-gray-50 p-4 rounded-md">
               <p className="text-sm text-gray-500">Licenças Totais</p>
               <p className="text-2xl font-bold text-portal-purple">{licenseStats.total}</p>
@@ -77,6 +100,11 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
             <div className="bg-gray-50 p-4 rounded-md">
               <p className="text-sm text-gray-500">Licenças Disponíveis</p>
               <p className="text-2xl font-bold text-portal-purple">{licenseStats.available}</p>
+            </div>
+            <div className="bg-yellow-50 p-4 rounded-md">
+              <p className="text-sm text-yellow-700">Licenças Pendentes</p>
+              <p className="text-2xl font-bold text-yellow-600">{licenseStats.pending}</p>
+              <p className="text-xs text-yellow-600 mt-1">Aguardando ativação</p>
             </div>
           </div>
         </CardContent>

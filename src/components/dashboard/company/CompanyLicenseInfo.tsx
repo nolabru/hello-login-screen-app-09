@@ -4,9 +4,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { XCircle, Users } from 'lucide-react';
+import { XCircle, Users, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
-import { CompanyLicense, cancelLicense } from '@/services/licenseService';
+import { CompanyLicense, cancelLicense, activateLicense } from '@/services/licenseService';
 import { useToast } from '@/components/ui/use-toast';
 import LicenseUsersDialog from './LicenseUsersDialog';
 
@@ -56,6 +56,27 @@ const CompanyLicenseInfo: React.FC<CompanyLicenseInfoProps> = ({ license, onLice
       });
     }
   };
+  
+  const handleActivateLicense = async () => {
+    try {
+      await activateLicense(license.id);
+      toast({
+        title: "Licença ativada",
+        description: "A licença foi ativada com sucesso.",
+        variant: "default",
+      });
+      if (onLicenseUpdated) {
+        onLicenseUpdated();
+      }
+    } catch (error) {
+      console.error('Erro ao ativar licença:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível ativar a licença. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleCardClick = () => {
     if (license.used_licenses > 0) {
@@ -86,18 +107,32 @@ const CompanyLicenseInfo: React.FC<CompanyLicenseInfoProps> = ({ license, onLice
               </Badge>
               
               {isPending && (
-                <Button 
-                  variant="destructive" 
-                  size="sm" 
-                  className="flex items-center gap-1"
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent card click event
-                    handleCancelLicense();
-                  }}
-                >
-                  <XCircle size={16} />
-                  <span>Cancelar</span>
-                </Button>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent card click event
+                      handleActivateLicense();
+                    }}
+                  >
+                    <CheckCircle size={16} />
+                    <span>Ativar</span>
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    className="flex items-center gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent card click event
+                      handleCancelLicense();
+                    }}
+                  >
+                    <XCircle size={16} />
+                    <span>Cancelar</span>
+                  </Button>
+                </div>
               )}
             </div>
           </div>

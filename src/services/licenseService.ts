@@ -43,15 +43,24 @@ export const fetchCompanyLicenses = async (companyId: number | string): Promise<
     // Converter o ID da empresa para string para compatibilidade com UUID
     const companyIdString = typeof companyId === 'number' ? companyId.toString() : companyId;
     
+    console.log('fetchCompanyLicenses - companyId:', companyId, 'tipo:', typeof companyId);
+    console.log('fetchCompanyLicenses - companyIdString:', companyIdString);
+    
     // Buscar licenças sem a junção automática
     const { data: licensesData, error: licensesError } = await supabase
       .from('company_licenses')
       .select('*')
       .eq('company_id', companyIdString);
 
-    if (licensesError) throw licensesError;
+    if (licensesError) {
+      console.error('Erro na consulta de licenças:', licensesError);
+      throw licensesError;
+    }
+    
+    console.log('fetchCompanyLicenses - Licenças encontradas:', licensesData?.length || 0);
     
     if (!licensesData || licensesData.length === 0) {
+      console.log('fetchCompanyLicenses - Nenhuma licença encontrada para a empresa');
       return [];
     }
 
@@ -60,7 +69,12 @@ export const fetchCompanyLicenses = async (companyId: number | string): Promise<
       .from('license_plans')
       .select('*');
 
-    if (plansError) throw plansError;
+    if (plansError) {
+      console.error('Erro na consulta de planos:', plansError);
+      throw plansError;
+    }
+
+    console.log('fetchCompanyLicenses - Planos encontrados:', plansData?.length || 0);
 
     // Criar um mapa de planos para facilitar a busca
     const plansMap = new Map<number, LicensePlan>();
@@ -73,12 +87,14 @@ export const fetchCompanyLicenses = async (companyId: number | string): Promise<
     // Combinar licenças com seus planos
     const licensesWithPlans = licensesData.map(license => {
       const plan = plansMap.get(license.plan_id);
+      console.log('fetchCompanyLicenses - Processando licença:', license.id, 'plan_id:', license.plan_id, 'plano encontrado:', !!plan);
       return {
         ...license,
         plan: plan || undefined
       };
     });
 
+    console.log('fetchCompanyLicenses - Licenças com planos:', licensesWithPlans.length);
     return licensesWithPlans;
   } catch (error) {
     console.error('Erro ao buscar licenças da empresa:', error);
@@ -127,51 +143,95 @@ export const cancelLicense = async (licenseId: number): Promise<void> => {
   if (error) throw error;
 };
 
+// Ativar uma licença pendente
+export const activateLicense = async (licenseId: number): Promise<void> => {
+  console.log('Ativando licença:', licenseId);
+  
+  const { error } = await supabase
+    .from('company_licenses')
+    .update({
+      payment_status: 'active'
+    })
+    .eq('id', licenseId)
+    .eq('payment_status', 'pending'); // Apenas ativar licenças pendentes
+
+  if (error) {
+    console.error('Erro ao ativar licença:', error);
+    throw error;
+  }
+  
+  console.log('Licença ativada com sucesso');
+};
+
 // Verificar disponibilidade de licenças
 export const checkLicenseAvailability = async (companyId: number | string): Promise<{
   available: number;
   total: number;
   used: number;
+  pending: number;
 }> => {
   try {
     // Converter o ID da empresa para string para compatibilidade com UUID
     const companyIdString = typeof companyId === 'number' ? companyId.toString() : companyId;
     
-    // Buscar todas as licenças ativas da empresa
+    console.log('checkLicenseAvailability - companyId:', companyId, 'tipo:', typeof companyId);
+    console.log('checkLicenseAvailability - companyIdString:', companyIdString);
+    
+    // Buscar todas as licenças ativas da empresa (incluindo pendentes)
     const { data, error } = await supabase
       .from('company_licenses')
-      .select('total_licenses, used_licenses, payment_status, status')
+      .select('id, total_licenses, used_licenses, payment_status, status')
       .eq('company_id', companyIdString)
-      .eq('status', 'active')
-      .or('payment_status.eq.active,payment_status.eq.completed');
+      .eq('status', 'active');
+      // Removido o filtro de payment_status para incluir licenças pendentes
 
-    if (error) throw error;
-
-    // Se não houver licenças, retornar zeros
-    if (!data || data.length === 0) {
-      return { available: 0, total: 0, used: 0 };
+    if (error) {
+      console.error('Erro na consulta de licenças:', error);
+      throw error;
     }
 
-    // Somar todas as licenças ativas e pagas
+    console.log('checkLicenseAvailability - Licenças encontradas:', data?.length || 0);
+    console.log('checkLicenseAvailability - Dados das licenças:', data);
+    
+    // Se não houver licenças, retornar zeros
+    if (!data || data.length === 0) {
+      console.log('checkLicenseAvailability - Nenhuma licença encontrada para a empresa');
+      return { available: 0, total: 0, used: 0, pending: 0 };
+    }
+
+    // Somar todas as licenças ativas
     let total = 0;
     let used = 0;
+    let pending = 0;
 
     data.forEach(license => {
-      // Considerar apenas licenças com pagamento concluído ou ativo
-      if (license.payment_status === 'active' || license.payment_status === 'completed') {
-        total += license.total_licenses;
-        used += license.used_licenses || 0;
+      console.log('checkLicenseAvailability - Processando licença:', license.id, 'status:', license.status, 'payment_status:', license.payment_status);
+      
+      // Contar todas as licenças ativas, independente do status de pagamento
+      total += license.total_licenses;
+      used += license.used_licenses || 0;
+      
+      // Marcar licenças pendentes para exibição separada
+      if (license.payment_status === 'pending') {
+        pending += license.total_licenses;
+        console.log('checkLicenseAvailability - Licença pendente:', license.id, 'total:', license.total_licenses);
+      } else {
+        console.log('checkLicenseAvailability - Licença válida:', license.id, 'total:', license.total_licenses, 'used:', license.used_licenses);
       }
     });
 
-    return {
+    const result = {
       total,
       used,
-      available: Math.max(0, total - used)
+      available: Math.max(0, total - used),
+      pending
     };
+    
+    console.log('checkLicenseAvailability - Resultado final:', result);
+    return result;
   } catch (error) {
     console.error('Erro ao verificar disponibilidade de licenças:', error);
-    return { available: 0, total: 0, used: 0 };
+    return { available: 0, total: 0, used: 0, pending: 0 };
   }
 };
 
