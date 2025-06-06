@@ -32,13 +32,27 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
 
-// Cores para cada sentimento
+// Cores para cada sentimento (fundo)
 const SENTIMENT_COLORS = {
   feliz: "#A5D6A7",    // Verde mais escuro
   triste: "#90CAF9",   // Azul mais escuro
   ansioso: "#FFCC80",  // Laranja mais escuro
   neutro: "#FFD54F",   // Amarelo mais escuro
   irritado: "#EF9A9A", // Vermelho mais escuro
+};
+
+// Cores para texto (mais escuras para contraste)
+const SENTIMENT_TEXT_COLORS = {
+  feliz: "#388E3C",    // Verde escuro
+  triste: "#1976D2",   // Azul escuro
+  ansioso: "#FF933B",  // Laranja escuro
+  neutro: "#F5CC00",   // Cinza escuro
+  irritado: "#D32F2F", // Vermelho escuro
+};
+
+// Função para obter a cor de texto baseada no sentimento
+const getTextColor = (sentiment: string): string => {
+  return SENTIMENT_TEXT_COLORS[sentiment as keyof typeof SENTIMENT_TEXT_COLORS] || "#333333";
 };
 
 
@@ -188,12 +202,13 @@ const SentimentChart: React.FC = () => {
             {predominantSentiment && (
               <div className="mt-1 flex items-center">
                 <Badge
-                  className="text-neutral-600"
-                  style={{ backgroundColor: predominantSentiment.color }}
+                  className="font-medium"
+                  style={{ 
+                    backgroundColor: predominantSentiment.color,
+                    color: getTextColor(predominantSentiment.name.toLowerCase())
+                  }}
                 >
-                  <span className="text-neutral-800">
-                    Sentimento Predominante: {predominantSentiment.name}
-                  </span>
+                  Sentimento Predominante: {predominantSentiment.name}
                 </Badge>
               </div>
             )}
@@ -265,17 +280,27 @@ const SentimentChart: React.FC = () => {
                     left: 20,
                     bottom: 20,
                   }}
-                  barSize={20}
+                  barSize={28}
                 >
                   <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend
-                    verticalAlign="top"
                     height={36}
+                    iconSize={0}
                     formatter={(value, entry) => (
-                      <span className="text-neutral-600"> {value}</span>
+                      <span className="flex items-center">
+                        <svg width="12" height="12" className="mr-1">
+                          <circle cx="6" cy="6" r="5" fill={entry.color} />
+                        </svg>
+                        <span 
+                          className="text-neutral-600"
+                          style={{ color: getTextColor(value.toLowerCase()) }}
+                        >
+                          {value}
+                        </span>
+                      </span>
                     )}
                   />
                   <Bar
@@ -350,8 +375,19 @@ const SentimentChart: React.FC = () => {
                   <Legend
                     verticalAlign="bottom"
                     height={36}
+                    iconSize={0}
                     formatter={(value, entry) => (
-                      <span className="text-neutral-800"> {value}</span>
+                      <span className="flex items-center">
+                        <svg width="12" height="12" className="mr-2">
+                          <circle cx="6" cy="6" r="5" fill={entry.color} />
+                        </svg>
+                        <span 
+                          className="text-neutral-600"
+                          style={{ color: getTextColor(value.toLowerCase()) }}
+                        >
+                          {value}
+                        </span>
+                      </span>
                     )}
                   />
                 </PieChart>

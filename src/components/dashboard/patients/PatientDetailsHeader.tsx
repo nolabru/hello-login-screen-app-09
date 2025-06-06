@@ -76,7 +76,7 @@ const PatientDetailsHeader: React.FC<PatientDetailsHeaderProps> = ({ patient }) 
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-gray-600">
             {patient.email && (
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
+                <Mail className="h-4 w-4 text-portal-purple" />
                 <span>{patient.email}</span>
               </div>
             )}
