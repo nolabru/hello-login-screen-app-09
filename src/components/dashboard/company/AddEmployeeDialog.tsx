@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import AddSingleEmployeeForm from './AddSingleEmployeeForm';
-import LinkEmployeeForm from './LinkEmployeeForm';
 import BulkEmployeeUpload from './BulkEmployeeUpload';
-import { AddSingleEmployeeFormValues, LinkEmployeeFormValues } from './employeeSchema';
+import EmployeeSearchDialog from './EmployeeSearchDialog';
+import { AddSingleEmployeeFormValues } from './employeeSchema';
 import { checkLicenseAvailability } from '@/services/licenseService';
 interface AddEmployeeDialogProps {
   open: boolean;
@@ -98,76 +99,8 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
       setIsSubmitting(false);
     }
   };
-  const handleLinkEmployeeSubmit = async (data: LinkEmployeeFormValues) => {
-    setIsSubmitting(true);
-    try {
-      // Verificar licenças novamente antes de vincular
-      const {
-        available
-      } = await checkLicenseAvailability(companyId);
-      if (available <= 0) {
-        toast({
-          title: "Sem licenças disponíveis",
-          description: "Você não possui licenças disponíveis para adicionar funcionários. Adquira mais licenças na aba de Licenças.",
-          variant: "destructive"
-        });
-        onOpenChange(false);
-        return;
-      }
-
-      // Buscar funcionário pelo email
-      const {
-        data: existingUser,
-        error: searchError
-      } = await supabase.from('user_profiles').select('id, company_id').eq('email', data.email).single();
-      if (searchError) {
-        if (searchError.code === 'PGRST116') {
-          toast({
-            title: "Usuário não encontrado",
-            description: "Não encontramos um usuário com este email.",
-            variant: "destructive"
-          });
-        } else {
-          throw searchError;
-        }
-        return;
-      }
-      if (existingUser.company_id) {
-        toast({
-          title: "Usuário já vinculado",
-          description: "Este usuário já está vinculado a uma empresa.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      console.log('Vinculando usuário existente com company_id:', companyId, 'tipo:', typeof companyId);
-      
-      // Vincular usuário à empresa
-      const {
-        error: updateError
-      } = await supabase.from('user_profiles').update({
-        company_id: companyId,
-        license_status: 'active' // Definir como active para consumir uma licença
-      }).eq('id', existingUser.id);
-      if (updateError) throw updateError;
-      toast({
-        title: "Funcionário vinculado",
-        description: "O funcionário foi vinculado à sua empresa com sucesso."
-      });
-      onEmployeeAdded();
-      onOpenChange(false);
-    } catch (error: any) {
-      console.error('Erro ao vincular funcionário:', error);
-      toast({
-        title: "Erro",
-        description: `Não foi possível vincular o funcionário: ${error.message || error}`,
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // Estado para controlar a abertura do diálogo de busca de funcionários
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   if (!hasAvailableLicenses) {
     return <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
@@ -188,7 +121,7 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
   return <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle className="text-xl   text-neutral-700">Convidar Funcionário</DialogTitle>
+          <DialogTitle className="text-md text-neutral-700">Convidar Funcionário</DialogTitle>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -203,7 +136,23 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
           </TabsContent>
 
           <TabsContent value="link" className="py-2">
-            <LinkEmployeeForm onSubmit={handleLinkEmployeeSubmit} isSubmitting={isSubmitting} />
+            <div className="text-center py-4">
+              <p className="mb-6 text-neutral-400 text-sm">Busque um Usuário que já usa o C'Alma e o Vincule a sua Empresa.</p>
+              <Button 
+                onClick={() => setIsSearchDialogOpen(true)} 
+                className="bg-portal-purple hover:bg-portal-purple-dark"
+              >
+                Buscar Funcionário
+              </Button>
+            </div>
+            
+            {/* Diálogo de busca de funcionários */}
+            <EmployeeSearchDialog 
+              open={isSearchDialogOpen} 
+              onOpenChange={setIsSearchDialogOpen} 
+              companyId={companyId} 
+              onEmployeeLinked={onEmployeeAdded} 
+            />
           </TabsContent>
           
           <TabsContent value="bulk" className="py-2">

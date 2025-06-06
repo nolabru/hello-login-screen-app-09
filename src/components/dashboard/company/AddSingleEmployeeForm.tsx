@@ -36,7 +36,7 @@ const AddSingleEmployeeForm: React.FC<AddSingleEmployeeFormProps> = ({
             <FormItem>
               <FormLabel>Nome</FormLabel>
               <FormControl>
-                <Input placeholder="Nome do funcionário" {...field} />
+                <Input placeholder="Nome do Funcionário" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -64,21 +64,7 @@ const AddSingleEmployeeForm: React.FC<AddSingleEmployeeFormProps> = ({
             <FormItem>
               <FormLabel>CPF</FormLabel>
               <FormControl>
-                <Input placeholder="CPF do funcionário" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="senha"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Senha</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="Senha do funcionário" {...field} />
+                <Input placeholder="CPF do Funcionário" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
