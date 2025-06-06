@@ -202,7 +202,7 @@ const CompanyDashboard: React.FC = () => {
                   <Card>
                     <CardContent className="p-6">
                       <div className="mb-2">
-                        <h3 className="text-gray-700">Índice de Bem-estar</h3>
+                        <h3 className="text-gray-700">Índice de Bem-Estar</h3>
                       </div>
                       <p className="text-4xl font-bold text-portal-purple">{stats.wellBeingIndex}</p>
                       <p className="text-sm text-gray-500 mt-2">Média atual da equipe</p>

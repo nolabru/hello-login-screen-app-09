@@ -8,7 +8,7 @@ const CompanyLicenses: React.FC = () => {
   const {
     toast
   } = useToast();
-  const [companyId, setCompanyId] = useState<number | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   useEffect(() => {
     // Fetch the company ID from local storage
     const storedCompanyId = localStorage.getItem('companyId');
@@ -20,7 +20,7 @@ const CompanyLicenses: React.FC = () => {
       });
       return;
     }
-    setCompanyId(parseInt(storedCompanyId, 10));
+    setCompanyId(storedCompanyId);
   }, [toast]);
   return <>
       <Helmet>
