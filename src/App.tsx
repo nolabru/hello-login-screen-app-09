@@ -14,6 +14,7 @@ import PsychologistDashboard from "./pages/PsychologistDashboard";
 import PsychologistPatients from "./pages/PsychologistPatients";
 import PsychologistSettings from "./pages/PsychologistSettings";
 import PsychologistCompanies from "./pages/PsychologistCompanies";
+import PatientDetails from "./pages/PatientDetails";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import CompanyEmployees from "./pages/CompanyEmployees";
 import CompanyPsychologists from "./pages/CompanyPsychologists";
@@ -52,6 +53,7 @@ const App = () => {
               {/* Psychologist Routes */}
               <Route path="/dashboard" element={<PsychologistDashboard />} />
               <Route path="/pacientes" element={<PsychologistPatients />} />
+              <Route path="/patients/:id" element={<PatientDetails />} />
               <Route path="/configuracoes" element={<PsychologistSettings />} />
               <Route path="/empresas" element={<PsychologistCompanies />} />
               

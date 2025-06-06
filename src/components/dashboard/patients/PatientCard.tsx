@@ -3,15 +3,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Phone, Calendar } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface PatientProps {
   patient: {
-    id: number;
+    id: string | number;
     [key: string]: any;
   };
 }
 
 const PatientCard: React.FC<PatientProps> = ({ patient }) => {
+  const navigate = useNavigate();
   // Estado para armazenar a URL da imagem
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   
@@ -80,8 +82,16 @@ const PatientCard: React.FC<PatientProps> = ({ patient }) => {
       .substring(0, 2);
   };
 
+  // Função para navegar para a página de detalhes do paciente
+  const handleCardClick = () => {
+    navigate(`/patients/${patient.id}`);
+  };
+
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+    <Card 
+      className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" 
+      onClick={handleCardClick}
+    >
       <CardContent className="p-0">
         <div className="bg-portal-purple/10 p-4 flex items-center gap-4">
           <Avatar className="h-16 w-16 border-2 border-white">
