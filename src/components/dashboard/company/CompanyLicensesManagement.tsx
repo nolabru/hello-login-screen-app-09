@@ -81,7 +81,7 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
         </div>
         <Button onClick={() => setIsAcquireDialogOpen(true)} className="flex items-center gap-2 bg-portal-purple hover:bg-portal-purple-dark">
           <CirclePlus size={16} />
-          <span>Adquirir Licenças</span>
+          <span>Adquirir Planos</span>
         </Button>
       </div>
       
@@ -90,21 +90,24 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
           <h3 className="text-lg font-medium mb-4 text-neutral-700">Resumo de Licenças</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-gray-50 p-4 rounded-md">
-              <p className="text-sm text-gray-500">Licenças Totais</p>
+              <p className="text-sm text-gray-500">Total de Licenças</p>
               <p className="text-2xl font-bold text-portal-purple">{licenseStats.total}</p>
+              <p className="text-xs text-gray-500 mt-1">Capacidade Total dos Planos</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-md">
-              <p className="text-sm text-gray-500">Licenças em Uso</p>
+              <p className="text-sm text-gray-500">Funcionários Ativos</p>
               <p className="text-2xl font-bold text-portal-purple">{licenseStats.used}</p>
+              <p className="text-xs text-gray-500 mt-1">Funcionários Ativos</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-md">
-              <p className="text-sm text-gray-500">Licenças Disponíveis</p>
+              <p className="text-sm text-gray-500">Licenças Restantes</p>
               <p className="text-2xl font-bold text-portal-purple">{licenseStats.available}</p>
+              <p className="text-xs text-gray-500 mt-1">Usuários que Podem ser Adicionados</p>
             </div>
             <div className="bg-yellow-50 p-4 rounded-md">
               <p className="text-sm text-yellow-700">Licenças Pendentes</p>
               <p className="text-2xl font-bold text-yellow-600">{licenseStats.pending}</p>
-              <p className="text-xs text-yellow-600 mt-1">Aguardando ativação</p>
+              <p className="text-xs text-yellow-600 mt-1">Aguardando Ativação de Plano</p>
             </div>
           </div>
         </CardContent>
@@ -114,7 +117,7 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
       {loading ? <p className="text-center py-8">Carregando...</p> : licenses.length === 0 ? <Card>
           <CardContent className="p-6 text-center">
             <p className="mb-4  text-neutral-700">Sua empresa ainda não possui planos de licença ativos.</p>
-            <Button onClick={() => setIsAcquireDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark">Adquirir Licenças</Button>
+            <Button onClick={() => setIsAcquireDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark">Adquirir Planos</Button>
           </CardContent>
         </Card> : <div className="space-y-4">
           {licenses.map(license => <CompanyLicenseInfo key={license.id} license={license} companyId={companyId} onLicenseUpdated={fetchLicenses} />)}

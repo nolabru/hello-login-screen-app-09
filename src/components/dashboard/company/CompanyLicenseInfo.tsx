@@ -140,22 +140,25 @@ const CompanyLicenseInfo: React.FC<CompanyLicenseInfoProps> = ({ license, onLice
           <div className="space-y-4">
             <div>
               <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium">Licenças Utilizadas</span>
-                <span className="text-sm font-medium">{license.used_licenses} / {license.total_licenses}</span>
+                <span className="text-sm font-medium">Usuários</span>
+                <span className="text-sm font-medium">{license.used_licenses} / {(license.plan?.max_users || 10) * license.total_licenses}</span>
               </div>
               <Progress
-                value={usagePercentage}
+                value={(license.used_licenses / ((license.plan?.max_users || 10) * license.total_licenses)) * 100}
                 className={`h-2 ${progressColor}`}
               />
+              <p className="text-xs text-gray-500 mt-1">
+                {license.plan?.name || 'Plano'} - {license.total_licenses} Planos  × {license.plan?.max_users || 10} Funcionários = {(license.plan?.max_users || 10) * license.total_licenses} Licenças
+              </p>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-gray-500">Data de início</p>
+                <p className="text-sm text-gray-500">Data de Início</p>
                 <p className="font-medium">{format(new Date(license.start_date), 'dd/MM/yyyy')}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Data de expiração</p>
+                <p className="text-sm text-gray-500">Data de Expiração</p>
                 <p className="font-medium">{format(new Date(license.expiry_date), 'dd/MM/yyyy')}</p>
               </div>
             </div>

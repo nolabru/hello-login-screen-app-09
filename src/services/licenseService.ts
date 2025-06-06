@@ -177,10 +177,10 @@ export const checkLicenseAvailability = async (companyId: number | string): Prom
     console.log('checkLicenseAvailability - companyId:', companyId, 'tipo:', typeof companyId);
     console.log('checkLicenseAvailability - companyIdString:', companyIdString);
     
-    // Buscar todas as licenças ativas da empresa (incluindo pendentes)
+    // Buscar todas as licenças ativas da empresa (incluindo pendentes) com seus planos
     const { data, error } = await supabase
       .from('company_licenses')
-      .select('id, total_licenses, used_licenses, payment_status, status')
+      .select('id, plan_id, total_licenses, used_licenses, payment_status, status, plan:license_plans(max_users)')
       .eq('company_id', companyIdString)
       .eq('status', 'active');
       // Removido o filtro de payment_status para incluir licenças pendentes
@@ -207,16 +207,22 @@ export const checkLicenseAvailability = async (companyId: number | string): Prom
     data.forEach(license => {
       console.log('checkLicenseAvailability - Processando licença:', license.id, 'status:', license.status, 'payment_status:', license.payment_status);
       
+      // Obter o número de usuários por plano
+      const usersPerPlan = license.plan?.max_users || 10; // Valor padrão caso não encontre o plano
+      const totalUsersForLicense = license.total_licenses * usersPerPlan;
+      
+      console.log('checkLicenseAvailability - Plano:', license.plan_id, 'usuários por plano:', usersPerPlan, 'quantidade de planos:', license.total_licenses, 'total de usuários:', totalUsersForLicense);
+      
       // Contar todas as licenças ativas, independente do status de pagamento
-      total += license.total_licenses;
+      total += totalUsersForLicense;
       used += license.used_licenses || 0;
       
       // Marcar licenças pendentes para exibição separada
       if (license.payment_status === 'pending') {
-        pending += license.total_licenses;
-        console.log('checkLicenseAvailability - Licença pendente:', license.id, 'total:', license.total_licenses);
+        pending += totalUsersForLicense;
+        console.log('checkLicenseAvailability - Licença pendente:', license.id, 'total de usuários:', totalUsersForLicense);
       } else {
-        console.log('checkLicenseAvailability - Licença válida:', license.id, 'total:', license.total_licenses, 'used:', license.used_licenses);
+        console.log('checkLicenseAvailability - Licença válida:', license.id, 'total de usuários:', totalUsersForLicense, 'used:', license.used_licenses);
       }
     });
 

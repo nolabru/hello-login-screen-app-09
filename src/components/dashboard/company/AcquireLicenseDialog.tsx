@@ -43,7 +43,7 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
           console.error('Erro ao carregar planos de licença:', error);
           toast({
             title: 'Erro',
-            description: 'Não foi possível carregar os planos de licença',
+            description: 'Não foi possível carregar os tipos de planos',
             variant: 'destructive'
           });
         }
@@ -55,7 +55,7 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
     if (!selectedPlan) {
       toast({
         title: 'Erro',
-        description: 'Selecione um plano de licença',
+        description: 'Selecione um tipo de plano',
         variant: 'destructive'
       });
       return;
@@ -63,7 +63,7 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
     if (licenseCount < 1) {
       toast({
         title: 'Erro',
-        description: 'O número de licenças deve ser pelo menos 1',
+        description: 'A quantidade de planos deve ser pelo menos 1',
         variant: 'destructive'
       });
       return;
@@ -78,7 +78,7 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
       await acquireLicense(companyId, selectedPlan, licenseCount, startDate, expiryDate);
       toast({
         title: 'Sucesso',
-        description: 'Licenças adquiridas com sucesso'
+        description: 'Planos adquiridos com sucesso'
       });
       onLicenseAcquired();
       onOpenChange(false);
@@ -86,7 +86,7 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
       console.error('Erro ao adquirir licenças:', error);
       toast({
         title: 'Erro',
-        description: 'Não foi possível adquirir as licenças',
+        description: 'Não foi possível adquirir os planos',
         variant: 'destructive'
       });
     } finally {
@@ -108,7 +108,7 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="text-xl">Adquirir Licenças</DialogTitle>
+          <DialogTitle className="text-xl">Adquirir Planos</DialogTitle>
         </DialogHeader>
         
         <div className="flex-1 overflow-y-auto py-4">
@@ -164,7 +164,10 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
           </div>
           
           <div className="mt-6">
-            <h3 className="font-medium mb-4">Quantidade de licenças</h3>
+            <h3 className="font-medium mb-4">Quantidade de planos</h3>
+            <p className="text-sm text-gray-500 mb-2">
+              Cada plano permite um número fixo de usuários. Se precisar de mais usuários, adquira mais planos.
+            </p>
             <Input 
               type="number" 
               value={licenseCount} 
@@ -176,7 +179,7 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
           {selectedPlanDetails && (
             <div className="mt-6 pt-4 border-t border-gray-100">
               <div className="flex justify-between">
-                <span>Valor por licença:</span>
+                <span>Valor por plano:</span>
                 <span>R$ {selectedPlanDetails.price.toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-bold mt-2">
@@ -197,7 +200,7 @@ const AcquireLicenseDialog: React.FC<AcquireLicenseDialogProps> = ({
             disabled={loading} 
             className="bg-portal-purple hover:bg-portal-purple-dark"
           >
-            {loading ? 'Processando...' : 'Adquirir Licenças'}
+            {loading ? 'Processando...' : 'Adquirir Planos'}
           </Button>
         </DialogFooter>
       </DialogContent>
