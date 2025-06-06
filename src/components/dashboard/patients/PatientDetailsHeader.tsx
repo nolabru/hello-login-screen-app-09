@@ -83,14 +83,14 @@ const PatientDetailsHeader: React.FC<PatientDetailsHeaderProps> = ({ patient }) 
             
             {patient.phone_number && (
               <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4" />
+                <Phone className="h-4 w-4 text-portal-purple" />
                 <span>{patient.phone_number}</span>
               </div>
             )}
             
             {patient.created_at && (
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-4 w-4 text-portal-purple" />
                 <span>
                   Vinculado desde {new Date(patient.created_at).toLocaleDateString('pt-BR')}
                 </span>

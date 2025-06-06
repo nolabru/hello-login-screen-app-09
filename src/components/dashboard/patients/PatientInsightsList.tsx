@@ -54,27 +54,11 @@ const PatientInsightsList: React.FC<PatientInsightsListProps> = ({ insights }) =
             placeholder="Buscar nos insights..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-4"
           />
         </div>
         
         <div className="flex gap-2">
-          <Select
-            value={selectedTopic}
-            onValueChange={(value) => setSelectedTopic(value)}
-          >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filtrar por tópico" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os tópicos</SelectItem>
-              {allTopics.map((topic) => (
-                <SelectItem key={topic} value={topic}>
-                  {topic}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           
           <Select
             value={sortOrder}
@@ -84,8 +68,8 @@ const PatientInsightsList: React.FC<PatientInsightsListProps> = ({ insights }) =
               <SelectValue placeholder="Ordenar por" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Mais recentes</SelectItem>
-              <SelectItem value="oldest">Mais antigos</SelectItem>
+              <SelectItem value="newest">Mais Recentes</SelectItem>
+              <SelectItem value="oldest">Mais Antigos</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -96,7 +80,7 @@ const PatientInsightsList: React.FC<PatientInsightsListProps> = ({ insights }) =
           <p>Nenhum insight encontrado com os filtros atuais.</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {sortedInsights.map((insight) => (
             <PatientInsightCard key={insight.id} insight={insight} />
           ))}

@@ -131,13 +131,13 @@ const PatientCard: React.FC<PatientProps> = ({ patient }) => {
           
           {patient.phone_number && (
             <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-gray-500" />
+              <Phone className="h-4 w-4 text-portal-purple" />
               <span className="text-sm text-gray-700">{patient.phone_number}</span>
             </div>
           )}
           
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gray-500" />
+            <Calendar className="h-4 w-4 text-portal-purple" />
             <span className="text-sm text-gray-700">
               {patient.created_at 
                 ? `Vinculado desde ${new Date(patient.created_at).toLocaleDateString('pt-BR')}`

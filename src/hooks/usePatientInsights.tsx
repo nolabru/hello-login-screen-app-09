@@ -8,6 +8,10 @@ export interface SessionInsight {
   topics: string[];
   ai_advice: string;
   long_summary: string;
+  // Novos campos da tabela call_sessions
+  mood?: string;
+  summary?: string;
+  started_at?: string;
 }
 
 export function usePatientInsights(userId: string | null) {
@@ -31,9 +35,9 @@ export function usePatientInsights(userId: string | null) {
           const supabaseUrl = "https://ygafwrebafehwaomibmm.supabase.co";
           const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlnYWZ3cmViYWZlaHdhb21pYm1tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3OTQyNjQsImV4cCI6MjA2MjM3MDI2NH0.tD90iyVXxrt1HJlzz_LV-SLY5usqC4cwmLEXe9hWEvo";
           
-          // Buscar sessões do usuário
+          // Buscar sessões do usuário com os campos adicionais
           const sessionsResponse = await fetch(
-            `${supabaseUrl}/rest/v1/call_sessions?user_id=eq.${userId}&select=id`,
+            `${supabaseUrl}/rest/v1/call_sessions?user_id=eq.${userId}&select=id,mood,summary,started_at`,
             {
               headers: {
                 'apikey': supabaseKey,
@@ -87,8 +91,24 @@ export function usePatientInsights(userId: string | null) {
           return await insightsResponse.json();
         };
         
+        // Buscar os insights
         const insightsData = await fetchInsights();
-        setInsights(insightsData || []);
+        
+        // Criar um mapa de sessões para fácil acesso
+        const sessionsMap = sessions.reduce((map: Record<string, any>, session: any) => {
+          map[session.id] = session;
+          return map;
+        }, {});
+        
+        // Combinar os dados de insights com os dados das sessões
+        const combinedInsights = insightsData.map((insight: any) => ({
+          ...insight,
+          mood: sessionsMap[insight.session_id]?.mood,
+          summary: sessionsMap[insight.session_id]?.summary,
+          started_at: sessionsMap[insight.session_id]?.started_at
+        }));
+        
+        setInsights(combinedInsights || []);
       } catch (err: any) {
         console.error('Erro ao buscar insights do paciente:', err);
         setError(err.message);

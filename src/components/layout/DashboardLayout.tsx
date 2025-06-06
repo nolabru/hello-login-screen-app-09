@@ -46,7 +46,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           data: psychologist
         } = await supabase.from('psychologists').select('nome, name').eq('id', psychologistIdNumber).single();
         if (psychologist) {
-          const displayName = psychologist.nome || psychologist.name;
+          const displayName = psychologist.name || psychologist.name;
           setUserName(displayName || 'Psicólogo');
           localStorage.setItem('psychologistName', displayName || 'Psicólogo');
         }
