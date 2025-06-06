@@ -146,7 +146,7 @@ const CompanyEmployeesList: React.FC = () => {
   const renderContent = () => {
     if (isLoading) {
       return <div className="py-8 text-center">
-          <p className="text-gray-500">Carregando funcionários...</p>
+          <p className="text-gray-500">Carregando Funcionários...</p>
         </div>;
     }
     if (filteredEmployees.length === 0) {
@@ -155,8 +155,7 @@ const CompanyEmployeesList: React.FC = () => {
     return viewMode === 'table' ? <EmployeesTableView employees={filteredEmployees} onRemoveEmployee={handleRemoveEmployee} /> : <EmployeesCardView employees={filteredEmployees} onRemoveEmployee={handleRemoveEmployee} />;
   };
   return <div className="space-y-4">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="font-medium text-neutral-700 text-xl">Funcionários</h2>
+      <div className="flex justify-end items-center mb-6">
         <Button onClick={() => setIsAddDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark">
           <Plus className="h-4 w-4 mr-2" />
           Convidar Funcionário

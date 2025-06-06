@@ -94,12 +94,9 @@ const CompanyPsychologistsList: React.FC = () => {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="mb-6">
-          <h2 className="font-medium text-neutral-700 text-xl">Psicólogos da Empresa</h2>
-        </div>
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-gray-500">Carregando psicólogos...</p>
+            <p className="text-gray-500">Carregando Psicólogos...</p>
           </CardContent>
         </Card>
       </div>
@@ -108,8 +105,7 @@ const CompanyPsychologistsList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="font-medium text-neutral-700 text-xl">Psicólogos da Empresa</h2>
+      <div className="flex justify-end items-center mb-6">
         <Button onClick={handleAddPsychologist} className="bg-portal-purple hover:bg-portal-purple-dark">
           <UserPlus className="h-4 w-4 mr-2" />
           Adicionar Psicólogo
