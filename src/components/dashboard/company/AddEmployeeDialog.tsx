@@ -8,7 +8,7 @@ import AddSingleEmployeeForm from './AddSingleEmployeeForm';
 import BulkEmployeeUpload from './BulkEmployeeUpload';
 import EmployeeSearchDialog from './EmployeeSearchDialog';
 import { AddSingleEmployeeFormValues } from './employeeSchema';
-import { checkLicenseAvailability } from '@/services/licenseService';
+import { checkLicenseAvailability, updateEmployeeLicenseStatus } from '@/services/licenseService';
 interface AddEmployeeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -70,9 +70,7 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
       console.log('Adicionando novo funcionário com company_id:', companyId, 'tipo:', typeof companyId);
       
       // Inserir novo funcionário
-      const {
-        error
-      } = await supabase.from('user_profiles').insert({
+      const { data: newEmployee, error } = await supabase.from('user_profiles').insert({
         name: data.nome, // Usando 'name' no banco, mas 'nome' no formulário
         email: data.email,
         cpf: data.cpf,
@@ -80,8 +78,14 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
         company_id: companyId,
         status: true, // Definir como true por padrão, já que não usamos mais a distinção na interface
         employee_status: 'active' // Definir como 'active' quando vinculado a uma empresa
-      });
+      }).select('id').single();
+      
       if (error) throw error;
+      
+      // Incrementar o contador de licenças usadas
+      if (newEmployee) {
+        await updateEmployeeLicenseStatus(newEmployee.id, 'active', companyId);
+      }
       toast({
         title: "Funcionário adicionado",
         description: "O funcionário foi adicionado com sucesso e receberá um convite por email."

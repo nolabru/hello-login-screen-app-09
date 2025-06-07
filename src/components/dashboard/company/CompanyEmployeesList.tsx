@@ -18,30 +18,35 @@ const CompanyEmployeesList: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
+  
   useEffect(() => {
     const storedCompanyId = localStorage.getItem('companyId');
     if (storedCompanyId) {
       setCompanyId(storedCompanyId);
     }
   }, []);
+  
   useEffect(() => {
     if (companyId) {
       fetchEmployees();
     }
   }, [companyId]);
+  
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredEmployees(employees);
     } else {
       const query = searchQuery.toLowerCase();
-      setFilteredEmployees(employees.filter(employee => employee.nome?.toLowerCase().includes(query) || employee.email?.toLowerCase().includes(query)));
+      setFilteredEmployees(employees.filter(employee => 
+        employee.nome?.toLowerCase().includes(query) || 
+        employee.email?.toLowerCase().includes(query)
+      ));
     }
   }, [searchQuery, employees]);
+  
   const fetchEmployees = async () => {
     if (!companyId) return;
     setIsLoading(true);
@@ -114,23 +119,17 @@ const CompanyEmployeesList: React.FC = () => {
       setIsLoading(false);
     }
   };
+  
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
+  
   const handleRemoveEmployee = async (employeeId: number) => {
     if (!confirm('Tem certeza que deseja desvincular este funcionário?')) return;
     try {
-      // Primeiro, marcar a licença como inativa para liberar a licença
+      // Atualizar o status do funcionário para 'inactive' e decrementar o contador de licenças
       await updateEmployeeLicenseStatus(employeeId, 'inactive');
-
-      // Em seguida, desvincular o funcionário da empresa
-      const {
-        error
-      } = await supabase.from('user_profiles').update({
-        company_id: null,
-        employee_status: 'pending' // Atualizar para 'pending' quando desvinculado
-      }).eq('id', employeeId);
-      if (error) throw error;
+      
       toast({
         title: 'Funcionário desvinculado',
         description: 'O funcionário foi desvinculado da empresa com sucesso e a licença foi liberada.'
@@ -145,18 +144,27 @@ const CompanyEmployeesList: React.FC = () => {
       });
     }
   };
+  
   const renderContent = () => {
     if (isLoading) {
-      return <div className="py-8 text-center">
+      return (
+        <div className="py-8 text-center">
           <p className="text-gray-500">Carregando Funcionários...</p>
-        </div>;
+        </div>
+      );
     }
+    
     if (filteredEmployees.length === 0) {
       return <EmployeesEmptyState onAddEmployee={() => setIsAddDialogOpen(true)} />;
     }
-    return viewMode === 'table' ? <EmployeesTableView employees={filteredEmployees} onRemoveEmployee={handleRemoveEmployee} /> : <EmployeesCardView employees={filteredEmployees} onRemoveEmployee={handleRemoveEmployee} />;
+    
+    return viewMode === 'table' 
+      ? <EmployeesTableView employees={filteredEmployees} onRemoveEmployee={handleRemoveEmployee} /> 
+      : <EmployeesCardView employees={filteredEmployees} onRemoveEmployee={handleRemoveEmployee} />;
   };
-  return <div className="space-y-4">
+  
+  return (
+    <div className="space-y-4">
       <div className="flex justify-end items-center mb-6">
         <Button onClick={() => setIsAddDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark">
           <Plus className="h-4 w-4 mr-2" />
@@ -166,13 +174,21 @@ const CompanyEmployeesList: React.FC = () => {
       
       <div className="flex justify-between items-center mb-4">
         <EmployeeSearch searchQuery={searchQuery} onSearchChange={handleSearchChange} />
-        
         <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
       </div>
       
       {renderContent()}
       
-      {companyId && <AddEmployeeDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onEmployeeAdded={fetchEmployees} companyId={companyId} />}
-    </div>;
+      {companyId && (
+        <AddEmployeeDialog 
+          open={isAddDialogOpen} 
+          onOpenChange={setIsAddDialogOpen} 
+          onEmployeeAdded={fetchEmployees} 
+          companyId={companyId} 
+        />
+      )}
+    </div>
+  );
 };
+
 export default CompanyEmployeesList;

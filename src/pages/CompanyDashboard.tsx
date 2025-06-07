@@ -9,9 +9,10 @@ import CompanyPsychologistsList from '@/components/dashboard/company/CompanyPsyc
 import CompanyEmployeesList from '@/components/dashboard/company/CompanyEmployeesList';
 import AddEmployeeDialog from '@/components/dashboard/company/AddEmployeeDialog';
 import CompanyLicensesManagement from '@/components/dashboard/company/CompanyLicensesManagement';
-import { checkLicenseAvailability } from '@/services/licenseService';
+import { checkLicenseAvailability, updateLicenseCountForExistingEmployees } from '@/services/licenseService';
 import { fetchCompanyPsychologists } from '@/integrations/supabase/companyPsychologistsService';
 import { useToast } from '@/components/ui/use-toast';
+import { RefreshCw } from 'lucide-react';
 const CompanyDashboard: React.FC = () => {
   const {
     toast
@@ -177,9 +178,46 @@ const CompanyDashboard: React.FC = () => {
               
               {/* Terceira linha - Licenças e Índice */}
               <div className="mb-8">
-                <h2 className="text-xl font-medium mb-4  text-neutral-700">
-                  Licenças e Bem-estar
-                </h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-medium text-neutral-700">
+                    Licenças e Bem-estar
+                  </h2>
+                  {companyId && (
+                    <Button 
+                      onClick={async () => {
+                        try {
+                          await updateLicenseCountForExistingEmployees(companyId);
+                          
+                          // Atualizar as estatísticas após a atualização do contador
+                          const licenseStats = await checkLicenseAvailability(companyId);
+                          setStats(prev => ({
+                            ...prev,
+                            availableLicenses: licenseStats.available,
+                            totalLicenses: licenseStats.total
+                          }));
+                          
+                          toast({
+                            title: 'Contador de licenças atualizado',
+                            description: 'O contador de licenças foi atualizado com base nos funcionários existentes.'
+                          });
+                        } catch (error) {
+                          console.error('Erro ao atualizar contador de licenças:', error);
+                          toast({
+                            title: 'Erro',
+                            description: 'Não foi possível atualizar o contador de licenças. Tente novamente.',
+                            variant: 'destructive'
+                          });
+                        }
+                      }}
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center gap-1"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      <span>Atualizar Licenças</span>
+                    </Button>
+                  )}
+                </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Card 5 - Licenças Disponíveis */}

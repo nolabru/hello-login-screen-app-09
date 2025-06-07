@@ -259,21 +259,142 @@ export const updateEmployeeLicenseStatus = async (
 };
 */
 
-// Versão temporária que apenas remove o company_id para "desativar" a licença
+// Função para atualizar o status da licença de um funcionário
 export const updateEmployeeLicenseStatus = async (
   employeeId: number,
-  status: 'active' | 'inactive'
+  status: 'active' | 'inactive',
+  companyId?: string
 ): Promise<void> => {
-  // Se o status for 'inactive', removemos a associação com a empresa
-  if (status === 'inactive') {
-    const { error } = await supabase
+  try {
+    if (status === 'active' && !companyId) {
+      throw new Error('companyId é obrigatório para ativar uma licença');
+    }
+
+    // Obter o company_id atual do funcionário
+    const { data: userData, error: userError } = await supabase
       .from('user_profiles')
-      .update({ company_id: null })
-      .eq('id', employeeId);
+      .select('company_id')
+      .eq('id', employeeId)
+      .single();
+
+    if (userError) throw userError;
+
+    const currentCompanyId = userData?.company_id;
+
+    // Atualizar o contador de licenças usadas
+    if (status === 'active') {
+      // Incrementar o contador de licenças usadas
+      await incrementLicenseUsage(companyId!);
+      
+      // Atualizar o status do funcionário
+      await supabase
+        .from('user_profiles')
+        .update({ 
+          employee_status: 'active',
+          company_id: companyId 
+        })
+        .eq('id', employeeId);
+    } else {
+      // Decrementar o contador de licenças usadas
+      if (currentCompanyId) {
+        await decrementLicenseUsage(currentCompanyId);
+      }
+      
+      // Atualizar o status do funcionário
+      await supabase
+        .from('user_profiles')
+        .update({ 
+          employee_status: 'pending',
+          company_id: null 
+        })
+        .eq('id', employeeId);
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar status da licença:', error);
+    throw error;
+  }
+};
+
+// Função auxiliar para incrementar o contador de licenças usadas
+const incrementLicenseUsage = async (companyId: string): Promise<void> => {
+  try {
+    console.log('Incrementando uso de licença para a empresa:', companyId);
+    
+    // Buscar a licença ativa mais recente da empresa
+    const { data, error } = await supabase
+      .from('company_licenses')
+      .select('id, used_licenses')
+      .eq('company_id', companyId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1);
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      console.log('Nenhuma licença ativa encontrada para a empresa:', companyId);
+      return;
+    }
+
+    // Incrementar o contador
+    const licenseId = data[0].id;
+    const currentUsage = data[0].used_licenses || 0;
+    const newUsage = currentUsage + 1;
+    
+    console.log(`Atualizando licença ${licenseId}: used_licenses ${currentUsage} -> ${newUsage}`);
+
+    const { error: updateError } = await supabase
+      .from('company_licenses')
+      .update({ used_licenses: newUsage })
+      .eq('id', licenseId);
+      
+    if (updateError) throw updateError;
+    
+    console.log('Uso de licença incrementado com sucesso');
+  } catch (error) {
+    console.error('Erro ao incrementar uso de licença:', error);
+    throw error;
   }
-  // Se for 'active', não fazemos nada, pois a associação já deve existir
+};
+
+// Função auxiliar para decrementar o contador de licenças usadas
+const decrementLicenseUsage = async (companyId: string): Promise<void> => {
+  try {
+    console.log('Decrementando uso de licença para a empresa:', companyId);
+    
+    // Buscar a licença ativa mais recente da empresa
+    const { data, error } = await supabase
+      .from('company_licenses')
+      .select('id, used_licenses')
+      .eq('company_id', companyId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      console.log('Nenhuma licença ativa encontrada para a empresa:', companyId);
+      return;
+    }
+
+    // Decrementar o contador (garantindo que não fique negativo)
+    const licenseId = data[0].id;
+    const currentUsage = data[0].used_licenses || 0;
+    const newUsage = Math.max(0, currentUsage - 1);
+    
+    console.log(`Atualizando licença ${licenseId}: used_licenses ${currentUsage} -> ${newUsage}`);
+
+    const { error: updateError } = await supabase
+      .from('company_licenses')
+      .update({ used_licenses: newUsage })
+      .eq('id', licenseId);
+      
+    if (updateError) throw updateError;
+    
+    console.log('Uso de licença decrementado com sucesso');
+  } catch (error) {
+    console.error('Erro ao decrementar uso de licença:', error);
+    throw error;
+  }
 };
 
 // Nova função: Buscar usuários com licenças ativas de um plano específico
@@ -290,5 +411,68 @@ export const fetchUsersWithLicense = async (
   } catch (error) {
     console.error('Erro ao buscar usuários com licença:', error);
     return [];
+  }
+};
+
+// Função para atualizar o contador de licenças com base nos funcionários existentes
+export const updateLicenseCountForExistingEmployees = async (companyId: string): Promise<void> => {
+  try {
+    console.log('Atualizando contador de licenças para funcionários existentes da empresa:', companyId);
+    
+    // Buscar todos os funcionários ativos da empresa
+    const { data: employees, error: employeesError } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .eq('company_id', companyId)
+      .eq('employee_status', 'active');
+    
+    if (employeesError) {
+      console.error('Erro ao buscar funcionários:', employeesError);
+      throw employeesError;
+    }
+    
+    // Contar o número total de funcionários ativos
+    const activeCount = employees?.length || 0;
+    console.log(`Encontrados ${activeCount} funcionários ativos para a empresa ${companyId}`);
+    
+    // Buscar a licença ativa mais recente da empresa
+    const { data: licenses, error: licensesError } = await supabase
+      .from('company_licenses')
+      .select('id, used_licenses')
+      .eq('company_id', companyId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1);
+    
+    if (licensesError) {
+      console.error('Erro ao buscar licenças:', licensesError);
+      throw licensesError;
+    }
+    
+    if (!licenses || licenses.length === 0) {
+      console.log('Nenhuma licença ativa encontrada para a empresa:', companyId);
+      return;
+    }
+    
+    const licenseId = licenses[0].id;
+    const currentUsage = licenses[0].used_licenses || 0;
+    
+    console.log(`Atualizando licença ${licenseId}: used_licenses ${currentUsage} -> ${activeCount}`);
+    
+    // Atualizar o contador de licenças usadas
+    const { error: updateError } = await supabase
+      .from('company_licenses')
+      .update({ used_licenses: activeCount })
+      .eq('id', licenseId);
+    
+    if (updateError) {
+      console.error('Erro ao atualizar contador de licenças:', updateError);
+      throw updateError;
+    }
+    
+    console.log('Contador de licenças atualizado com sucesso');
+  } catch (error) {
+    console.error('Erro ao atualizar contador de licenças:', error);
+    throw error;
   }
 };

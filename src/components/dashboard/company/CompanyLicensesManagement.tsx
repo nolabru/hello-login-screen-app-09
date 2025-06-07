@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { fetchCompanyLicenses, CompanyLicense, checkLicenseAvailability } from '@/services/licenseService';
+import { 
+  fetchCompanyLicenses, 
+  CompanyLicense, 
+  checkLicenseAvailability,
+  updateLicenseCountForExistingEmployees
+} from '@/services/licenseService';
 import { useToast } from '@/components/ui/use-toast';
 import CompanyLicenseInfo from './CompanyLicenseInfo';
 import AcquireLicenseDialog from './AcquireLicenseDialog';
-import { CirclePlus } from 'lucide-react';
+import { CirclePlus, RefreshCw } from 'lucide-react';
 interface CompanyLicensesManagementProps {
   companyId: string;
 }
@@ -24,6 +29,7 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
   });
   const [loading, setLoading] = useState(true);
   const [isAcquireDialogOpen, setIsAcquireDialogOpen] = useState(false);
+  const [isUpdatingLicenses, setIsUpdatingLicenses] = useState(false);
   const fetchLicenses = async () => {
     setLoading(true);
     try {
@@ -73,6 +79,31 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
       fetchLicenses();
     }
   }, [companyId]);
+
+  // Função para atualizar o contador de licenças com base nos funcionários existentes
+  const handleUpdateLicenseCount = async () => {
+    setIsUpdatingLicenses(true);
+    try {
+      await updateLicenseCountForExistingEmployees(companyId);
+      
+      toast({
+        title: 'Contador de licenças atualizado',
+        description: 'O contador de licenças foi atualizado com base nos funcionários existentes.'
+      });
+      
+      // Recarregar os dados para exibir o contador atualizado
+      await fetchLicenses();
+    } catch (error) {
+      console.error('Erro ao atualizar contador de licenças:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível atualizar o contador de licenças. Tente novamente.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsUpdatingLicenses(false);
+    }
+  };
   return <div>
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -87,7 +118,19 @@ const CompanyLicensesManagement: React.FC<CompanyLicensesManagementProps> = ({
       
       <Card className="mb-6">
         <CardContent className="p-6">
-          <h3 className="text-lg font-medium mb-4 text-neutral-700">Resumo de Licenças</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-neutral-700">Resumo de Licenças</h3>
+            <Button 
+              onClick={handleUpdateLicenseCount} 
+              disabled={isUpdatingLicenses || loading} 
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              <RefreshCw className={`h-4 w-4 ${isUpdatingLicenses ? 'animate-spin' : ''}`} />
+              <span>{isUpdatingLicenses ? 'Atualizando...' : 'Atualizar Contador'}</span>
+            </Button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-gray-50 p-4 rounded-md">
               <p className="text-sm text-gray-500">Total de Licenças</p>

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Search, UserPlus, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { updateEmployeeLicenseStatus } from '@/services/licenseService';
 
 // Tipo para representar um funcionário nos resultados da busca
 export interface EmployeeSearchResult {
@@ -205,20 +206,12 @@ const EmployeeSearchDialog: React.FC<EmployeeSearchDialogProps> = ({
         return;
       }
 
-      // Vincular usuário à empresa
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          company_id: companyId,
-          employee_status: 'active' // Atualizar o status para 'active' quando vinculado
-        })
-        .eq('id', selectedEmployee);
-
-      if (error) throw error;
+      // Atualizar o status do funcionário e incrementar o contador de licenças
+      await updateEmployeeLicenseStatus(selectedEmployee, 'active', companyId);
 
       toast({
         title: 'Funcionário vinculado',
-        description: 'O funcionário foi vinculado à sua empresa com sucesso.'
+        description: 'O funcionário foi vinculado à sua empresa com sucesso e uma licença foi consumida.'
       });
       onEmployeeLinked();
       onOpenChange(false);
