@@ -44,7 +44,7 @@ const CompanyList: React.FC<CompanyListProps> = ({
     } catch (error) {
       console.error('Erro ao desconectar:', error);
       toast({
-        title: "Erro na desconexão",
+        title: "Erro na Desconexão",
         description: "Não foi possível desconectar da empresa. Tente novamente.",
         variant: "destructive"
       });

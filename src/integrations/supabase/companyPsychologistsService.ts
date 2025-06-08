@@ -1,6 +1,7 @@
 
 import { supabase } from './client';
 import { Company, CompanySearchResult, CompanyDetail } from '@/pages/companies/types';
+import { createNotification } from '@/services/notificationService';
 
 // Tipo para representar um psicólogo nos resultados da busca
 export interface PsychologistSearchResult {
@@ -18,7 +19,7 @@ export interface CompanyPsychologist {
   psychologist_id: string;
   started_at: string;
   ended_at: string | null;
-  status: boolean;
+  status: string;
   psychologist_name?: string;
   psychologist_email?: string;
   psychologist_specialization?: string;
@@ -31,7 +32,7 @@ export interface PsychologistCompany {
   psychologist_id: string;
   started_at: string;
   ended_at: string | null;
-  status: boolean;
+  status: string;
   company_name?: string;
   company_email?: string;
 }
@@ -51,7 +52,7 @@ export const fetchCompanyPsychologists = async (companyId: string): Promise<Comp
       .from('company_psychologists')
       .select('*')
       .eq('company_id', companyId)
-      .eq('status', true)
+      .eq('status', 'active')
       .is('ended_at', null);
 
     if (error) throw error;
@@ -102,7 +103,7 @@ export const fetchPsychologistCompanies = async (psychologistId: string): Promis
       .from('company_psychologists')
       .select('*')
       .eq('psychologist_id', psychologistId)
-      .eq('status', true)
+      .eq('status', 'active')
       .is('ended_at', null);
 
     if (error) throw error;
@@ -148,36 +149,54 @@ export const fetchPsychologistCompanies = async (psychologistId: string): Promis
  */
 export const associatePsychologistToCompany = async (companyId: string, psychologistId: string): Promise<string> => {
   try {
-    // Verificar se já existe uma associação ativa
+    // Verificar se já existe uma associação
     const { data: existingAssociation, error: checkError } = await supabaseAny
       .from('company_psychologists')
-      .select('id')
+      .select('id, status')
       .eq('company_id', companyId)
       .eq('psychologist_id', psychologistId)
-      .eq('status', true)
-      .is('ended_at', null)
       .maybeSingle();
 
     if (checkError) throw checkError;
 
     // Se já existe uma associação ativa, retornar o ID dela
-    if (existingAssociation) {
+    if (existingAssociation && existingAssociation.status === 'active') {
       return existingAssociation.id;
     }
+    
+    // Se existe uma associação pendente ou rejeitada, atualizá-la
+    if (existingAssociation) {
+      const { data, error } = await supabaseAny
+        .from('company_psychologists')
+        .update({
+          status: 'pending',
+          ended_at: null,
+          started_at: new Date().toISOString()
+        })
+        .eq('id', existingAssociation.id)
+        .select('id')
+        .single();
+        
+      if (error) throw error;
+      return data.id;
+    }
 
-    // Criar nova associação
+    // Criar nova associação com status pendente
     const { data, error } = await supabaseAny
       .from('company_psychologists')
       .insert({
         company_id: companyId,
         psychologist_id: psychologistId,
         started_at: new Date().toISOString(),
-        status: true
+        status: 'pending'
       })
       .select('id')
       .single();
 
     if (error) throw error;
+    
+    // Não precisamos mais criar notificações, pois as associações pendentes
+    // serão tratadas como notificações
 
     return data.id;
   } catch (error) {
@@ -199,7 +218,7 @@ export const disassociatePsychologistFromCompany = async (companyId: string, psy
       .select('id')
       .eq('company_id', companyId)
       .eq('psychologist_id', psychologistId)
-      .eq('status', true)
+      .eq('status', 'active')
       .is('ended_at', null)
       .maybeSingle();
 
@@ -214,7 +233,7 @@ export const disassociatePsychologistFromCompany = async (companyId: string, psy
     const { error } = await supabaseAny
       .from('company_psychologists')
       .update({
-        status: false,
+        status: 'inactive',
         ended_at: new Date().toISOString()
       })
       .eq('id', association.id);
@@ -266,7 +285,7 @@ export const searchAvailableCompanies = async (query: string, psychologistId: st
       .from('companies')
       .select('id, name, corp_email, status')
       .or(`name.ilike.%${query}%,corp_email.ilike.%${query}%`)
-      .eq('status', true)
+      .eq('status', 'active')
       .limit(10);
 
     if (error) throw error;
@@ -292,10 +311,10 @@ export const searchAvailableCompanies = async (query: string, psychologistId: st
  * @param companyId ID da empresa
  * @param psychologistId ID do psicólogo
  */
-export const requestCompanyConnection = async (companyId: number, psychologistId: string): Promise<void> => {
+export const requestCompanyConnection = async (companyId: string, psychologistId: string): Promise<void> => {
   try {
     // Criar nova associação
-    await associatePsychologistToCompany(companyId.toString(), psychologistId);
+    await associatePsychologistToCompany(companyId, psychologistId);
   } catch (error) {
     console.error('Erro ao solicitar conexão com empresa:', error);
     throw error;
@@ -306,11 +325,29 @@ export const requestCompanyConnection = async (companyId: number, psychologistId
  * Aceita uma solicitação de conexão de uma empresa
  * @param companyId ID da empresa
  * @param psychologistId ID do psicólogo
+ * @param connectionId ID da conexão
  */
-export const acceptCompanyRequest = async (companyId: number, psychologistId: string): Promise<void> => {
+export const acceptCompanyRequest = async (companyId: string, psychologistId: string, connectionId: string): Promise<void> => {
   try {
-    // Atualizar a associação para ativa
-    await associatePsychologistToCompany(companyId.toString(), psychologistId);
+    // Atualizar o status da conexão para ativo
+    const { error } = await supabaseAny
+      .from('company_psychologists')
+      .update({
+        status: 'active'
+      })
+      .eq('id', connectionId)
+      .eq('psychologist_id', psychologistId)
+      .eq('company_id', companyId);
+      
+    if (error) throw error;
+    
+    // Atualizar o status do psicólogo para ativo
+    await supabaseAny
+      .from('psychologists')
+      .update({
+        status: 'active'
+      })
+      .eq('id', psychologistId);
     
     // Buscar funcionários da empresa
     const { data: employees, error: employeesError } = await supabaseAny
@@ -332,14 +369,40 @@ export const acceptCompanyRequest = async (companyId: number, psychologistId: st
 };
 
 /**
+ * Rejeita uma solicitação de conexão de uma empresa
+ * @param companyId ID da empresa
+ * @param psychologistId ID do psicólogo
+ * @param connectionId ID da conexão
+ */
+export const rejectCompanyRequest = async (companyId: string, psychologistId: string, connectionId: string): Promise<void> => {
+  try {
+    // Atualizar o status da conexão para rejeitado
+    const { error } = await supabaseAny
+      .from('company_psychologists')
+      .update({
+        status: 'rejected',
+        ended_at: new Date().toISOString()
+      })
+      .eq('id', connectionId)
+      .eq('psychologist_id', psychologistId)
+      .eq('company_id', companyId);
+      
+    if (error) throw error;
+  } catch (error) {
+    console.error('Erro ao rejeitar convite da empresa:', error);
+    throw error;
+  }
+};
+
+/**
  * Desconecta um psicólogo de uma empresa
  * @param companyId ID da empresa
  * @param psychologistId ID do psicólogo
  */
-export const disconnectFromCompany = async (companyId: number, psychologistId: string): Promise<void> => {
+export const disconnectFromCompany = async (companyId: string, psychologistId: string): Promise<void> => {
   try {
     // Usar a função disassociatePsychologistFromCompany para desassociar o psicólogo da empresa
-    await disassociatePsychologistFromCompany(companyId.toString(), psychologistId);
+    await disassociatePsychologistFromCompany(companyId, psychologistId);
     
     // Buscar funcionários da empresa
     const { data: employees, error: employeesError } = await supabaseAny
@@ -374,7 +437,7 @@ export const fetchCompanyDetails = async (company: Company, psychologistId: stri
       .select('*')
       .eq('company_id', company.id.toString())
       .eq('psychologist_id', psychologistId)
-      .eq('status', true)
+      .eq('status', 'active')
       .is('ended_at', null);
 
     if (associationsError) throw associationsError;
@@ -408,16 +471,20 @@ export const fetchCompanyDetails = async (company: Company, psychologistId: stri
  */
 export const fetchAllAvailablePsychologists = async (companyId: string): Promise<PsychologistSearchResult[]> => {
   try {
-    // Buscar todos os psicólogos ativos
+    // Buscar todos os psicólogos (removido filtro de status temporariamente)
     const { data, error } = await supabaseAny
       .from('psychologists')
       .select('id, name, email, crp, specialization')
-      .eq('status', true)
+      // Removido filtro .eq('status', 'active') para depuração
       .limit(50); // Limitamos a 50 para evitar carregar muitos dados
+
+    console.log('Psicólogos retornados da consulta:', data);
+    console.log('Erro na consulta (se houver):', error);
 
     if (error) throw error;
     
     if (!data || data.length === 0) {
+      console.log('Nenhum psicólogo encontrado na consulta');
       return [];
     }
     
@@ -425,8 +492,14 @@ export const fetchAllAvailablePsychologists = async (companyId: string): Promise
     const companyPsychologists = await fetchCompanyPsychologists(companyId);
     const connectedPsychologistIds = companyPsychologists.map(cp => cp.psychologist_id);
     
+    console.log('IDs de psicólogos já conectados:', connectedPsychologistIds);
+    
     // Filtrar psicólogos já conectados
-    return data.filter(psychologist => !connectedPsychologistIds.includes(psychologist.id));
+    const availablePsychologists = data.filter(psychologist => !connectedPsychologistIds.includes(psychologist.id));
+    
+    console.log('Psicólogos disponíveis após filtragem:', availablePsychologists);
+    
+    return availablePsychologists;
   } catch (error) {
     console.error('Erro ao buscar psicólogos:', error);
     throw error;
@@ -441,17 +514,22 @@ export const fetchAllAvailablePsychologists = async (companyId: string): Promise
  */
 export const searchAvailablePsychologists = async (query: string, companyId: string): Promise<PsychologistSearchResult[]> => {
   try {
-    // Buscar psicólogos que correspondem à pesquisa
+    // Buscar psicólogos que correspondem à pesquisa (removido filtro de status temporariamente)
     const { data, error } = await supabaseAny
       .from('psychologists')
       .select('id, name, email, crp, specialization')
       .or(`name.ilike.%${query}%,email.ilike.%${query}%,crp.ilike.%${query}%`)
-      .eq('status', true)
+      // Removido filtro .eq('status', 'active') para depuração
       .limit(10);
+
+    console.log('Psicólogos retornados da busca:', data);
+    console.log('Erro na busca (se houver):', error);
+    console.log('Termo de busca usado:', query);
 
     if (error) throw error;
     
     if (!data || data.length === 0) {
+      console.log('Nenhum psicólogo encontrado na busca');
       return [];
     }
     
@@ -459,8 +537,14 @@ export const searchAvailablePsychologists = async (query: string, companyId: str
     const companyPsychologists = await fetchCompanyPsychologists(companyId);
     const connectedPsychologistIds = companyPsychologists.map(cp => cp.psychologist_id);
     
+    console.log('IDs de psicólogos já conectados:', connectedPsychologistIds);
+    
     // Filtrar psicólogos já conectados
-    return data.filter(psychologist => !connectedPsychologistIds.includes(psychologist.id));
+    const availablePsychologists = data.filter(psychologist => !connectedPsychologistIds.includes(psychologist.id));
+    
+    console.log('Psicólogos disponíveis após filtragem:', availablePsychologists);
+    
+    return availablePsychologists;
   } catch (error) {
     console.error('Erro ao buscar psicólogos:', error);
     throw error;

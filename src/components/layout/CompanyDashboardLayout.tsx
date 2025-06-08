@@ -94,7 +94,7 @@ const CompanyDashboardLayout: React.FC<CompanyDashboardLayoutProps> = ({
       localStorage.removeItem('companyName');
       localStorage.removeItem('companyEmail');
       toast({
-        title: "Logout realizado",
+        title: "Logout Realizado",
         description: "Sua sessão foi encerrada com sucesso."
       });
 

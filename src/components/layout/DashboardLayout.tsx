@@ -5,6 +5,7 @@ import { Home, Users, Building2, Settings, LogOut, Menu, X } from 'lucide-react'
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/components/ui/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
+import NotificationBell from '@/components/NotificationBell';
 interface DashboardLayoutProps {
   children: ReactNode;
 }
@@ -40,13 +41,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         setUserName(psychologistName);
       } else {
         // Caso contrário, busque do banco de dados
-        // Converting string to number with parseInt
-        const psychologistIdNumber = parseInt(psychologistId, 10);
+        // Usar o ID como string para a consulta
         const {
           data: psychologist
-        } = await supabase.from('psychologists').select('nome, name').eq('id', psychologistIdNumber).single();
+        } = await supabase.from('psychologists').select('name').eq('id', psychologistId).single();
         if (psychologist) {
-          const displayName = psychologist.name || psychologist.name;
+          const displayName = psychologist.name;
           setUserName(displayName || 'Psicólogo');
           localStorage.setItem('psychologistName', displayName || 'Psicólogo');
         }
@@ -86,7 +86,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       localStorage.removeItem('psychologistId');
       localStorage.removeItem('psychologistName');
       toast({
-        title: "Logout realizado",
+        title: "Logout Realizado",
         description: "Sua sessão foi encerrada com sucesso."
       });
 
@@ -126,9 +126,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </Link>
           </div>
           
-          <div className="p-4 border-b">
-            <p className="text-sm text-gray-500">Bem-vindo(a),</p>
-            <h2 className="font-medium text-xl text-neutral-700">{userName}</h2>
+          <div className="p-4 border-b flex justify-between items-center">
+            <div>
+              <p className="text-sm text-gray-500">Bem-vindo(a),</p>
+              <h2 className="font-medium text-xl text-neutral-700">{userName}</h2>
+            </div>
+            <NotificationBell />
           </div>
           
           <div className="overflow-y-auto flex-1 py-0">

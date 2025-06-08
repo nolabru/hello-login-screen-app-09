@@ -119,14 +119,14 @@ const CompanyPsychologistsList: React.FC<CompanyPsychologistsListProps> = ({
       <div className="flex justify-end items-center mb-6">
         <Button onClick={handleAddPsychologist} className="bg-portal-purple hover:bg-portal-purple-dark">
           <UserPlus className="h-4 w-4 mr-2" />
-          Adicionar Psicólogo
+          Convidar Psicólogo
         </Button>
       </div>
 
       {psychologists.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center">
-            <p className="text-gray-500">Nenhum psicólogo associado a esta empresa.</p>
+            <p className="text-gray-500">Nenhum Psicólogo Associado a esta Empresa</p>
           </CardContent>
         </Card>
       ) : (

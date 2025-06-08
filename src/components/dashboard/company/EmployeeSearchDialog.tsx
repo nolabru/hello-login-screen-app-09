@@ -210,7 +210,7 @@ const EmployeeSearchDialog: React.FC<EmployeeSearchDialogProps> = ({
       await updateEmployeeLicenseStatus(selectedEmployee, 'active', companyId);
 
       toast({
-        title: 'Funcionário vinculado',
+        title: 'Funcionário Vinculado',
         description: 'O funcionário foi vinculado à sua empresa com sucesso e uma licença foi consumida.'
       });
       onEmployeeLinked();

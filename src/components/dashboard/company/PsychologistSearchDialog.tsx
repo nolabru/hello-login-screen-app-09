@@ -152,7 +152,7 @@ const PsychologistSearchDialog: React.FC<PsychologistSearchDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-neutral-700">Adicionar Psicólogo</DialogTitle>
+          <DialogTitle className="text-neutral-700">cólogo</DialogTitle>
         </DialogHeader>
 
         <div className="relative mb-4">
@@ -168,11 +168,11 @@ const PsychologistSearchDialog: React.FC<PsychologistSearchDialogProps> = ({
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">Carregando psicólogos...</p>
+              <p className="text-gray-500">Carregando Psicólogos...</p>
             </div>
           ) : isSearching ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">Buscando psicólogos...</p>
+              <p className="text-gray-500">Buscando Psicólogos...</p>
             </div>
           ) : searchResults.length === 0 ? (
             <div className="text-center py-8">
@@ -240,7 +240,7 @@ const PsychologistSearchDialog: React.FC<PsychologistSearchDialogProps> = ({
             ) : (
               <>
                 <UserPlus className="h-4 w-4 mr-2" />
-                Adicionar Psicólogo
+                Convidar Psicólogo
               </>
             )}
           </Button>

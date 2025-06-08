@@ -88,7 +88,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ children })
       localStorage.removeItem('adminName');
       
       toast({
-        title: "Logout realizado",
+        title: "Logout Realizado",
         description: "Sua sessão foi encerrada com sucesso.",
       });
       
