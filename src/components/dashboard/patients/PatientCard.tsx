@@ -1,9 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Phone, Calendar, Clock } from 'lucide-react';
+import { User, Phone, Calendar, Clock, MoreVertical, Unlink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/components/ui/use-toast';
+import { disassociatePatientFromPsychologist } from '@/integrations/supabase/psychologistPatientsService';
 
 interface PatientProps {
   patient: {
@@ -15,8 +33,11 @@ interface PatientProps {
 
 const PatientCard: React.FC<PatientProps> = ({ patient, isPending = false }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   // Estado para armazenar a URL da imagem
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  // Estado para controlar o diálogo de confirmação
+  const [showDisassociateDialog, setShowDisassociateDialog] = useState(false);
   
   // Log para depuração
   console.log('Dados do paciente:', patient);
@@ -83,8 +104,54 @@ const PatientCard: React.FC<PatientProps> = ({ patient, isPending = false }) => 
       .substring(0, 2);
   };
 
+  // Função para desvincular o paciente
+  const handleDisassociatePatient = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Impedir que o card seja clicado
+    
+    try {
+      const psychologistId = localStorage.getItem('psychologistId');
+      if (!psychologistId) {
+        throw new Error('ID do psicólogo não encontrado');
+      }
+      
+      // Usar user_id se disponível, caso contrário usar id
+      const patientId = patient.user_id ? String(patient.user_id) : String(patient.id);
+      
+      console.log('Dados do paciente para desvinculação:', {
+        id: patient.id,
+        user_id: patient.user_id,
+        idUsado: patientId,
+        psychologistId
+      });
+      
+      await disassociatePatientFromPsychologist(patientId, psychologistId);
+      
+      toast({
+        title: 'Paciente Desvinculado',
+        description: 'O paciente foi desvinculado com sucesso.',
+      });
+      
+      // Disparar evento para atualizar a lista de pacientes
+      window.dispatchEvent(new CustomEvent('patientConnectionUpdated'));
+    } catch (error) {
+      console.error('Erro ao desvincular paciente:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível desvincular o paciente. Tente novamente.',
+        variant: 'destructive'
+      });
+    }
+    
+    setShowDisassociateDialog(false);
+  };
+  
   // Função para navegar para a página de detalhes do paciente
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Se o clique foi no menu ou no diálogo, não navegar
+    if ((e.target as HTMLElement).closest('.dropdown-menu-container')) {
+      return;
+    }
+    
     navigate(`/patients/${patient.id}`);
   };
 
@@ -95,6 +162,24 @@ const PatientCard: React.FC<PatientProps> = ({ patient, isPending = false }) => 
     >
       <CardContent className="p-0 relative">
         <div className="bg-portal-purple/10 p-4 flex items-center gap-4 relative">
+          {/* Menu de contexto */}
+          <div className="absolute top-2 right-2 z-10 dropdown-menu-container" onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="p-1 rounded-full hover:bg-gray-200 focus:outline-none">
+                  <MoreVertical className="h-5 w-5 text-gray-500" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {!isPending && (
+                  <DropdownMenuItem onClick={() => setShowDisassociateDialog(true)}>
+                    <Unlink className="h-4 w-4 mr-2" />
+                  Desvincular Paciente
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
           <Avatar className="h-16 w-16 border-2 border-white">
             {imageUrl ? (
               <AvatarImage 
@@ -165,6 +250,27 @@ const PatientCard: React.FC<PatientProps> = ({ patient, isPending = false }) => 
           
         </div>
       </CardContent>
+      
+      {/* Diálogo de confirmação para desvincular paciente */}
+      <AlertDialog open={showDisassociateDialog} onOpenChange={setShowDisassociateDialog}>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Desvincular paciente</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja desvincular este paciente? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDisassociatePatient} 
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Desvincular
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 };

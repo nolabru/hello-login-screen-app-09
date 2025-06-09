@@ -145,23 +145,88 @@ export const fetchPsychologistPatients = async (psychologistId: string): Promise
  */
 export const disassociatePatientFromPsychologist = async (patientId: string, psychologistId: string): Promise<void> => {
   try {
+    console.log('Iniciando desvinculação com patientId:', patientId, 'psychologistId:', psychologistId);
+    
     // Buscar a associação ativa
     const { data: association, error: findError } = await supabaseAny
       .from('psychologists_patients')
-      .select('id')
+      .select('id, patient_id, psychologist_id, status')
       .eq('patient_id', patientId)
       .eq('psychologist_id', psychologistId)
       .eq('status', 'active')
       .is('ended_at', null)
       .maybeSingle();
 
-    if (findError) throw findError;
+    if (findError) {
+      console.error('Erro ao buscar associação:', findError);
+      throw findError;
+    }
 
-    // Se não encontrou associação ativa, não há o que fazer
+    // Se não encontrou associação ativa, tentar buscar por user_id na tabela user_profiles
     if (!association) {
+      console.log('Associação não encontrada diretamente. Tentando buscar user_id na tabela user_profiles...');
+      
+      // Buscar o user_id correspondente ao ID do perfil
+      const { data: userProfile, error: profileError } = await supabaseAny
+        .from('user_profiles')
+        .select('user_id')
+        .eq('id', patientId)
+        .maybeSingle();
+        
+      if (profileError) {
+        console.error('Erro ao buscar perfil do usuário:', profileError);
+        throw profileError;
+      }
+      
+      if (!userProfile || !userProfile.user_id) {
+        console.log('Perfil de usuário não encontrado ou sem user_id. Desvinculação não é possível.');
+        return;
+      }
+      
+      console.log('Encontrado user_id:', userProfile.user_id, 'para o perfil ID:', patientId);
+      
+      // Tentar novamente com o user_id encontrado
+      const { data: associationByUserId, error: findError2 } = await supabaseAny
+        .from('psychologists_patients')
+        .select('id, patient_id, psychologist_id, status')
+        .eq('patient_id', userProfile.user_id)
+        .eq('psychologist_id', psychologistId)
+        .eq('status', 'active')
+        .is('ended_at', null)
+        .maybeSingle();
+        
+      if (findError2) {
+        console.error('Erro ao buscar associação com user_id:', findError2);
+        throw findError2;
+      }
+      
+      if (!associationByUserId) {
+        console.log('Nenhuma associação encontrada mesmo usando user_id. Desvinculação não é possível.');
+        return;
+      }
+      
+      console.log('Associação encontrada usando user_id:', associationByUserId);
+      
+      // Atualizar a associação para inativa
+      const { error } = await supabaseAny
+        .from('psychologists_patients')
+        .update({
+          status: 'inactive',
+          ended_at: new Date().toISOString()
+        })
+        .eq('id', associationByUserId.id);
+
+      if (error) {
+        console.error('Erro ao atualizar associação com user_id:', error);
+        throw error;
+      }
+      
+      console.log('Paciente desvinculado com sucesso usando user_id!');
       return;
     }
 
+    console.log('Associação encontrada:', association);
+    
     // Atualizar a associação para inativa
     const { error } = await supabaseAny
       .from('psychologists_patients')
@@ -171,7 +236,26 @@ export const disassociatePatientFromPsychologist = async (patientId: string, psy
       })
       .eq('id', association.id);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Erro ao atualizar associação:', error);
+      throw error;
+    }
+    
+    console.log('Paciente desvinculado com sucesso!');
+    
+    // Também atualizar o campo psychologist_id na tabela user_profiles para null
+    const { error: updateProfileError } = await supabaseAny
+      .from('user_profiles')
+      .update({
+        psychologist_id: null
+      })
+      .eq('user_id', patientId);
+      
+    if (updateProfileError) {
+      console.error('Aviso: Não foi possível atualizar o perfil do usuário, mas a desvinculação foi concluída:', updateProfileError);
+    } else {
+      console.log('Perfil do usuário atualizado com sucesso!');
+    }
   } catch (error) {
     console.error('Erro ao desassociar paciente do psicólogo:', error);
     throw error;
