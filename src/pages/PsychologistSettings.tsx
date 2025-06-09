@@ -122,7 +122,7 @@ const PsychologistSettings = () => {
       }
       localStorage.setItem('psychologistName', values.name);
       toast({
-        title: "Perfil atualizado",
+        title: "Perfil Atualizado",
         description: "Suas informações foram atualizadas com sucesso"
       });
     } catch (error) {

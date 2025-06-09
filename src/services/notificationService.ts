@@ -62,12 +62,13 @@ export const fetchNotifications = async (): Promise<Notification[]> => {
     }
   }
   
-  // Buscar solicitações pendentes de pacientes
+  // Buscar solicitações pendentes de pacientes (apenas as iniciadas pelo paciente)
   const { data: patientConnections, error: patientError } = await supabaseAny
     .from('psychologists_patients')
-    .select('id, patient_id, started_at')
+    .select('id, patient_id, started_at, patient_email')
     .eq('psychologist_id', psychologistId)
     .eq('status', 'pending')
+    .is('patient_email', null)  // Apenas conexões onde patient_email é nulo (iniciadas pelo paciente)
     .order('started_at', { ascending: false });
     
   console.log('Conexões de pacientes encontradas:', patientConnections);
@@ -176,12 +177,13 @@ export const fetchUnreadNotificationsCount = async (): Promise<number> => {
     .eq('psychologist_id', psychologistId)
     .eq('status', 'pending');
     
-  // Contar solicitações pendentes de pacientes
+  // Contar solicitações pendentes de pacientes (apenas as iniciadas pelo paciente)
   const { count: patientCount, error: patientError } = await supabaseAny
     .from('psychologists_patients')
     .select('id', { count: 'exact', head: true })
     .eq('psychologist_id', psychologistId)
-    .eq('status', 'pending');
+    .eq('status', 'pending')
+    .is('patient_email', null);  // Apenas conexões onde patient_email é nulo (iniciadas pelo paciente)
     
   if (companyError) {
     console.error('Erro ao buscar contagem de notificações de empresas:', companyError);

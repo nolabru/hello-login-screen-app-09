@@ -137,7 +137,7 @@ const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
       await markNotificationAsRead(notification.id);
       
       toast({
-        title: 'Solicitação rejeitada',
+        title: 'Solicitação Rejeitada',
         description: 'Você rejeitou a solicitação do paciente.',
       });
       

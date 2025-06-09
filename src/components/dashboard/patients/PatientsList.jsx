@@ -4,12 +4,15 @@ import { Button } from '@/components/ui/button';
 import { UserPlus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import PatientCard from './PatientCard';
+import PatientSearchDialog from './PatientSearchDialog';
 
 const PatientsList = () => {
   const [loading, setLoading] = useState(true);
   const [patients, setPatients] = useState([]);
+  const [pendingPatients, setPendingPatients] = useState([]);
   const [activeTab, setActiveTab] = useState('active');
   const [errorMessage, setErrorMessage] = useState(null);
+  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
 
   // Função para buscar os pacientes
   const fetchPatients = async () => {
@@ -26,32 +29,54 @@ const PatientsList = () => {
         return;
       }
       
-      // Buscar pacientes vinculados a este psicólogo
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('psychologist_id', psychologistId);
+      // Importar a função fetchPendingInvites para os casos que precisam dela
+      const { fetchPendingInvites } = await import('@/integrations/supabase/psychologistPatientsService');
       
-      if (error) {
-        console.error('Erro ao buscar pacientes:', error);
-        setErrorMessage("Não foi possível carregar a lista de pacientes.");
-        setLoading(false);
-        return;
+      if (activeTab === 'pending') {
+        // Buscar apenas pacientes com convites pendentes
+        const pendingData = await fetchPendingInvites(psychologistId);
+        console.log('Pacientes pendentes encontrados:', pendingData);
+        setPendingPatients(pendingData || []);
+        setPatients([]);
+      } else {
+        // Buscar pacientes vinculados a este psicólogo (ativos)
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('psychologist_id', psychologistId);
+        
+        if (error) {
+          console.error('Erro ao buscar pacientes:', error);
+          setErrorMessage("Não foi possível carregar a lista de pacientes.");
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Pacientes encontrados:', data);
+        console.log('Estrutura do primeiro paciente:', data && data.length > 0 ? JSON.stringify(data[0], null, 2) : 'Nenhum paciente encontrado');
+        
+        // Verificar campos específicos
+        if (data && data.length > 0) {
+          const firstPatient = data[0];
+          console.log('Campos do primeiro paciente:');
+          console.log('- profile_photo:', firstPatient.profile_photo);
+          console.log('- profile:', firstPatient.profile);
+          console.log('- profilePhotoPath:', firstPatient.profilePhotoPath);
+          console.log('- profile_photo_path:', firstPatient.profile_photo_path);
+        }
+        
+        setPatients(data || []);
+        
+        // Se for a aba "Todos", buscar também os pacientes pendentes
+        if (activeTab === 'all') {
+          const pendingData = await fetchPendingInvites(psychologistId);
+          console.log('Pacientes pendentes encontrados para aba Todos:', pendingData);
+          setPendingPatients(pendingData || []);
+        } else {
+          // Se for a aba "Ativos", limpar os pendentes
+          setPendingPatients([]);
+        }
       }
-      
-      console.log('Pacientes encontrados:', data);
-      console.log('Estrutura do primeiro paciente:', data && data.length > 0 ? JSON.stringify(data[0], null, 2) : 'Nenhum paciente encontrado');
-      
-      // Verificar campos específicos
-      if (data && data.length > 0) {
-        const firstPatient = data[0];
-        console.log('Campos do primeiro paciente:');
-        console.log('- profile_photo:', firstPatient.profile_photo);
-        console.log('- profile:', firstPatient.profile);
-        console.log('- profilePhotoPath:', firstPatient.profilePhotoPath);
-        console.log('- profile_photo_path:', firstPatient.profile_photo_path);
-      }
-      setPatients(data || []);
     } catch (error) {
       console.error('Erro ao buscar pacientes:', error);
       setErrorMessage("Ocorreu um erro ao carregar os pacientes.");
@@ -60,9 +85,12 @@ const PatientsList = () => {
     }
   };
   
+  // Efeito para buscar pacientes quando a aba mudar
   useEffect(() => {
     fetchPatients();
-    
+  }, [activeTab]);
+  
+  useEffect(() => {
     // Adicionar listener para o evento patientConnectionUpdated
     const handleConnectionUpdate = () => {
       console.log('Evento patientConnectionUpdated recebido, recarregando pacientes...');
@@ -96,7 +124,10 @@ const PatientsList = () => {
           >
             {loading ? 'Atualizando...' : 'Atualizar Lista'}
           </Button>
-          <Button className="bg-portal-purple hover:bg-portal-purple-dark text-white">
+          <Button 
+            className="bg-portal-purple hover:bg-portal-purple-dark text-white"
+            onClick={() => setIsSearchDialogOpen(true)}
+          >
             <UserPlus size={16} className="mr-2" />
             Adicionar Paciente
           </Button>
@@ -106,6 +137,7 @@ const PatientsList = () => {
       <Tabs defaultValue="active" value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4">
           <TabsTrigger value="active" className="text-neutral-700">Pacientes Ativos</TabsTrigger>
+          <TabsTrigger value="pending" className="text-neutral-700">Pendentes</TabsTrigger>
           <TabsTrigger value="all" className="text-neutral-700">Todos</TabsTrigger>
         </TabsList>
 
@@ -120,6 +152,51 @@ const PatientsList = () => {
               {errorMessage}
             </p>
           </div>
+        ) : activeTab === 'pending' ? (
+          pendingPatients.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border">
+              <h3 className="text-lg font-medium mb-2">Nenhum Convite Pendente</h3>
+              <p className="text-gray-500 text-center max-w-md">
+                Você não possui convites pendentes para pacientes.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {console.log('Renderizando cards para pacientes pendentes:', pendingPatients)}
+              {pendingPatients.map(patient => (
+                <PatientCard 
+                  key={patient.connection_id || patient.id} 
+                  patient={patient} 
+                  isPending={true}
+                />
+              ))}
+            </div>
+          )
+        ) : activeTab === 'all' ? (
+          patients.length === 0 && pendingPatients.length === 0 ? (
+            <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border">
+              <h3 className="text-lg font-medium mb-2">Nenhum Paciente Encontrado</h3>
+              <p className="text-gray-500 text-center max-w-md">
+                Você ainda não possui pacientes vinculados ou convites pendentes.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Renderizar pacientes ativos */}
+              {patients.map(patient => (
+                <PatientCard key={patient.id} patient={patient} />
+              ))}
+              
+              {/* Renderizar pacientes pendentes */}
+              {pendingPatients.map(patient => (
+                <PatientCard 
+                  key={`pending-${patient.connection_id || patient.id}`} 
+                  patient={patient} 
+                  isPending={true}
+                />
+              ))}
+            </div>
+          )
         ) : patients.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border">
             <h3 className="text-lg font-medium mb-2">Nenhum Paciente Encontrado</h3>
@@ -136,6 +213,13 @@ const PatientsList = () => {
           </div>
         )}
       </Tabs>
+      
+      {/* Diálogo para buscar e convidar pacientes */}
+      <PatientSearchDialog
+        open={isSearchDialogOpen}
+        onOpenChange={setIsSearchDialogOpen}
+        onPatientInvited={fetchPatients}
+      />
     </div>
   );
 };

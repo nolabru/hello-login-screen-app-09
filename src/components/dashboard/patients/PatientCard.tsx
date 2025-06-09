@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Phone, Calendar } from 'lucide-react';
+import { User, Phone, Calendar, Clock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,9 +10,10 @@ interface PatientProps {
     id: string | number;
     [key: string]: any;
   };
+  isPending?: boolean;
 }
 
-const PatientCard: React.FC<PatientProps> = ({ patient }) => {
+const PatientCard: React.FC<PatientProps> = ({ patient, isPending = false }) => {
   const navigate = useNavigate();
   // Estado para armazenar a URL da imagem
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -92,8 +93,8 @@ const PatientCard: React.FC<PatientProps> = ({ patient }) => {
       className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer" 
       onClick={handleCardClick}
     >
-      <CardContent className="p-0">
-        <div className="bg-portal-purple/10 p-4 flex items-center gap-4">
+      <CardContent className="p-0 relative">
+        <div className="bg-portal-purple/10 p-4 flex items-center gap-4 relative">
           <Avatar className="h-16 w-16 border-2 border-white">
             {imageUrl ? (
               <AvatarImage 
@@ -140,11 +141,28 @@ const PatientCard: React.FC<PatientProps> = ({ patient }) => {
             <Calendar className="h-4 w-4 text-portal-purple" />
             <span className="text-sm text-gray-700">
               {patient.created_at 
-                ? `Vinculado desde ${new Date(patient.created_at).toLocaleDateString('pt-BR')}`
-                : 'Data de vinculação não disponível'
+                ? isPending 
+                  ? `Convite Enviado em ${new Date(patient.created_at).toLocaleDateString('pt-BR')}`
+                  : `Vinculado desde ${new Date(patient.created_at).toLocaleDateString('pt-BR')}`
+                : 'Data não disponível'
               }
             </span>
           </div>
+          
+          {isPending && patient.patient_email && (
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4 text-portal-purple" />
+              <span className="text-sm text-gray-700">{patient.patient_email}</span>
+            </div>
+          )}
+          
+          {/* Indicador de pendente no canto inferior direito */}
+          {isPending && (
+            <div className="absolute bottom-2 right-2 w-7 h-7 bg-yellow-100 rounded-full flex items-center justify-center">
+              <Clock className="h-4 w-4 text-yellow-600" />
+            </div>
+          )}
+          
         </div>
       </CardContent>
     </Card>
