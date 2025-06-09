@@ -5,6 +5,7 @@ import { Notification, fetchNotifications, markNotificationAsRead } from '@/serv
 import { Check, X } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { acceptCompanyRequest, rejectCompanyRequest } from '@/integrations/supabase/companyPsychologistsService';
+import { acceptPatientRequest, rejectPatientRequest } from '@/integrations/supabase/psychologistPatientsService';
 
 interface NotificationsPopoverProps {
   open: boolean;
@@ -95,6 +96,62 @@ const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
     }
   };
   
+  const handleAcceptPatientRequest = async (notification: Notification) => {
+    try {
+      const { patient_id, connection_id } = notification.data;
+      const psychologistId = localStorage.getItem('psychologistId');
+      
+      if (!psychologistId) {
+        throw new Error('ID do psicólogo não encontrado');
+      }
+      
+      await acceptPatientRequest(patient_id, psychologistId, connection_id);
+      await markNotificationAsRead(notification.id);
+      
+      toast({
+        title: 'Solicitação aceita',
+        description: 'Você aceitou a solicitação do paciente.',
+      });
+      
+      loadNotifications();
+    } catch (error) {
+      console.error('Erro ao aceitar solicitação de paciente:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível aceitar a solicitação. Tente novamente.',
+        variant: 'destructive'
+      });
+    }
+  };
+  
+  const handleRejectPatientRequest = async (notification: Notification) => {
+    try {
+      const { patient_id, connection_id } = notification.data;
+      const psychologistId = localStorage.getItem('psychologistId');
+      
+      if (!psychologistId) {
+        throw new Error('ID do psicólogo não encontrado');
+      }
+      
+      await rejectPatientRequest(patient_id, psychologistId, connection_id);
+      await markNotificationAsRead(notification.id);
+      
+      toast({
+        title: 'Solicitação rejeitada',
+        description: 'Você rejeitou a solicitação do paciente.',
+      });
+      
+      loadNotifications();
+    } catch (error) {
+      console.error('Erro ao rejeitar solicitação de paciente:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível rejeitar a solicitação. Tente novamente.',
+        variant: 'destructive'
+      });
+    }
+  };
+  
   return (
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
@@ -140,6 +197,29 @@ const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
                         variant="outline" 
                         className="flex-1 bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
                         onClick={() => handleRejectRequest(notification)}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Rejeitar
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {notification.type === 'patient_request' && !notification.read && (
+                    <div className="flex space-x-2 mt-2">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1 bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
+                        onClick={() => handleAcceptPatientRequest(notification)}
+                      >
+                        <Check className="h-4 w-4 mr-1" />
+                        Aceitar
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1 bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                        onClick={() => handleRejectPatientRequest(notification)}
                       >
                         <X className="h-4 w-4 mr-1" />
                         Rejeitar
