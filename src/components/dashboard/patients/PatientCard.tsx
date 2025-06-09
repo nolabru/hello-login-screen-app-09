@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Phone, Calendar, Clock, MoreVertical, Unlink } from 'lucide-react';
+import { User, Phone, Calendar, Clock, MoreVertical, Unlink, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -21,7 +21,10 @@ import {
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { disassociatePatientFromPsychologist } from '@/integrations/supabase/psychologistPatientsService';
+import { 
+  disassociatePatientFromPsychologist,
+  cancelPendingInvite
+} from '@/integrations/supabase/psychologistPatientsService';
 
 interface PatientProps {
   patient: {
@@ -36,8 +39,9 @@ const PatientCard: React.FC<PatientProps> = ({ patient, isPending = false }) => 
   const { toast } = useToast();
   // Estado para armazenar a URL da imagem
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  // Estado para controlar o diálogo de confirmação
+  // Estados para controlar os diálogos de confirmação
   const [showDisassociateDialog, setShowDisassociateDialog] = useState(false);
+  const [showCancelInviteDialog, setShowCancelInviteDialog] = useState(false);
   
   // Log para depuração
   console.log('Dados do paciente:', patient);
@@ -104,6 +108,47 @@ const PatientCard: React.FC<PatientProps> = ({ patient, isPending = false }) => 
       .substring(0, 2);
   };
 
+  // Função para cancelar o convite pendente
+  const handleCancelInvite = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Impedir que o card seja clicado
+    
+    try {
+      const psychologistId = localStorage.getItem('psychologistId');
+      if (!psychologistId) {
+        throw new Error('ID do psicólogo não encontrado');
+      }
+      
+      // Usar connection_id para cancelar o convite
+      if (!patient.connection_id) {
+        throw new Error('ID da conexão não encontrado');
+      }
+      
+      console.log('Dados do convite para cancelamento:', {
+        connection_id: patient.connection_id,
+        psychologistId
+      });
+      
+      await cancelPendingInvite(patient.connection_id, psychologistId);
+      
+      toast({
+        title: 'Convite Cancelado',
+        description: 'O convite para o paciente foi cancelado com sucesso.',
+      });
+      
+      // Disparar evento para atualizar a lista de pacientes
+      window.dispatchEvent(new CustomEvent('patientConnectionUpdated'));
+    } catch (error) {
+      console.error('Erro ao cancelar convite:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível cancelar o convite. Tente novamente.',
+        variant: 'destructive'
+      });
+    }
+    
+    setShowCancelInviteDialog(false);
+  };
+  
   // Função para desvincular o paciente
   const handleDisassociatePatient = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Impedir que o card seja clicado
@@ -171,10 +216,15 @@ const PatientCard: React.FC<PatientProps> = ({ patient, isPending = false }) => 
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {!isPending && (
+                {isPending ? (
+                  <DropdownMenuItem onClick={() => setShowCancelInviteDialog(true)}>
+                    <X className="h-4 w-4 mr-2" />
+                    Cancelar Convite
+                  </DropdownMenuItem>
+                ) : (
                   <DropdownMenuItem onClick={() => setShowDisassociateDialog(true)}>
                     <Unlink className="h-4 w-4 mr-2" />
-                  Desvincular Paciente
+                    Desvincular Paciente
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -267,6 +317,27 @@ const PatientCard: React.FC<PatientProps> = ({ patient, isPending = false }) => 
               className="bg-red-500 hover:bg-red-600 text-white"
             >
               Desvincular
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Diálogo de confirmação para cancelar convite */}
+      <AlertDialog open={showCancelInviteDialog} onOpenChange={setShowCancelInviteDialog}>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancelar Convite</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja cancelar o convite enviado para {patient.patient_email}? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Não</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleCancelInvite} 
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Sim, Cancelar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

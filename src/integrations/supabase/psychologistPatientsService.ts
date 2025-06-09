@@ -316,6 +316,38 @@ export const fetchPendingInvites = async (psychologistId: string): Promise<any[]
   }
 };
 
+/**
+ * Cancela um convite pendente enviado a um paciente
+ * @param connectionId ID da conexão pendente
+ * @param psychologistId ID do psicólogo
+ */
+export const cancelPendingInvite = async (connectionId: string, psychologistId: string): Promise<void> => {
+  try {
+    console.log('Cancelando convite pendente:', connectionId);
+    
+    // Atualizar o status da conexão para cancelado
+    const { error } = await supabaseAny
+      .from('psychologists_patients')
+      .update({
+        status: 'cancelled',
+        ended_at: new Date().toISOString()
+      })
+      .eq('id', connectionId)
+      .eq('psychologist_id', psychologistId)
+      .eq('status', 'pending');
+      
+    if (error) {
+      console.error('Erro ao cancelar convite:', error);
+      throw error;
+    }
+    
+    console.log('Convite cancelado com sucesso!');
+  } catch (error) {
+    console.error('Erro ao cancelar convite pendente:', error);
+    throw error;
+  }
+};
+
 export const invitePatient = async (psychologistId: string, patientEmail: string): Promise<string> => {
   try {
     // Buscar o paciente pelo email

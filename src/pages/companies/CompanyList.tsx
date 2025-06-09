@@ -35,7 +35,7 @@ const CompanyList: React.FC<CompanyListProps> = ({
     try {
       const psychologistId = localStorage.getItem('psychologistId');
       if (!psychologistId) return;
-      await disconnectFromCompany(companyId, psychologistId);
+      await disconnectFromCompany(String(companyId), psychologistId);
       toast({
         title: "Desconexão bem-sucedida",
         description: "Você foi desconectado da empresa com sucesso."
@@ -54,7 +54,7 @@ const CompanyList: React.FC<CompanyListProps> = ({
     try {
       const psychologistId = localStorage.getItem('psychologistId');
       if (!psychologistId) return;
-      await acceptCompanyRequest(companyId, psychologistId);
+      await acceptCompanyRequest(String(companyId), psychologistId);
       toast({
         title: "Empresa conectada",
         description: "Conexão com a empresa aceita com sucesso."
@@ -124,10 +124,7 @@ const CompanyList: React.FC<CompanyListProps> = ({
                         Recusar
                       </Button>
                     </> : company.connection_status === 'active' ? <>
-                      <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => handleDisconnect(company.id)}>
-                        <UserMinus size={16} className="mr-1" />
-                        Desconectar
-                      </Button>
+                      {/* Botão de desconectar removido */}
                     </> : <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => handleDisconnect(company.id)}>
                       <UserX size={16} className="mr-1" />
                       Cancelar
@@ -146,7 +143,6 @@ const CompanyList: React.FC<CompanyListProps> = ({
               <TableHead className="font-medium">Empresa</TableHead>
               <TableHead className="font-medium">Email</TableHead>
               <TableHead className="font-medium">Status</TableHead>
-              <TableHead className="text-right font-medium">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -165,10 +161,7 @@ const CompanyList: React.FC<CompanyListProps> = ({
                         Recusar
                       </Button>
                     </> : company.connection_status === 'active' ? <>
-                      <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => handleDisconnect(company.id)}>
-                        <UserMinus size={16} className="mr-1" />
-                        Desconectar
-                      </Button>
+                      {/* Botão de desconectar removido */}
                     </> : <Button variant="outline" size="sm" className="text-red-500 border-red-300 hover:bg-red-50" onClick={() => handleDisconnect(company.id)}>
                       <UserX size={16} className="mr-1" />
                       Cancelar

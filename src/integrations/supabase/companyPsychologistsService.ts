@@ -325,9 +325,9 @@ export const requestCompanyConnection = async (companyId: string, psychologistId
  * Aceita uma solicitação de conexão de uma empresa
  * @param companyId ID da empresa
  * @param psychologistId ID do psicólogo
- * @param connectionId ID da conexão
+ * @param connectionId ID da conexão (opcional)
  */
-export const acceptCompanyRequest = async (companyId: string, psychologistId: string, connectionId: string): Promise<void> => {
+export const acceptCompanyRequest = async (companyId: string, psychologistId: string, connectionId?: string): Promise<void> => {
   try {
     // Atualizar o status da conexão para ativo
     const { error } = await supabaseAny
