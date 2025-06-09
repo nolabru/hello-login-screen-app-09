@@ -62,6 +62,19 @@ const PatientsList = () => {
   
   useEffect(() => {
     fetchPatients();
+    
+    // Adicionar listener para o evento patientConnectionUpdated
+    const handleConnectionUpdate = () => {
+      console.log('Evento patientConnectionUpdated recebido, recarregando pacientes...');
+      fetchPatients();
+    };
+    
+    window.addEventListener('patientConnectionUpdated', handleConnectionUpdate);
+    
+    // Limpar o listener quando o componente for desmontado
+    return () => {
+      window.removeEventListener('patientConnectionUpdated', handleConnectionUpdate);
+    };
   }, []);
 
   return (
@@ -75,10 +88,19 @@ const PatientsList = () => {
             Gerencie seus pacientes e visualize seus históricos de interação com a AIA
           </p>
         </div>
-        <Button className="bg-portal-purple hover:bg-portal-purple-dark text-white">
-          <UserPlus size={16} className="mr-2" />
-          Adicionar Paciente
-        </Button>
+        <div className="flex space-x-2">
+          <Button 
+            onClick={fetchPatients} 
+            variant="outline" 
+            className="text-portal-purple border-portal-purple hover:bg-portal-purple/10"
+          >
+            {loading ? 'Atualizando...' : 'Atualizar Lista'}
+          </Button>
+          <Button className="bg-portal-purple hover:bg-portal-purple-dark text-white">
+            <UserPlus size={16} className="mr-2" />
+            Adicionar Paciente
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="active" value={activeTab} onValueChange={setActiveTab} className="w-full">

@@ -35,6 +35,27 @@ export const acceptPatientRequest = async (patientId: string, psychologistId: st
       
     if (error) throw error;
     
+    // Atualizar o campo psychologist_id na tabela user_profiles
+    console.log(`Atualizando user_profiles: definindo psychologist_id=${psychologistId} para user_id=${patientId}`);
+    const { error: updateError } = await supabaseAny
+      .from('user_profiles')
+      .update({
+        psychologist_id: psychologistId
+      })
+      .eq('user_id', patientId);
+      
+    if (updateError) {
+      console.error('Erro ao atualizar psychologist_id no perfil do usuário:', updateError);
+      throw updateError;
+    }
+    
+    console.log('Conexão aceita com sucesso, disparando evento patientConnectionUpdated');
+    
+    // Disparar evento para atualizar a lista de pacientes
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('patientConnectionUpdated'));
+    }
+    
   } catch (error) {
     console.error('Erro ao aceitar solicitação de paciente:', error);
     throw error;
