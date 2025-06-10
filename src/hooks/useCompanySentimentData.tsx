@@ -111,12 +111,16 @@ function aggregateByPeriod(sessions: any[], period: 'month' | 'week'): CompanySe
     let periodKey;
     
     if (period === 'month') {
-      // Formato: "Jan 2025"
-      periodKey = date.toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' });
+      // Formato: "Janeiro 2025"
+      const month = date.toLocaleDateString('pt-BR', { month: 'long' });
+      const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+      periodKey = `${capitalizedMonth} ${date.getFullYear()}`;
     } else {
-      // Formato: "Sem 1 Jan"
+      // Formato: "1ª Semana de Janeiro"
       const weekNumber = Math.ceil(date.getDate() / 7);
-      periodKey = `Sem ${weekNumber} ${date.toLocaleDateString('pt-BR', { month: 'short' })}`;
+      const month = date.toLocaleDateString('pt-BR', { month: 'long' });
+      const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+      periodKey = `${weekNumber}ª Semana de ${capitalizedMonth}`;
     }
     
     // Inicializar o período se não existir
@@ -153,25 +157,32 @@ function aggregateByPeriod(sessions: any[], period: 'month' | 'week'): CompanySe
     .sort((a, b) => {
       // Ordenar por período (mais antigo primeiro)
       if (period === 'month') {
-        // Extrair mês e ano
-        const [monthA, yearA] = a.name.split(' ');
-        const [monthB, yearB] = b.name.split(' ');
+        // Formato: "Janeiro 2025"
+        const monthsA = a.name.split(' ');
+        const monthsB = b.name.split(' ');
+        const monthA = monthsA[0];
+        const yearA = parseInt(monthsA[1]);
+        const monthB = monthsB[0];
+        const yearB = parseInt(monthsB[1]);
         
         // Comparar ano primeiro
-        if (yearA !== yearB) return parseInt(yearA) - parseInt(yearB);
+        if (yearA !== yearB) return yearA - yearB;
         
         // Depois comparar mês
-        const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
         return months.indexOf(monthA.toLowerCase()) - months.indexOf(monthB.toLowerCase());
       } else {
-        // Para semanas, extrair número da semana e mês
-        const weekA = parseInt(a.name.split(' ')[1]);
-        const weekB = parseInt(b.name.split(' ')[1]);
-        const monthA = a.name.split(' ')[2];
-        const monthB = b.name.split(' ')[2];
+        // Formato: "1ª Semana de Janeiro"
+        // Extrair número da semana
+        const weekA = parseInt(a.name.split('ª')[0]);
+        const weekB = parseInt(b.name.split('ª')[0]);
+        
+        // Extrair mês
+        const monthA = a.name.split('de ')[1];
+        const monthB = b.name.split('de ')[1];
         
         // Comparar mês primeiro
-        const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
         const monthCompare = months.indexOf(monthA.toLowerCase()) - months.indexOf(monthB.toLowerCase());
         
         if (monthCompare !== 0) return monthCompare;

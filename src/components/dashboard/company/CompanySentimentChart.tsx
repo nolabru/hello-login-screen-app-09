@@ -48,7 +48,7 @@ const getTextColor = (sentiment: string): string => {
 // Dados de fallback para quando não há dados reais
 const fallbackData = [
   {
-    name: "Sem 1 Jan",
+    name: "1ª Semana de Janeiro",
     feliz: 1,
     triste: 0,
     irritado: 0,
@@ -56,7 +56,7 @@ const fallbackData = [
     neutro: 0,
   },
   {
-    name: "Sem 2 Jan",
+    name: "2ª Semana de Janeiro",
     feliz: 3,
     triste: 1,
     irritado: 0,
@@ -64,7 +64,7 @@ const fallbackData = [
     neutro: 0,
   },
   {
-    name: "Sem 3 Jan",
+    name: "3ª Semana de Janeiro",
     feliz: 4,
     triste: 3,
     irritado: 1,
@@ -72,7 +72,7 @@ const fallbackData = [
     neutro: 0,
   },
   {
-    name: "Sem 4 Jan",
+    name: "4ª Semana de Janeiro",
     feliz: 5,
     triste: 4,
     irritado: 3,
