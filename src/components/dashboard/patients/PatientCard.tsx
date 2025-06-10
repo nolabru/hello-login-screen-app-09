@@ -115,7 +115,7 @@ const PatientCard: React.FC<PatientProps> = ({ patient, isPending = false }) => 
     try {
       const psychologistId = localStorage.getItem('psychologistId');
       if (!psychologistId) {
-        throw new Error('ID do psicólogo não encontrado');
+        throw new Error('ID do Psicólogo não encontrado');
       }
       
       // Usar connection_id para cancelar o convite
@@ -162,7 +162,7 @@ const PatientCard: React.FC<PatientProps> = ({ patient, isPending = false }) => 
       // Usar user_id se disponível, caso contrário usar id
       const patientId = patient.user_id ? String(patient.user_id) : String(patient.id);
       
-      console.log('Dados do paciente para desvinculação:', {
+      console.log('Dados do Paciente para desvinculação:', {
         id: patient.id,
         user_id: patient.user_id,
         idUsado: patientId,
@@ -179,7 +179,7 @@ const PatientCard: React.FC<PatientProps> = ({ patient, isPending = false }) => 
       // Disparar evento para atualizar a lista de pacientes
       window.dispatchEvent(new CustomEvent('patientConnectionUpdated'));
     } catch (error) {
-      console.error('Erro ao desvincular paciente:', error);
+      console.error('Erro ao Desvincular Paciente:', error);
       toast({
         title: 'Erro',
         description: 'Não foi possível desvincular o paciente. Tente novamente.',
