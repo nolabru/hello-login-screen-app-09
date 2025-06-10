@@ -208,7 +208,7 @@ const SentimentChart: React.FC = () => {
                     color: getTextColor(predominantSentiment.name.toLowerCase())
                   }}
                 >
-                  Sentimento Predominante: {predominantSentiment.name}
+                  Sentimento Predominante dos seus Pacientes: {predominantSentiment.name}
                 </Badge>
               </div>
             )}

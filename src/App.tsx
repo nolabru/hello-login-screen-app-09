@@ -30,6 +30,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSettings from "./pages/admin/AdminSettings";
 import PsychologistInviteHandler from "./pages/PsychologistInviteHandler";
 import RedirectInvite from "./pages/RedirectInvite";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 // Create a new QueryClient instance outside the component
 const queryClient = new QueryClient();
@@ -73,6 +74,9 @@ const App = () => {
               <Route path="/admin/licenses" element={<AdminLicenses />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
+              
+              {/* Página de Política de Privacidade */}
+              <Route path="/politica-privacidade" element={<PrivacyPolicy />} />
               
               {/* Catch-all route for 404 */}
               <Route path="*" element={<NotFound />} />
