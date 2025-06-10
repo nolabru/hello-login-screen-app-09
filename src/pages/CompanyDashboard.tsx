@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import AddEmployeeDialog from '@/components/dashboard/company/AddEmployeeDialog';
+import CompanySentimentChart from '@/components/dashboard/company/CompanySentimentChart';
 import { checkLicenseAvailability, updateLicenseCountForExistingEmployees } from '@/services/licenseService';
 import { fetchCompanyPsychologists } from '@/integrations/supabase/companyPsychologistsService';
 import { useToast } from '@/components/ui/use-toast';
@@ -96,6 +97,11 @@ const CompanyDashboard: React.FC = () => {
             <p className="text-purple-700">
               Aqui você acompanha, de forma <strong>anonimizada</strong>, o bem-estar do seu grupo de funcionários no app, sempre respeitando a privacidade individual.
             </p>
+          </div>
+          
+          {/* Gráfico de Sentimentos */}
+          <div className="mb-8">
+            <CompanySentimentChart />
           </div>
           
           <div className="space-y-8">
