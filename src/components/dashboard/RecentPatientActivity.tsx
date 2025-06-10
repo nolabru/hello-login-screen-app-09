@@ -40,6 +40,7 @@ interface InteractionRanking {
   name: string;
   profile_photo?: string;
   interaction_count: number;
+  predominant_mood?: string; // Sentimento predominante
 }
 
 interface StreakRanking {
@@ -47,6 +48,7 @@ interface StreakRanking {
   name: string;
   profile_photo?: string;
   current_streak: number;
+  predominant_mood?: string; // Sentimento predominante
 }
 
 const RecentPatientActivity: React.FC = () => {
@@ -59,10 +61,10 @@ const RecentPatientActivity: React.FC = () => {
   // Buscar dados de ranking de interações
   const fetchInteractionsRanking = async () => {
     try {
-      // Passo 1: Buscar todas as sessões
+      // Passo 1: Buscar todas as sessões com sentimento
       const { data: sessions, error: sessionsError } = await supabase
         .from('call_sessions')
-        .select('user_id')
+        .select('user_id, mood')
         .limit(100);
         
       if (sessionsError) throw sessionsError;
@@ -73,13 +75,44 @@ const RecentPatientActivity: React.FC = () => {
         return;
       }
       
-      // Agrupar por usuário e contar interações
+      // Agrupar por usuário, contar interações e rastrear sentimentos
       const userInteractions = new Map<string, number>();
+      const userMoods = new Map<string, Map<string, number>>();
       
       sessions.forEach(session => {
         const userId = session.user_id;
+        const mood = session.mood;
+        
         if (userId) {
+          // Contar interações
           userInteractions.set(userId, (userInteractions.get(userId) || 0) + 1);
+          
+          // Rastrear sentimentos
+          if (mood) {
+            if (!userMoods.has(userId)) {
+              userMoods.set(userId, new Map<string, number>());
+            }
+            const moodMap = userMoods.get(userId)!;
+            moodMap.set(mood, (moodMap.get(mood) || 0) + 1);
+          }
+        }
+      });
+      
+      // Calcular o sentimento predominante para cada usuário
+      const userPredominantMood = new Map<string, string>();
+      userMoods.forEach((moodMap, userId) => {
+        let maxCount = 0;
+        let predominantMood = '';
+        
+        moodMap.forEach((count, mood) => {
+          if (count > maxCount) {
+            maxCount = count;
+            predominantMood = mood;
+          }
+        });
+        
+        if (predominantMood) {
+          userPredominantMood.set(userId, predominantMood);
         }
       });
       
@@ -122,7 +155,8 @@ const RecentPatientActivity: React.FC = () => {
               user_id: userId,
               name: userName,
               profile_photo: profile?.profile_photo,
-              interaction_count: count
+              interaction_count: count,
+              predominant_mood: userPredominantMood.get(userId)
             };
           })
           .sort((a, b) => b.interaction_count - a.interaction_count)
@@ -138,7 +172,8 @@ const RecentPatientActivity: React.FC = () => {
             user_id: userId,
             name: `Usuário ${userId.substring(0, 4)}`,
             profile_photo: undefined,
-            interaction_count: count
+            interaction_count: count,
+            predominant_mood: userPredominantMood.get(userId)
           }))
           .sort((a, b) => b.interaction_count - a.interaction_count)
           .slice(0, 10);
@@ -163,6 +198,51 @@ const RecentPatientActivity: React.FC = () => {
         .select('user_id, current_streak')
         .order('current_streak', { ascending: false })
         .limit(10);
+        
+      // Buscar dados de sentimento das sessões para os usuários com streak
+      const { data: sessions, error: sessionsError } = await supabase
+        .from('call_sessions')
+        .select('user_id, mood')
+        .in('user_id', streakData?.map((streak: any) => streak.user_id) || [])
+        .limit(100);
+        
+      // Calcular o sentimento predominante para cada usuário
+      const userPredominantMood = new Map<string, string>();
+      
+      if (sessions && !sessionsError) {
+        // Agrupar sentimentos por usuário
+        const userMoods = new Map<string, Map<string, number>>();
+        
+        sessions.forEach(session => {
+          const userId = session.user_id;
+          const mood = session.mood;
+          
+          if (userId && mood) {
+            if (!userMoods.has(userId)) {
+              userMoods.set(userId, new Map<string, number>());
+            }
+            const moodMap = userMoods.get(userId)!;
+            moodMap.set(mood, (moodMap.get(mood) || 0) + 1);
+          }
+        });
+        
+        // Determinar o sentimento predominante para cada usuário
+        userMoods.forEach((moodMap, userId) => {
+          let maxCount = 0;
+          let predominantMood = '';
+          
+          moodMap.forEach((count, mood) => {
+            if (count > maxCount) {
+              maxCount = count;
+              predominantMood = mood;
+            }
+          });
+          
+          if (predominantMood) {
+            userPredominantMood.set(userId, predominantMood);
+          }
+        });
+      }
       
       console.log('Resultado da consulta:', { streakData, streakError });
         
@@ -229,7 +309,8 @@ const RecentPatientActivity: React.FC = () => {
           user_id: streak.user_id,
           name: userName,
           profile_photo: profile?.profile_photo,
-          current_streak: streak.current_streak
+          current_streak: streak.current_streak,
+          predominant_mood: userPredominantMood.get(streak.user_id)
         };
       });
       
@@ -314,8 +395,10 @@ const RecentPatientActivity: React.FC = () => {
                       position={index + 1}
                       name={item.name}
                       value={item.interaction_count}
-                      valueLabel="interações"
+                      valueLabel="Interações"
                       profilePhoto={item.profile_photo}
+                      type="interactions"
+                      predominantMood={item.predominant_mood}
                     />
                   ))}
                 </div>
@@ -335,8 +418,10 @@ const RecentPatientActivity: React.FC = () => {
                       position={index + 1}
                       name={item.name}
                       value={item.current_streak}
-                      valueLabel="dias"
+                      valueLabel="Dias"
                       profilePhoto={item.profile_photo}
+                      type="streaks"
+                      predominantMood={item.predominant_mood}
                     />
                   ))}
                 </div>
@@ -358,7 +443,9 @@ const RankingItem: React.FC<{
   value: number;
   valueLabel: string;
   profilePhoto?: string;
-}> = ({ position, name, value, valueLabel, profilePhoto }) => {
+  type?: 'interactions' | 'streaks';
+  predominantMood?: string;
+}> = ({ position, name, value, valueLabel, profilePhoto, type = 'interactions', predominantMood }) => {
   
   // Estado para controlar se a imagem carregou com sucesso
   const [imageError, setImageError] = useState(false);
@@ -366,14 +453,39 @@ const RankingItem: React.FC<{
   // Obter a URL da foto de perfil
   const photoUrl = !imageError ? getProfilePhotoUrl(profilePhoto) : null;
   
-  // Determinar a cor da posição
-  const getPositionColor = (pos: number) => {
+  // Determinar a cor do fundo (mais clara para os 3 primeiros)
+  const getBackgroundColor = (pos: number) => {
     switch (pos) {
-      case 1: return 'bg-yellow-500'; // Ouro
-      case 2: return 'bg-gray-400';   // Prata
-      case 3: return 'bg-amber-700';  // Bronze
-      default: return 'bg-gray-200';  // Outras posições
+      case 1: return 'bg-yellow-200'; // Ouro claro
+      case 2: return 'bg-gray-200';   // Prata claro
+      case 3: return 'bg-amber-100';  // Bronze claro (mais marrom)
+      default: return 'bg-gray-100';  // Outras posições
     }
+  };
+  
+  // Determinar a cor do ícone (mais escura para os 3 primeiros)
+  const getIconColor = (pos: number) => {
+    switch (pos) {
+      case 1: return 'text-yellow-600'; // Ouro escuro
+      case 2: return 'text-gray-600';   // Prata escuro
+      case 3: return 'text-amber-900';  // Bronze escuro (mais marrom)
+      default: return 'text-gray-500';  // Outras posições
+    }
+  };
+  
+  // Renderizar o conteúdo do círculo (ícone ou número)
+  const renderPositionIndicator = () => {
+    // Para os 3 primeiros, mostrar ícone
+    if (position <= 3) {
+      if (type === 'interactions') {
+        return <MessageSquare className={`h-4 w-4 ${getIconColor(position)}`} />;
+      } else {
+        return <Flame className={`h-4 w-4 ${getIconColor(position)}`} />;
+      }
+    }
+    
+    // Para os outros, mostrar número com fonte menor
+    return <span className="text-sm">{position}</span>;
   };
 
   // Obter as iniciais do nome para o fallback
@@ -390,8 +502,8 @@ const RankingItem: React.FC<{
   return (
     <div className="flex items-center gap-3 p-3 border rounded-md hover:bg-gray-50 transition-colors">
       {/* Posição no ranking */}
-      <div className={`flex items-center justify-center h-8 w-8 rounded-full text-white font-bold ${getPositionColor(position)}`}>
-        {position}
+      <div className={`flex items-center justify-center h-8 w-8 rounded-full ${getBackgroundColor(position)} ${getIconColor(position)}`}>
+        {renderPositionIndicator()}
       </div>
       
       {/* Avatar e nome */}
@@ -411,6 +523,9 @@ const RankingItem: React.FC<{
         </Avatar>
         <div>
           <p className="font-medium text-neutral-700">{name}</p>
+          {predominantMood && (
+            <p className="text-xs text-gray-500">Sentimento: {predominantMood.charAt(0).toUpperCase() + predominantMood.slice(1)}</p>
+          )}
         </div>
       </div>
       
