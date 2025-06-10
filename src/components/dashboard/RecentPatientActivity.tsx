@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MessageSquare, Flame, AlertCircle } from 'lucide-react';
+import { MessageSquare, Flame, AlertCircle, User, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { fetchPsychologistPatients } from '@/integrations/supabase/psychologistPatientsService';
 
@@ -648,6 +649,7 @@ const RecentPatientActivity: React.FC = () => {
                       type="interactions"
                       predominantMood={item.predominant_mood}
                       isPatient={patientIds.includes(item.user_id)}
+                      user_id={item.user_id}
                     />
                   ))}
                 </div>
@@ -672,6 +674,7 @@ const RecentPatientActivity: React.FC = () => {
                       type="streaks"
                       predominantMood={item.predominant_mood}
                       isPatient={patientIds.includes(item.user_id)}
+                      user_id={item.user_id}
                     />
                   ))}
                 </div>
@@ -696,13 +699,41 @@ const RankingItem: React.FC<{
   type?: 'interactions' | 'streaks';
   predominantMood?: string;
   isPatient?: boolean;
-}> = ({ position, name, value, valueLabel, profilePhoto, type = 'interactions', predominantMood, isPatient = true }) => {
+  user_id: string;
+}> = ({ position, name, value, valueLabel, profilePhoto, type = 'interactions', predominantMood, isPatient = true, user_id }) => {
+  const navigate = useNavigate();
   
   // Estado para controlar se a imagem carregou com sucesso
   const [imageError, setImageError] = useState(false);
   
   // Obter a URL da foto de perfil
   const photoUrl = !imageError ? getProfilePhotoUrl(profilePhoto) : null;
+  
+  // Função para navegar para a página de detalhes do paciente
+  const handleClick = () => {
+    console.log('Botão clicado para o usuário:', user_id);
+    console.log('isPatient:', isPatient);
+    
+    // Usar window.location.href para forçar a navegação
+    // Removida temporariamente a condição isPatient para diagnóstico
+    console.log('Navegando para a página de detalhes do paciente:', user_id);
+    
+    // Tentar ambos os métodos de navegação
+    try {
+      navigate(`/patients/${user_id}`);
+      console.log('Navegação via React Router tentada');
+      
+      // Adicionar um fallback com window.location após um pequeno delay
+      setTimeout(() => {
+        console.log('Fallback: Navegando via window.location');
+        window.location.href = `/patients/${user_id}`;
+      }, 100);
+    } catch (error) {
+      console.error('Erro ao navegar:', error);
+      // Fallback direto se o navigate falhar
+      window.location.href = `/patients/${user_id}`;
+    }
+  };
   
   // Determinar a cor do fundo (mais clara para os 3 primeiros)
   const getBackgroundColor = (pos: number) => {
@@ -781,9 +812,20 @@ const RankingItem: React.FC<{
       </div>
       
       {/* Valor (interações ou streak) */}
-      <div className="text-right">
-        <p className="font-bold text-lg text-portal-purple">{value}</p>
-        <p className="text-xs text-gray-500">{valueLabel}</p>
+      <div className="flex items-center gap-2">
+        <div className="text-right">
+          <p className="font-bold text-lg text-portal-purple">{value}</p>
+          <p className="text-xs text-gray-500">{valueLabel}</p>
+        </div>
+        
+        {/* Botão de detalhes - Removida condição isPatient temporariamente */}
+        <button 
+          onClick={handleClick}
+          className="ml-3 p-1 rounded-full border border-portal-purple hover:bg-gray-100 transition-colors"
+          title="Ver detalhes do paciente"
+        >
+          <User size={15} className="text-portal-purple" />
+        </button>
       </div>
     </div>
   );

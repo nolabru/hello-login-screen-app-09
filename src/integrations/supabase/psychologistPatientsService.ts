@@ -100,7 +100,7 @@ export const fetchPsychologistPatients = async (psychologistId: string): Promise
     // Buscar pacientes diretamente da tabela user_profiles usando o campo psychologist_id
     const { data: patientsData, error: patientsError } = await supabaseAny
       .from('user_profiles')
-      .select('id, user_id, name, email, psychologist_id')
+      .select('id, user_id, full_name, email, psychologist_id')
       .eq('psychologist_id', psychologistId);
 
     if (patientsError) {
@@ -148,7 +148,7 @@ export const fetchPsychologistPatients = async (psychologistId: string): Promise
         started_at: association?.started_at || new Date().toISOString(),
         ended_at: null,
         status: 'active',
-        patient_name: patient.name,
+        patient_name: patient.full_name,
         patient_email: patient.email,
       };
     });

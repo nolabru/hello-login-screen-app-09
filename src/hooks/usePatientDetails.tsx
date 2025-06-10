@@ -15,7 +15,7 @@ export function usePatientDetails(patientId: string | number) {
         const { data, error } = await supabase
           .from('user_profiles')
           .select('*')
-          .match({ id: patientId })
+          .match({ user_id: patientId })
           .single();
           
         if (error) throw error;
