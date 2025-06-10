@@ -188,7 +188,7 @@ const CompanyDashboard: React.FC = () => {
                           }));
                           
                           toast({
-                            title: 'Contador de licenças atualizado',
+                            title: 'Contador de Licenças Atualizado',
                             description: 'O contador de licenças foi atualizado com base nos funcionários existentes.'
                           });
                         } catch (error) {
