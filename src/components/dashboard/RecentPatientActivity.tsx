@@ -1,39 +1,449 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
-const RecentPatientActivity: React.FC = () => {
-  const [loading, setLoading] = useState(true);
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MessageSquare, Flame, AlertCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
-  useEffect(() => {
-    // Simular carregamento para manter a experiência do usuário
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
+// Função utilitária para obter a URL da foto de perfil
+const getProfilePhotoUrl = (profilePhoto: any): string | null => {
+  if (!profilePhoto) return null;
+  
+  // Se já for uma URL completa
+  if (typeof profilePhoto === 'string' && profilePhoto.startsWith('http')) {
+    return profilePhoto;
+  }
+  
+  // Se for um objeto com path ou url
+  if (typeof profilePhoto === 'object' && profilePhoto !== null) {
+    const path = profilePhoto.path || profilePhoto.url;
+    if (path) return path;
+  }
+  
+  try {
+    // Tentar obter a URL pública via Supabase
+    const { data } = supabase.storage.from('profiles').getPublicUrl(profilePhoto);
+    if (data?.publicUrl) return data.publicUrl;
     
-    return () => clearTimeout(timer);
+    // Fallback: construir a URL manualmente
+    const supabaseUrl = "https://ygafwrebafehwaomibmm.supabase.co";
+    return `${supabaseUrl}/storage/v1/object/public/profiles/${profilePhoto}`;
+  } catch (error) {
+    console.error('Erro ao obter URL da foto de perfil:', error);
+    return null;
+  }
+};
+
+// Tipos para os rankings
+interface InteractionRanking {
+  user_id: string;
+  name: string;
+  profile_photo?: string;
+  interaction_count: number;
+}
+
+interface StreakRanking {
+  user_id: string;
+  name: string;
+  profile_photo?: string;
+  current_streak: number;
+}
+
+const RecentPatientActivity: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('interactions');
+  const [interactionsRanking, setInteractionsRanking] = useState<InteractionRanking[]>([]);
+  const [streaksRanking, setStreaksRanking] = useState<StreakRanking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Buscar dados de ranking de interações
+  const fetchInteractionsRanking = async () => {
+    try {
+      // Passo 1: Buscar todas as sessões
+      const { data: sessions, error: sessionsError } = await supabase
+        .from('call_sessions')
+        .select('user_id')
+        .limit(100);
+        
+      if (sessionsError) throw sessionsError;
+      
+      // Verificar se temos dados de sessões
+      if (!sessions || sessions.length === 0) {
+        setInteractionsRanking([]);
+        return;
+      }
+      
+      // Agrupar por usuário e contar interações
+      const userInteractions = new Map<string, number>();
+      
+      sessions.forEach(session => {
+        const userId = session.user_id;
+        if (userId) {
+          userInteractions.set(userId, (userInteractions.get(userId) || 0) + 1);
+        }
+      });
+      
+      // Se não houver interações, retornar array vazio
+      if (userInteractions.size === 0) {
+        setInteractionsRanking([]);
+        return;
+      }
+      
+      try {
+        // Passo 2: Buscar informações dos usuários
+        const userIdList = Array.from(userInteractions.keys());
+        
+        // Buscar informações dos usuários
+        const { data: userProfiles, error: profilesError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .in('user_id', userIdList);
+          
+        if (profilesError) throw profilesError;
+        
+        // Criar um mapa de perfis de usuário para fácil acesso
+        const userProfileMap = new Map();
+        if (userProfiles) {
+          userProfiles.forEach(profile => {
+            userProfileMap.set(profile.user_id, profile);
+          });
+        }
+        
+        // Criar o ranking final
+        const rankingArray: InteractionRanking[] = Array.from(userInteractions.entries())
+          .map(([userId, count]) => {
+            const profile = userProfileMap.get(userId) as any;
+            // Usar uma abordagem segura para obter o nome, tentando diferentes campos
+            const userName = profile 
+              ? (profile.full_name || profile.preferred_name || `Usuário ${userId.substring(0, 4)}`)
+              : `Usuário ${userId.substring(0, 4)}`;
+              
+            return {
+              user_id: userId,
+              name: userName,
+              profile_photo: profile?.profile_photo,
+              interaction_count: count
+            };
+          })
+          .sort((a, b) => b.interaction_count - a.interaction_count)
+          .slice(0, 10);
+        
+        setInteractionsRanking(rankingArray);
+      } catch (profileError) {
+        console.error('Erro ao buscar perfis de usuários:', profileError);
+        
+        // Fallback: Criar o ranking sem informações de perfil
+        const rankingArray: InteractionRanking[] = Array.from(userInteractions.entries())
+          .map(([userId, count]) => ({
+            user_id: userId,
+            name: `Usuário ${userId.substring(0, 4)}`,
+            profile_photo: undefined,
+            interaction_count: count
+          }))
+          .sort((a, b) => b.interaction_count - a.interaction_count)
+          .slice(0, 10);
+        
+        setInteractionsRanking(rankingArray);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar ranking de interações:', error);
+      setError('Não foi Possível Carregar o Ranking de Interações.');
+    }
+  };
+
+  // Buscar dados de ranking de streaks
+  const fetchStreaksRanking = async () => {
+    try {
+      console.log('=== DIAGNÓSTICO: Iniciando fetchStreaksRanking ===');
+      
+      // Buscar diretamente os dados de streak
+      console.log('Executando consulta à tabela user_streaks...');
+      const { data: streakData, error: streakError } = await (supabase as any)
+        .from('user_streaks')
+        .select('user_id, current_streak')
+        .order('current_streak', { ascending: false })
+        .limit(10);
+      
+      console.log('Resultado da consulta:', { streakData, streakError });
+        
+      if (streakError) {
+        console.error('Erro ao buscar dados de streaks:', streakError);
+        console.error('Detalhes do erro:', JSON.stringify(streakError, null, 2));
+        setError('Não foi possível carregar o ranking de dias consecutivos.');
+        return;
+      }
+      
+      // Verificar se temos dados
+      if (!streakData) {
+        console.log('Nenhum dado retornado (streakData é null ou undefined)');
+        setStreaksRanking([]);
+        return;
+      }
+      
+      if (streakData.length === 0) {
+        console.log('Array de dados vazio (streakData.length === 0)');
+        setStreaksRanking([]);
+        return;
+      }
+      
+      console.log('Dados encontrados:', streakData.length, 'registros');
+      console.log('Primeiro registro:', streakData[0]);
+      
+      // Buscar informações dos usuários para exibir nomes
+      const userIds = streakData.map((streak: any) => streak.user_id);
+      console.log('Buscando informações dos usuários com IDs:', userIds);
+      
+      const { data: userProfiles, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .in('user_id', userIds);
+      
+      console.log('Resultado da busca de perfis:', { userProfiles, profilesError });
+        
+      // Criar um mapa de perfis de usuário para fácil acesso
+      const userProfileMap = new Map();
+      if (userProfiles && !profilesError) {
+        userProfiles.forEach((profile: any) => {
+          userProfileMap.set(profile.user_id, profile);
+        });
+        console.log('Mapa de perfis criado com', userProfileMap.size, 'entradas');
+      } else {
+        console.log('Nenhum perfil de usuário encontrado ou erro ao buscar perfis');
+      }
+      
+      // Criar o ranking final
+      console.log('Criando ranking final...');
+      const rankingArray: StreakRanking[] = streakData.map((streak: any) => {
+        console.log('Processando streak:', streak);
+        const profile = userProfileMap.get(streak.user_id) as any;
+        console.log('Perfil encontrado para', streak.user_id, ':', profile);
+        
+        // Usar uma abordagem segura para obter o nome, tentando diferentes campos
+        const userName = profile 
+          ? (profile.full_name || profile.preferred_name || `Usuário ${streak.user_id.substring(0, 4)}`)
+          : `Usuário ${streak.user_id.substring(0, 4)}`;
+        
+        console.log('Nome de usuário determinado:', userName);
+          
+        return {
+          user_id: streak.user_id,
+          name: userName,
+          profile_photo: profile?.profile_photo,
+          current_streak: streak.current_streak
+        };
+      });
+      
+      console.log('Ranking final criado:', rankingArray);
+      console.log('Definindo estado streaksRanking...');
+      setStreaksRanking(rankingArray);
+      console.log('Estado streaksRanking atualizado');
+    } catch (error) {
+      console.error('Erro ao buscar ranking de streaks:', error);
+      setError('Não foi possível carregar o ranking de dias consecutivos.');
+    }
+  };
+
+  // Efeito para carregar os dados
+  useEffect(() => {
+    const loadData = async () => {
+      console.log('=== DIAGNÓSTICO: Iniciando carregamento de dados ===');
+      setLoading(true);
+      setError(null);
+      
+      try {
+        await Promise.all([
+          fetchInteractionsRanking(),
+          fetchStreaksRanking()
+        ]);
+        console.log('Carregamento de dados concluído com sucesso');
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+        setError('Ocorreu um erro ao carregar os rankings.');
+      } finally {
+        setLoading(false);
+        console.log('Estado de loading definido como false');
+      }
+    };
+    
+    loadData();
   }, []);
-  return <Card className="w-full">
+  
+  // Efeito para verificar quando a aba ativa muda
+  useEffect(() => {
+    console.log('=== DIAGNÓSTICO: Aba ativa alterada para:', activeTab, '===');
+  }, [activeTab]);
+  
+  // Definir a aba ativa como "streaks" para teste
+  useEffect(() => {
+    console.log('=== DIAGNÓSTICO: Definindo aba ativa como "streaks" para teste ===');
+    setActiveTab('streaks');
+  }, []);
+
+  return (
+    <Card className="w-full">
       <CardContent className="p-6">
         <h3 className="text-lg font-medium mb-4 text-neutral-700">Atividades Recentes</h3>
         
-        {loading ? <div className="space-y-4">
-            {[...Array(4)].map((_, i) => <div key={i} className="flex items-center gap-3 border-b border-gray-100 pb-3">
-                <div className="h-9 w-9 rounded-full bg-gray-200 animate-pulse"></div>
-                <div className="flex-1">
-                  <div className="h-4 w-24 bg-gray-200 animate-pulse rounded mb-1"></div>
-                  <div className="h-3 w-48 bg-gray-100 animate-pulse rounded"></div>
+        {error ? (
+          <div className="flex flex-col items-center justify-center text-center py-8">
+            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-medium mb-2">Erro ao Carregar Dados</h3>
+            <p className="text-gray-500 max-w-md">{error}</p>
+          </div>
+        ) : (
+          <Tabs defaultValue="interactions" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-4 w-full">
+              <TabsTrigger value="interactions" className="flex items-center gap-2 flex-1">
+                <MessageSquare className="h-4 w-4" />
+                <span>Interações com AIA</span>
+              </TabsTrigger>
+              <TabsTrigger value="streaks" className="flex items-center gap-2 flex-1">
+                <Flame className="h-4 w-4" />
+                <span>Dias Consecutivos</span>
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="interactions">
+              {loading ? (
+                <RankingSkeleton />
+              ) : interactionsRanking.length > 0 ? (
+                <div className="space-y-3">
+                  {interactionsRanking.map((item, index) => (
+                    <RankingItem
+                      key={item.user_id}
+                      position={index + 1}
+                      name={item.name}
+                      value={item.interaction_count}
+                      valueLabel="interações"
+                      profilePhoto={item.profile_photo}
+                    />
+                  ))}
                 </div>
-                <div className="h-3 w-16 bg-gray-100 animate-pulse rounded"></div>
-              </div>)}
-          </div> : <div className="flex flex-col items-center justify-center text-center py-8">
-            <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
-            <h3 className="text-lg font-medium mb-2">Funcionalidade em Breve</h3>
-            <p className="text-gray-500 max-w-md">
-              Estamos trabalhando em uma nova funcionalidade que vai melhorar ainda mais sua experiência!
-              Em breve, você poderá acessar as Atividades Recentes de forma prática, rápida e intuitiva.
-            </p>
-          </div>}
+              ) : (
+                <EmptyState message="Nenhuma interação registrada ainda." />
+              )}
+            </TabsContent>
+            
+            <TabsContent value="streaks">
+              {loading ? (
+                <RankingSkeleton />
+              ) : streaksRanking.length > 0 ? (
+                <div className="space-y-3">
+                  {streaksRanking.map((item, index) => (
+                    <RankingItem
+                      key={item.user_id}
+                      position={index + 1}
+                      name={item.name}
+                      value={item.current_streak}
+                      valueLabel="dias"
+                      profilePhoto={item.profile_photo}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState message="Nenhum streak registrado ainda." />
+              )}
+            </TabsContent>
+          </Tabs>
+        )}
       </CardContent>
-    </Card>;
+    </Card>
+  );
 };
+
+// Componente para exibir um item do ranking
+const RankingItem: React.FC<{
+  position: number;
+  name: string;
+  value: number;
+  valueLabel: string;
+  profilePhoto?: string;
+}> = ({ position, name, value, valueLabel, profilePhoto }) => {
+  
+  // Estado para controlar se a imagem carregou com sucesso
+  const [imageError, setImageError] = useState(false);
+  
+  // Obter a URL da foto de perfil
+  const photoUrl = !imageError ? getProfilePhotoUrl(profilePhoto) : null;
+  
+  // Determinar a cor da posição
+  const getPositionColor = (pos: number) => {
+    switch (pos) {
+      case 1: return 'bg-yellow-500'; // Ouro
+      case 2: return 'bg-gray-400';   // Prata
+      case 3: return 'bg-amber-700';  // Bronze
+      default: return 'bg-gray-200';  // Outras posições
+    }
+  };
+
+  // Obter as iniciais do nome para o fallback
+  const getInitials = () => {
+    if (!name) return "??";
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
+  return (
+    <div className="flex items-center gap-3 p-3 border rounded-md hover:bg-gray-50 transition-colors">
+      {/* Posição no ranking */}
+      <div className={`flex items-center justify-center h-8 w-8 rounded-full text-white font-bold ${getPositionColor(position)}`}>
+        {position}
+      </div>
+      
+      {/* Avatar e nome */}
+      <div className="flex items-center gap-3 flex-1">
+        <Avatar>
+          {photoUrl ? (
+            <AvatarImage 
+              src={photoUrl} 
+              alt={name}
+              onError={() => setImageError(true)}
+              style={{ objectFit: 'cover' }}
+            />
+          ) : null}
+          <AvatarFallback className="bg-portal-purple text-white">
+            {getInitials()}
+          </AvatarFallback>
+        </Avatar>
+        <div>
+          <p className="font-medium text-neutral-700">{name}</p>
+        </div>
+      </div>
+      
+      {/* Valor (interações ou streak) */}
+      <div className="text-right">
+        <p className="font-bold text-lg text-portal-purple">{value}</p>
+        <p className="text-xs text-gray-500">{valueLabel}</p>
+      </div>
+    </div>
+  );
+};
+
+// Componente para exibir o estado de carregamento
+const RankingSkeleton: React.FC = () => (
+  <div className="space-y-3">
+    {[...Array(5)].map((_, i) => (
+      <div key={i} className="flex items-center gap-3 p-3 border rounded-md">
+        <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse"></div>
+        <div className="h-10 w-10 rounded-full bg-gray-200 animate-pulse"></div>
+        <div className="flex-1">
+          <div className="h-4 w-24 bg-gray-200 animate-pulse rounded mb-1"></div>
+        </div>
+        <div className="h-8 w-16 bg-gray-200 animate-pulse rounded"></div>
+      </div>
+    ))}
+  </div>
+);
+
+// Componente para exibir o estado vazio
+const EmptyState: React.FC<{ message: string }> = ({ message }) => (
+  <div className="flex flex-col items-center justify-center text-center py-8">
+    <p className="text-gray-500">{message}</p>
+  </div>
+);
+
 export default RecentPatientActivity;
