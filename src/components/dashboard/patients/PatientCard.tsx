@@ -197,7 +197,15 @@ const PatientCard: React.FC<PatientProps> = ({ patient, isPending = false }) => 
       return;
     }
     
-    navigate(`/patients/${patient.id}`);
+    // Usar user_id em vez de id para a navegação
+    // Isso garante compatibilidade com o hook usePatientDetails que busca pelo campo user_id
+    if (patient.user_id) {
+      console.log('Navegando para detalhes do paciente usando user_id:', patient.user_id);
+      navigate(`/patients/${patient.user_id}`);
+    } else {
+      console.log('user_id não encontrado, usando id como fallback:', patient.id);
+      navigate(`/patients/${patient.id}`);
+    }
   };
 
   return (
