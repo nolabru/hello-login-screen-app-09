@@ -172,7 +172,7 @@ const AdminPsychologists: React.FC = () => {
                       <TableCell>{psychologist.phone || '-'}</TableCell>
                       <TableCell>
                         <Badge 
-                          className={psychologist.status ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-red-100 text-red-800 hover:bg-red-100'}
+                          className={psychologist.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
                         >
                           {psychologist.status ? 'Ativo' : 'Inativo'}
                         </Badge>

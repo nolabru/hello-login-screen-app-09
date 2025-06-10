@@ -185,7 +185,7 @@ const AdminEmployees: React.FC = () => {
                       <TableCell className="text-center">
                         <Badge 
                           variant="indigo"
-                          className="bg-blue-100 text-blue-800 hover:bg-blue-200 px-3 py-1.5 flex flex-col items-center justify-center w-40 mx-auto"
+                          className="bg-blue-100 text-blue-800 px-3 py-1.5 flex flex-col items-center justify-center w-40 mx-auto"
                         >
                           {employee.company_name}
                         </Badge>
@@ -203,8 +203,8 @@ const AdminEmployees: React.FC = () => {
                         <Badge 
                           variant="outline"
                           className={employee.license_status === 'active' ? 
-                            'bg-purple-100 text-purple-800 hover:bg-purple-200 border-purple-200' : 
-                            'bg-gray-100 text-gray-800 hover:bg-gray-200 border-gray-200'}
+                            'bg-purple-100 text-purple-800 border-purple-200' : 
+                            'bg-gray-100 text-gray-800 border-gray-200'}
                         >
                           {employee.license_status === 'active' ? 'Ativa' : 'Inativa'}
                         </Badge>
