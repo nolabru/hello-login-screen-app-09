@@ -95,41 +95,61 @@ export const rejectPatientRequest = async (patientId: string, psychologistId: st
  */
 export const fetchPsychologistPatients = async (psychologistId: string): Promise<PsychologistPatient[]> => {
   try {
-    // Buscar associações entre psicólogo e pacientes
-    const { data, error } = await supabaseAny
+    console.log('Buscando pacientes vinculados ao psicólogo diretamente da tabela user_profiles');
+    
+    // Buscar pacientes diretamente da tabela user_profiles usando o campo psychologist_id
+    const { data: patientsData, error: patientsError } = await supabaseAny
+      .from('user_profiles')
+      .select('id, user_id, name, email, psychologist_id')
+      .eq('psychologist_id', psychologistId);
+
+    if (patientsError) {
+      console.error('Erro ao buscar pacientes da tabela user_profiles:', patientsError);
+      throw patientsError;
+    }
+
+    if (!patientsData || patientsData.length === 0) {
+      console.log('Nenhum paciente encontrado com psychologist_id =', psychologistId);
+      return [];
+    }
+
+    console.log('Pacientes encontrados na tabela user_profiles:', patientsData.length);
+    
+    // Buscar associações na tabela psychologists_patients para obter informações adicionais
+    const patientIds = patientsData.map((patient: any) => patient.user_id);
+    const { data: associations, error: associationsError } = await supabaseAny
       .from('psychologists_patients')
       .select('*')
       .eq('psychologist_id', psychologistId)
       .eq('status', 'active')
-      .is('ended_at', null);
-
-    if (error) throw error;
-
-    if (!data || data.length === 0) {
-      return [];
+      .is('ended_at', null)
+      .in('patient_id', patientIds);
+      
+    if (associationsError) {
+      console.warn('Aviso: Erro ao buscar associações da tabela psychologists_patients:', associationsError);
+    }
+    
+    // Criar um mapa de associações para fácil acesso
+    const associationsMap = new Map();
+    if (associations && associations.length > 0) {
+      associations.forEach((assoc: any) => {
+        associationsMap.set(assoc.patient_id, assoc);
+      });
     }
 
-    // Buscar detalhes dos pacientes
-    const patientIds = data.map((item: any) => item.patient_id);
-    const { data: patientsData, error: patientsError } = await supabaseAny
-      .from('user_profiles')
-      .select('user_id, name, email')
-      .in('user_id', patientIds);
-
-    if (patientsError) throw patientsError;
-
     // Mapear os dados para o formato esperado
-    return data.map((item: any) => {
-      const patient = patientsData?.find((p: any) => p.user_id === item.patient_id);
+    return patientsData.map((patient: any) => {
+      const association = associationsMap.get(patient.user_id);
+      
       return {
-        id: item.id,
-        psychologist_id: item.psychologist_id,
-        patient_id: item.patient_id,
-        started_at: item.started_at,
-        ended_at: item.ended_at,
-        status: item.status,
-        patient_name: patient?.name,
-        patient_email: patient?.email,
+        id: association?.id || `user_profile_${patient.id}`,
+        psychologist_id: psychologistId,
+        patient_id: patient.user_id,
+        started_at: association?.started_at || new Date().toISOString(),
+        ended_at: null,
+        status: 'active',
+        patient_name: patient.name,
+        patient_email: patient.email,
       };
     });
   } catch (error) {

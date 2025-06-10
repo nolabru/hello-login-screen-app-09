@@ -4,6 +4,10 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { MessageSquare, Flame, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchPsychologistPatients } from '@/integrations/supabase/psychologistPatientsService';
+
+// Usando any para o tipo do Supabase para contornar erros de tipo
+const supabaseAny: any = supabase;
 
 // Função utilitária para obter a URL da foto de perfil
 const getProfilePhotoUrl = (profilePhoto: any): string | null => {
@@ -57,15 +61,132 @@ const RecentPatientActivity: React.FC = () => {
   const [streaksRanking, setStreaksRanking] = useState<StreakRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [patientIds, setPatientIds] = useState<string[]>([]);
+  
+  // Buscar a lista de pacientes vinculados ao psicólogo atual
+  const fetchPatients = async () => {
+    try {
+      console.log('=== DIAGNÓSTICO AVANÇADO: Iniciando fetchPatients ===');
+      
+      // Obter o ID do psicólogo do localStorage
+      const psychologistId = localStorage.getItem('psychologistId');
+      console.log('ID do psicólogo obtido do localStorage:', psychologistId);
+      
+      if (!psychologistId) {
+        console.error('ID do psicólogo não encontrado no localStorage');
+        return;
+      }
+      
+      // Buscar pacientes vinculados ao psicólogo (agora usando a tabela user_profiles)
+      console.log('Buscando pacientes vinculados ao psicólogo:', psychologistId);
+      console.log('NOTA: Agora usando a tabela user_profiles com o campo psychologist_id');
+      const patients = await fetchPsychologistPatients(psychologistId);
+      console.log('Pacientes retornados:', patients);
+      
+      // Definir uma variável para armazenar os IDs válidos
+      let validIds: string[] = [];
+      
+      // Verificar diretamente na tabela user_profiles para garantir que apenas usuários com psychologist_id definido sejam incluídos
+      const { data: userProfiles, error: profilesError } = await supabaseAny
+        .from('user_profiles')
+        .select('id, user_id, full_name, preferred_name, psychologist_id')
+        .eq('psychologist_id', psychologistId);
+        
+      if (profilesError) {
+        console.error('Erro ao verificar diretamente na tabela user_profiles:', profilesError);
+      } else {
+        console.log('Verificação direta na tabela user_profiles:');
+        if (userProfiles && userProfiles.length > 0) {
+          userProfiles.forEach((profile: any, index: number) => {
+            console.log(`Perfil ${index + 1}:`, {
+              id: profile.id,
+              user_id: profile.user_id,
+              name: profile.full_name || profile.preferred_name,
+              psychologist_id: profile.psychologist_id
+            });
+          });
+        }
+        
+        // Usar apenas os IDs dos usuários que têm psychologist_id definido
+        validIds = userProfiles ? userProfiles.map((profile: any) => profile.user_id) : [];
+        console.log('IDs dos pacientes com psychologist_id definido:', validIds);
+        
+        setPatientIds(validIds);
+        console.log('Estado patientIds atualizado:', validIds);
+      }
+      
+      // Exibir o total de perfis encontrados
+      console.log('Total de perfis com psychologist_id =', psychologistId, ':', userProfiles?.length || 0);
+      
+      // Verificar TODOS os perfis para diagnóstico
+      // Usar validIds em vez de patientIds para garantir que estamos usando os IDs mais recentes
+      const { data: allProfiles, error: allProfilesError } = await supabaseAny
+        .from('user_profiles')
+        .select('id, user_id, full_name, preferred_name, psychologist_id')
+        .in('user_id', validIds);
+        
+      if (allProfilesError) {
+        console.error('Erro ao verificar todos os perfis:', allProfilesError);
+      } else {
+        console.log('Verificação de todos os perfis com user_id em patientIds:');
+        if (allProfiles && allProfiles.length > 0) {
+          allProfiles.forEach((profile: any, index: number) => {
+            console.log(`Perfil ${index + 1}:`, {
+              id: profile.id,
+              user_id: profile.user_id,
+              name: profile.full_name || profile.preferred_name,
+              psychologist_id: profile.psychologist_id
+            });
+          });
+        }
+        console.log('Total de perfis encontrados:', allProfiles?.length || 0);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar pacientes:', error);
+    }
+  };
 
   // Buscar dados de ranking de interações
   const fetchInteractionsRanking = async () => {
     try {
-      // Passo 1: Buscar todas as sessões com sentimento
-      const { data: sessions, error: sessionsError } = await supabase
+      // Obter o ID do psicólogo do localStorage
+      const psychologistId = localStorage.getItem('psychologistId');
+      
+      if (!psychologistId) {
+        console.error('ID do psicólogo não encontrado no localStorage');
+        setInteractionsRanking([]);
+        return;
+      }
+      
+      console.log('=== ABORDAGEM SIMPLIFICADA: Buscando TODAS as interações e marcando pacientes vinculados ===');
+      
+      // Primeiro, buscar os IDs dos pacientes vinculados ao psicólogo para referência
+      const timestamp = new Date().getTime(); // Para evitar cache
+      const { data: linkedPatients, error: linkedPatientsError } = await supabaseAny
+        .from('user_profiles')
+        .select('user_id')
+        .eq('psychologist_id', psychologistId)
+        .order('created_at', { ascending: false });
+      
+      // Criar um conjunto de IDs de pacientes vinculados para verificação rápida
+      const linkedPatientIdsSet = new Set<string>();
+      if (!linkedPatientsError && linkedPatients && linkedPatients.length > 0) {
+        linkedPatients.forEach((p: any) => {
+          if (p.user_id) {
+            linkedPatientIdsSet.add(p.user_id);
+          }
+        });
+      }
+      console.log('IDs dos pacientes vinculados:', Array.from(linkedPatientIdsSet));
+      
+      // Buscar TODAS as sessões
+      const { data: sessions, error: sessionsError } = await supabaseAny
         .from('call_sessions')
         .select('user_id, mood')
+        .order('started_at', { ascending: false })
         .limit(100);
+      
+      console.log('Sessões encontradas para pacientes vinculados:', sessions?.length || 0);
         
       if (sessionsError) throw sessionsError;
       
@@ -142,8 +263,32 @@ const RecentPatientActivity: React.FC = () => {
           });
         }
         
-        // Criar o ranking final
+        // Criar o ranking final, filtrando apenas para pacientes vinculados ao psicólogo
+        console.log('=== DIAGNÓSTICO AVANÇADO: Filtrando interações ===');
+        console.log('Total de interações antes da filtragem:', userInteractions.size);
+        console.log('IDs de pacientes para filtrar:', patientIds);
+        
+        // Listar todos os usuários com interações antes da filtragem para diagnóstico
+        console.log('Lista completa de usuários com interações antes da filtragem:');
+        Array.from(userInteractions.entries()).forEach(([userId, count], index) => {
+          const profile = userProfileMap.get(userId);
+          console.log(`Usuário ${index + 1}:`, {
+            user_id: userId,
+            interaction_count: count,
+            profile: profile ? {
+              id: profile.id,
+              name: profile.full_name || profile.preferred_name,
+              psychologist_id: profile.psychologist_id
+            } : 'Perfil não encontrado'
+          });
+        });
+        
         const rankingArray: InteractionRanking[] = Array.from(userInteractions.entries())
+          // Filtrar para mostrar apenas os pacientes vinculados
+          .filter(([userId, _]) => {
+            // Verificar se o usuário está no conjunto de pacientes vinculados
+            return linkedPatientIdsSet.has(userId);
+          })
           .map(([userId, count]) => {
             const profile = userProfileMap.get(userId) as any;
             // Usar uma abordagem segura para obter o nome, tentando diferentes campos
@@ -189,11 +334,41 @@ const RecentPatientActivity: React.FC = () => {
   // Buscar dados de ranking de streaks
   const fetchStreaksRanking = async () => {
     try {
-      console.log('=== DIAGNÓSTICO: Iniciando fetchStreaksRanking ===');
+      console.log('=== DIAGNÓSTICO AVANÇADO: Iniciando fetchStreaksRanking ===');
       
-      // Buscar diretamente os dados de streak
-      console.log('Executando consulta à tabela user_streaks...');
-      const { data: streakData, error: streakError } = await (supabase as any)
+      // Obter o ID do psicólogo do localStorage
+      const psychologistId = localStorage.getItem('psychologistId');
+      
+      if (!psychologistId) {
+        console.error('ID do psicólogo não encontrado no localStorage');
+        setStreaksRanking([]);
+        return;
+      }
+      
+      console.log('=== ABORDAGEM SIMPLIFICADA: Buscando TODOS os streaks e marcando pacientes vinculados ===');
+      
+      // Primeiro, buscar os IDs dos pacientes vinculados ao psicólogo para referência
+      const timestamp = new Date().getTime(); // Para evitar cache
+      const { data: linkedPatients, error: linkedPatientsError } = await supabaseAny
+        .from('user_profiles')
+        .select('user_id')
+        .eq('psychologist_id', psychologistId)
+        .order('created_at', { ascending: false });
+      
+      // Criar um conjunto de IDs de pacientes vinculados para verificação rápida
+      const linkedPatientIdsSet = new Set<string>();
+      if (!linkedPatientsError && linkedPatients && linkedPatients.length > 0) {
+        linkedPatients.forEach((p: any) => {
+          if (p.user_id) {
+            linkedPatientIdsSet.add(p.user_id);
+          }
+        });
+      }
+      console.log('IDs dos pacientes vinculados:', Array.from(linkedPatientIdsSet));
+      
+      // Buscar TODOS os streaks
+      console.log('Executando consulta à tabela user_streaks para TODOS os usuários...');
+      const { data: streakData, error: streakError } = await supabaseAny
         .from('user_streaks')
         .select('user_id, current_streak')
         .order('current_streak', { ascending: false })
@@ -291,28 +466,42 @@ const RecentPatientActivity: React.FC = () => {
         console.log('Nenhum perfil de usuário encontrado ou erro ao buscar perfis');
       }
       
-      // Criar o ranking final
-      console.log('Criando ranking final...');
-      const rankingArray: StreakRanking[] = streakData.map((streak: any) => {
-        console.log('Processando streak:', streak);
-        const profile = userProfileMap.get(streak.user_id) as any;
-        console.log('Perfil encontrado para', streak.user_id, ':', profile);
-        
-        // Usar uma abordagem segura para obter o nome, tentando diferentes campos
-        const userName = profile 
-          ? (profile.full_name || profile.preferred_name || `Usuário ${streak.user_id.substring(0, 4)}`)
-          : `Usuário ${streak.user_id.substring(0, 4)}`;
-        
-        console.log('Nome de usuário determinado:', userName);
-          
-        return {
-          user_id: streak.user_id,
-          name: userName,
-          profile_photo: profile?.profile_photo,
-          current_streak: streak.current_streak,
-          predominant_mood: userPredominantMood.get(streak.user_id)
-        };
+      // Criar o ranking final, incluindo todos os streaks mas marcando quais são pacientes vinculados
+      console.log('=== DIAGNÓSTICO AVANÇADO: Processando todos os streaks ===');
+      console.log('Total de streaks:', streakData.length);
+      console.log('IDs de pacientes vinculados:', patientIds);
+      
+      // Listar todos os streaks antes da filtragem para diagnóstico
+      console.log('Lista completa de streaks antes da filtragem:');
+      streakData.forEach((streak: any, index: number) => {
+        console.log(`Streak ${index + 1}:`, streak);
       });
+      
+      const rankingArray: StreakRanking[] = streakData
+        .filter((streak: any) => {
+          // Verificar se o usuário está no conjunto de pacientes vinculados
+          return linkedPatientIdsSet.has(streak.user_id);
+        })
+        .map((streak: any) => {
+          console.log('Processando streak:', streak);
+          const profile = userProfileMap.get(streak.user_id) as any;
+          console.log('Perfil encontrado para', streak.user_id, ':', profile);
+          
+          // Usar uma abordagem segura para obter o nome, tentando diferentes campos
+          const userName = profile 
+            ? (profile.full_name || profile.preferred_name || `Usuário ${streak.user_id.substring(0, 4)}`)
+            : `Usuário ${streak.user_id.substring(0, 4)}`;
+          
+          console.log('Nome de usuário determinado:', userName);
+            
+          return {
+            user_id: streak.user_id,
+            name: userName,
+            profile_photo: profile?.profile_photo,
+            current_streak: streak.current_streak,
+            predominant_mood: userPredominantMood.get(streak.user_id)
+          };
+        });
       
       console.log('Ranking final criado:', rankingArray);
       console.log('Definindo estado streaksRanking...');
@@ -332,6 +521,10 @@ const RecentPatientActivity: React.FC = () => {
       setError(null);
       
       try {
+        // Primeiro buscar a lista de pacientes vinculados
+        await fetchPatients();
+        
+        // Depois buscar os rankings
         await Promise.all([
           fetchInteractionsRanking(),
           fetchStreaksRanking()
@@ -347,6 +540,18 @@ const RecentPatientActivity: React.FC = () => {
     };
     
     loadData();
+    
+    // Adicionar um listener para o evento de atualização de pacientes
+    const handlePatientUpdate = () => {
+      console.log('Evento de atualização de pacientes detectado, recarregando dados...');
+      loadData();
+    };
+    
+    window.addEventListener('patientConnectionUpdated', handlePatientUpdate);
+    
+    return () => {
+      window.removeEventListener('patientConnectionUpdated', handlePatientUpdate);
+    };
   }, []);
   
   // Efeito para verificar quando a aba ativa muda
@@ -360,10 +565,53 @@ const RecentPatientActivity: React.FC = () => {
     setActiveTab('streaks');
   }, []);
 
+  // Função para forçar a atualização dos dados
+  const handleRefresh = async () => {
+    console.log('=== DIAGNÓSTICO: Forçando atualização dos dados ===');
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Primeiro buscar a lista de pacientes vinculados
+      await fetchPatients();
+      
+      // Depois buscar os rankings
+      await Promise.all([
+        fetchInteractionsRanking(),
+        fetchStreaksRanking()
+      ]);
+      console.log('Atualização forçada concluída com sucesso');
+    } catch (err) {
+      console.error('Erro ao atualizar dados:', err);
+      setError('Ocorreu um erro ao atualizar os rankings.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardContent className="p-6">
-        <h3 className="text-lg font-medium mb-4 text-neutral-700">Atividades Recentes</h3>
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium text-neutral-700">Atividades Recentes</h3>
+          <button 
+            onClick={handleRefresh}
+            className="flex items-center gap-1 text-sm text-portal-purple hover:text-portal-purple-dark"
+            disabled={loading}
+          >
+            {loading ? (
+              <span className="inline-block w-4 h-4 border-2 border-portal-purple border-t-transparent rounded-full animate-spin"></span>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 2v6h-6"></path>
+                <path d="M3 12a9 9 0 0 1 15-6.7l3-3"></path>
+                <path d="M3 22v-6h6"></path>
+                <path d="M21 12a9 9 0 0 1-15 6.7l-3 3"></path>
+              </svg>
+            )}
+            <span>{loading ? 'Atualizando...' : 'Atualizar'}</span>
+          </button>
+        </div>
         
         {error ? (
           <div className="flex flex-col items-center justify-center text-center py-8">
@@ -399,6 +647,7 @@ const RecentPatientActivity: React.FC = () => {
                       profilePhoto={item.profile_photo}
                       type="interactions"
                       predominantMood={item.predominant_mood}
+                      isPatient={patientIds.includes(item.user_id)}
                     />
                   ))}
                 </div>
@@ -422,6 +671,7 @@ const RecentPatientActivity: React.FC = () => {
                       profilePhoto={item.profile_photo}
                       type="streaks"
                       predominantMood={item.predominant_mood}
+                      isPatient={patientIds.includes(item.user_id)}
                     />
                   ))}
                 </div>
@@ -445,7 +695,8 @@ const RankingItem: React.FC<{
   profilePhoto?: string;
   type?: 'interactions' | 'streaks';
   predominantMood?: string;
-}> = ({ position, name, value, valueLabel, profilePhoto, type = 'interactions', predominantMood }) => {
+  isPatient?: boolean;
+}> = ({ position, name, value, valueLabel, profilePhoto, type = 'interactions', predominantMood, isPatient = true }) => {
   
   // Estado para controlar se a imagem carregou com sucesso
   const [imageError, setImageError] = useState(false);
