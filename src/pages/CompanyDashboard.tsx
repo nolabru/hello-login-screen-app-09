@@ -4,11 +4,7 @@ import CompanyDashboardLayout from '@/components/layout/CompanyDashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import CompanyPsychologistsList from '@/components/dashboard/company/CompanyPsychologistsList';
-import CompanyEmployeesList from '@/components/dashboard/company/CompanyEmployeesList';
 import AddEmployeeDialog from '@/components/dashboard/company/AddEmployeeDialog';
-import CompanyLicensesManagement from '@/components/dashboard/company/CompanyLicensesManagement';
 import { checkLicenseAvailability, updateLicenseCountForExistingEmployees } from '@/services/licenseService';
 import { fetchCompanyPsychologists } from '@/integrations/supabase/companyPsychologistsService';
 import { useToast } from '@/components/ui/use-toast';
@@ -28,7 +24,6 @@ const CompanyDashboard: React.FC = () => {
     totalLicenses: 0
   });
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
   useEffect(() => {
@@ -103,17 +98,7 @@ const CompanyDashboard: React.FC = () => {
             </p>
           </div>
           
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-              <TabsTrigger value="employees">Funcionários</TabsTrigger>
-              <TabsTrigger value="psychologists">Psicólogos</TabsTrigger>
-              <TabsTrigger value="licenses">Licenças</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="overview" className="space-y-8">
-              
-              
+          <div className="space-y-8">
               {/* Primeira linha - Funcionários */}
               <div className="mb-8">
                 <h2 className="text-xl font-medium mb-4  text-neutral-700">
@@ -243,27 +228,7 @@ const CompanyDashboard: React.FC = () => {
                   </Card>
                 </div>
               </div>
-            </TabsContent>
-            
-            <TabsContent value="employees">
-              <CompanyEmployeesList />
-            </TabsContent>
-            
-            <TabsContent value="psychologists">
-              <CompanyPsychologistsList 
-                onPsychologistsLoaded={(count) => {
-                  setStats(prev => ({
-                    ...prev,
-                    activePsychologists: count
-                  }));
-                }}
-              />
-            </TabsContent>
-            
-            <TabsContent value="licenses">
-              {companyId && <CompanyLicensesManagement companyId={companyId} />}
-            </TabsContent>
-          </Tabs>
+          </div>
         </div>
         
         {companyId && <AddEmployeeDialog open={isAddEmployeeDialogOpen} onOpenChange={setIsAddEmployeeDialogOpen} onEmployeeAdded={() => {
