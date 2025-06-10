@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import PatientStatsCard from '@/components/dashboard/patients/PatientStatsCard';
-import SessionsStatsCard from '@/components/dashboard/sessions/SessionsStatsCard';
 import SentimentChart from '@/components/dashboard/SentimentChart';
 import RecentPatientActivity from '@/components/dashboard/RecentPatientActivity';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,9 +36,8 @@ const PsychologistDashboard: React.FC = () => {
           <h1 className=" text-2xl font-medium text-neutral-700">Visão Geral</h1>
           <p className="text-gray-500 mb-6">Acompanhe seus pacientes e sua interação com a AIA</p>
           
-          <div className="flex flex-col md:flex-row gap-6 mb-6">
+          <div className="flex justify-start mb-6">
             <PatientStatsCard />
-            <SessionsStatsCard />
           </div>
           
           <div className="w-full mb-6">
