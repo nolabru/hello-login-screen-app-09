@@ -524,7 +524,7 @@ const RankingItem: React.FC<{
         <div>
           <p className="font-medium text-neutral-700">{name}</p>
           {predominantMood && (
-            <p className="text-xs text-gray-500">Sentimento: {predominantMood.charAt(0).toUpperCase() + predominantMood.slice(1)}</p>
+            <p className="text-xs text-gray-500">O Paciente tem se sentido {predominantMood.charAt(0).toUpperCase() + predominantMood.slice(1)}</p>
           )}
         </div>
       </div>
