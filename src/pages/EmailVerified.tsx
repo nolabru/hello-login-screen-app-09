@@ -21,13 +21,28 @@ const EmailVerified = () => {
   
   // Detectar o tipo de usuário com base nos parâmetros da URL
   useEffect(() => {
-    // Verificar se há um parâmetro que indica origem mobile
+    // Verificar se é um deep link (app mobile)
     const isMobileDeepLink = window.location.href.includes('calma://');
     
-    if (source === 'mobile' || isMobileDeepLink) {
+    // Se for um deep link, é mobile no mesmo dispositivo
+    if (isMobileDeepLink) {
       setUserType('mobile');
-    } else if (token && localStorage.getItem('registeredOnMobile')) {
+      console.log('Detectado como usuário mobile no mesmo dispositivo (deep link)');
+    } 
+    // Se o parâmetro source=mobile estiver presente, é explicitamente mobile
+    else if (source === 'mobile') {
+      setUserType('mobile');
+      console.log('Detectado como usuário mobile (parâmetro source)');
+    }
+    // Se tiver token mas não for deep link, provavelmente é mobile em outro dispositivo
+    else if (token && !isMobileDeepLink) {
       setUserType('mobileOnWeb');
+      console.log('Detectado como usuário mobile em outro dispositivo');
+    }
+    // Em todos os outros casos, é um usuário web
+    else {
+      setUserType('web');
+      console.log('Detectado como usuário web');
     }
     
     // Registrar a verificação bem-sucedida
