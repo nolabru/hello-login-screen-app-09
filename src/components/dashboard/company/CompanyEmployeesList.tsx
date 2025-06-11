@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus } from 'lucide-react';
+import { AlertTriangle, Plus, UserMinus } from 'lucide-react';
 import AddEmployeeDialog from './AddEmployeeDialog';
 import EmployeeSearch from './EmployeeSearch';
 import ViewModeToggle from './ViewModeToggle';
@@ -11,6 +11,16 @@ import EmployeesCardView from './EmployeesCardView';
 import EmployeesEmptyState from './EmployeesEmptyState';
 import type { Employee } from './EmployeesTableView';
 import { updateEmployeeLicenseStatus } from '@/services/licenseService';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const CompanyEmployeesList: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -21,6 +31,8 @@ const CompanyEmployeesList: React.FC = () => {
   const { toast } = useToast();
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [employeeToRemove, setEmployeeToRemove] = useState<number | null>(null);
   
   useEffect(() => {
     const storedCompanyId = localStorage.getItem('companyId');
@@ -125,10 +137,17 @@ const CompanyEmployeesList: React.FC = () => {
   };
   
   const handleRemoveEmployee = async (employeeId: number) => {
-    if (!confirm('Tem certeza que deseja desvincular este funcionário?')) return;
+    // Abrir o diálogo de confirmação
+    setEmployeeToRemove(employeeId);
+    setIsConfirmDialogOpen(true);
+  };
+  
+  const confirmRemoveEmployee = async () => {
+    if (!employeeToRemove) return;
+    
     try {
       // Atualizar o status do funcionário para 'inactive' e decrementar o contador de licenças
-      await updateEmployeeLicenseStatus(employeeId, 'inactive');
+      await updateEmployeeLicenseStatus(employeeToRemove, 'inactive');
       
       toast({
         title: 'Funcionário desvinculado',
@@ -142,6 +161,10 @@ const CompanyEmployeesList: React.FC = () => {
         title: 'Erro ao desvincular funcionário',
         description: 'Ocorreu um erro ao desvincular o funcionário. Tente novamente.'
       });
+    } finally {
+      // Fechar o diálogo e limpar o estado
+      setIsConfirmDialogOpen(false);
+      setEmployeeToRemove(null);
     }
   };
   
@@ -187,6 +210,35 @@ const CompanyEmployeesList: React.FC = () => {
           companyId={companyId} 
         />
       )}
+      
+      {/* Diálogo de confirmação para desvincular funcionário */}
+      <AlertDialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
+              <UserMinus className="h-6 w-6 text-red-600" />
+            </div>
+            <AlertDialogTitle className="text-center text-xl">Desvincular Funcionário</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Tem certeza que deseja desvincular este funcionário da empresa?
+              <p className="mt-2 text-sm text-gray-500">
+                Esta ação liberará a licença associada a este funcionário.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6">
+            <AlertDialogCancel className="border-gray-300 text-gray-700 hover:bg-gray-50">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmRemoveEmployee}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Desvincular
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

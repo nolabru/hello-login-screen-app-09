@@ -9,6 +9,16 @@ import { useToast } from '@/components/ui/use-toast';
 import { fetchCompanyPsychologists, disassociatePsychologistFromCompany, CompanyPsychologist } from '@/integrations/supabase/companyPsychologistsService';
 import { supabase } from '@/integrations/supabase/client';
 import PsychologistSearchDialog from './PsychologistSearchDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface CompanyPsychologistsListProps {
   onPsychologistsLoaded?: (count: number) => void;
@@ -22,6 +32,8 @@ const CompanyPsychologistsList: React.FC<CompanyPsychologistsListProps> = ({
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [profileImageUrls, setProfileImageUrls] = useState<Record<string, string>>({});
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
+  const [psychologistToRemove, setPsychologistToRemove] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -74,15 +86,19 @@ const CompanyPsychologistsList: React.FC<CompanyPsychologistsListProps> = ({
       .substring(0, 2);
   };
 
-  const handleRemovePsychologist = async (psychologistId: string) => {
+  const handleRemovePsychologist = (psychologistId: string) => {
     if (!companyId) return;
     
-    if (!confirm('Tem certeza que deseja remover este psicólogo da empresa?')) {
-      return;
-    }
+    // Abrir o diálogo de confirmação
+    setPsychologistToRemove(psychologistId);
+    setIsConfirmDialogOpen(true);
+  };
+  
+  const confirmRemovePsychologist = async () => {
+    if (!companyId || !psychologistToRemove) return;
     
     try {
-      await disassociatePsychologistFromCompany(companyId, psychologistId);
+      await disassociatePsychologistFromCompany(companyId, psychologistToRemove);
       toast({
         title: 'Psicólogo removido',
         description: 'O psicólogo foi removido da empresa com sucesso.',
@@ -95,6 +111,10 @@ const CompanyPsychologistsList: React.FC<CompanyPsychologistsListProps> = ({
         description: 'Não foi possível remover o psicólogo. Tente novamente.',
         variant: 'destructive'
       });
+    } finally {
+      // Fechar o diálogo e limpar o estado
+      setIsConfirmDialogOpen(false);
+      setPsychologistToRemove(null);
     }
   };
 
@@ -210,6 +230,35 @@ const CompanyPsychologistsList: React.FC<CompanyPsychologistsListProps> = ({
           onPsychologistAdded={loadPsychologists}
         />
       )}
+      
+      {/* Diálogo de confirmação para remover psicólogo */}
+      <AlertDialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+        <AlertDialogContent className="bg-white">
+          <AlertDialogHeader>
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100 mb-4">
+              <UserMinus className="h-6 w-6 text-red-600" />
+            </div>
+            <AlertDialogTitle className="text-center text-xl">Remover Psicólogo</AlertDialogTitle>
+            <AlertDialogDescription className="text-center">
+              Tem certeza que deseja remover este psicólogo da empresa?
+              <p className="mt-2 text-sm text-gray-500">
+                Esta ação desvinculará o psicólogo da sua empresa.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="mt-6">
+            <AlertDialogCancel className="border-gray-300 text-gray-700 hover:bg-gray-50">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmRemovePsychologist}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
