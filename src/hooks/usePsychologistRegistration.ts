@@ -98,7 +98,7 @@ export const usePsychologistRegistration = () => {
             
             if (processData.success) {
               toast({
-                title: "Convite aceito com sucesso",
+                title: "Convite Aceito com Sucesso",
                 description: "Você foi vinculado ao paciente que enviou o convite."
               });
               
@@ -112,7 +112,7 @@ export const usePsychologistRegistration = () => {
               console.error('Erro ao processar convite:', processData.error);
               toast({
                 variant: 'destructive',
-                title: "Erro ao processar convite",
+                title: "Erro ao Processar Convite",
                 description: processData.error || "Ocorreu um erro ao processar o convite."
               });
             }
@@ -120,7 +120,7 @@ export const usePsychologistRegistration = () => {
             console.error('Erro ao processar convite:', error);
             toast({
               variant: 'destructive',
-              title: "Erro ao processar convite",
+              title: "Erro ao Processar Convite",
               description: "Ocorreu um erro ao processar o convite. Tente novamente mais tarde."
             });
           }
@@ -129,7 +129,7 @@ export const usePsychologistRegistration = () => {
       
       // Success message
       toast({
-        title: "Cadastro enviado!",
+        title: "Cadastro Enviado!",
         description: "Seus dados foram enviados com sucesso.",
       });
       
@@ -139,7 +139,7 @@ export const usePsychologistRegistration = () => {
       console.error('Unexpected error:', err);
       toast({
         variant: 'destructive',
-        title: "Erro no cadastro",
+        title: "Erro no Cadastro",
         description: "Houve um problema ao registrar seus dados. Por favor, tente novamente.",
       });
     } finally {
