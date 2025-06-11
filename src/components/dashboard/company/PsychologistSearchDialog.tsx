@@ -121,8 +121,8 @@ const PsychologistSearchDialog: React.FC<PsychologistSearchDialogProps> = ({
     try {
       await associatePsychologistToCompany(companyId, selectedPsychologist);
       toast({
-        title: 'Psicólogo adicionado',
-        description: 'O psicólogo foi adicionado à empresa com sucesso.',
+        title: 'Convite Enviado com Sucesso',
+        description: 'O convite para o Psicólogo foi enviado com sucesso.',
       });
       onPsychologistAdded();
       onOpenChange(false);

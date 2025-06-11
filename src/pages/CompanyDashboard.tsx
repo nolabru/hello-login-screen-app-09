@@ -10,6 +10,9 @@ import { checkLicenseAvailability, updateLicenseCountForExistingEmployees } from
 import { fetchCompanyPsychologists } from '@/integrations/supabase/companyPsychologistsService';
 import { useToast } from '@/components/ui/use-toast';
 import { RefreshCw } from 'lucide-react';
+
+// Usando any para o tipo do Supabase para contornar erros de tipo
+const supabaseAny: any = supabase;
 const CompanyDashboard: React.FC = () => {
   const {
     toast
@@ -53,11 +56,26 @@ const CompanyDashboard: React.FC = () => {
         // Contagem total de funcionários vinculados à empresa
         const totalEmployees = employees?.length || 0;
         
-        // Buscar psicólogos diretamente usando o serviço
-        console.log('Buscando psicólogos para a empresa:', companyIdStr);
+        // Buscar psicólogos ativos diretamente usando o serviço
+        console.log('Buscando psicólogos ativos para a empresa:', companyIdStr);
         const psychologists = await fetchCompanyPsychologists(companyIdStr);
         const activePsychs = psychologists.length;
-        const pendingPsychs = 0; // Não estamos mais usando a distinção entre ativos e pendentes
+        
+        // Buscar psicólogos pendentes usando supabaseAny para evitar erros de tipo
+        console.log('Buscando psicólogos pendentes para a empresa:', companyIdStr);
+        const { data: pendingPsychologistsData, error: pendingError } = await supabaseAny
+          .from('company_psychologists')
+          .select('*')
+          .eq('company_id', companyIdStr)
+          .eq('status', 'pending')
+          .is('ended_at', null);
+          
+        if (pendingError) {
+          console.error('Erro ao buscar psicólogos pendentes:', pendingError);
+        }
+        
+        const pendingPsychs = pendingPsychologistsData?.length || 0;
+        console.log('Psicólogos pendentes encontrados:', pendingPsychs);
 
         // Fetch license availability
         const licenseStats = await checkLicenseAvailability(companyIdStr);
@@ -138,9 +156,62 @@ const CompanyDashboard: React.FC = () => {
               
               {/* Segunda linha - Psicólogos */}
               <div className="mb-8">
-                <h2 className="text-xl font-medium mb-4  text-neutral-700">
-                  Psicólogos
-                </h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-medium text-neutral-700">
+                    Psicólogos
+                  </h2>
+                  {companyId && (
+                    <Button 
+                      onClick={async () => {
+                        try {
+                          // Buscar psicólogos ativos
+                          const psychologists = await fetchCompanyPsychologists(companyId);
+                          const activePsychs = psychologists.length;
+                          
+                          // Buscar psicólogos pendentes
+                          const { data: pendingPsychologistsData, error: pendingError } = await supabaseAny
+                            .from('company_psychologists')
+                            .select('*')
+                            .eq('company_id', companyId)
+                            .eq('status', 'pending')
+                            .is('ended_at', null);
+                            
+                          if (pendingError) {
+                            console.error('Erro ao buscar psicólogos pendentes:', pendingError);
+                            throw pendingError;
+                          }
+                          
+                          const pendingPsychs = pendingPsychologistsData?.length || 0;
+                          
+                          // Atualizar estatísticas
+                          setStats(prev => ({
+                            ...prev,
+                            activePsychologists: activePsychs,
+                            pendingPsychologists: pendingPsychs
+                          }));
+                          
+                          toast({
+                            title: 'Psicólogos Atualizados',
+                            description: `${activePsychs} ativos e ${pendingPsychs} pendentes`
+                          });
+                        } catch (error) {
+                          console.error('Erro ao atualizar psicólogos:', error);
+                          toast({
+                            title: 'Erro',
+                            description: 'Não foi possível atualizar a lista de psicólogos.',
+                            variant: 'destructive'
+                          });
+                        }
+                      }}
+                      variant="outline" 
+                      size="sm"
+                      className="flex items-center gap-1"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                      <span>Atualizar Psicólogos</span>
+                    </Button>
+                  )}
+                </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Card 3 - Psicólogos Associados */}
@@ -240,18 +311,37 @@ const CompanyDashboard: React.FC = () => {
         {companyId && <AddEmployeeDialog open={isAddEmployeeDialogOpen} onOpenChange={setIsAddEmployeeDialogOpen} onEmployeeAdded={() => {
         // Refresh the stats after adding an employee
         const fetchStats = async () => {
+          // Buscar funcionários
           const {
             data: employees
           } = await supabase.from('user_profiles').select('id')
             .eq('company_id', companyId);
           const totalEmployees = employees?.length || 0;
-
-          // Also update license information
+          
+          // Buscar psicólogos ativos
+          const psychologists = await fetchCompanyPsychologists(companyId);
+          const activePsychs = psychologists.length;
+          
+          // Buscar psicólogos pendentes
+          const { data: pendingPsychologistsData } = await supabaseAny
+            .from('company_psychologists')
+            .select('*')
+            .eq('company_id', companyId)
+            .eq('status', 'pending')
+            .is('ended_at', null);
+            
+          const pendingPsychs = pendingPsychologistsData?.length || 0;
+          
+          // Atualizar informações de licenças
           const licenseStats = await checkLicenseAvailability(companyId);
+          
+          // Atualizar estatísticas
           setStats(prev => ({
             ...prev,
             activeEmployees: totalEmployees,
             pendingEmployees: 0, // Não estamos mais usando a distinção entre ativos e pendentes
+            activePsychologists: activePsychs,
+            pendingPsychologists: pendingPsychs,
             availableLicenses: licenseStats.available,
             totalLicenses: licenseStats.total
           }));
