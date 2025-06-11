@@ -152,7 +152,7 @@ const PsychologistSearchDialog: React.FC<PsychologistSearchDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-neutral-700">cólogo</DialogTitle>
+          <DialogTitle className="text-neutral-700">Convidar Psicólogo</DialogTitle>
         </DialogHeader>
 
         <div className="relative mb-4">
@@ -190,12 +190,19 @@ const PsychologistSearchDialog: React.FC<PsychologistSearchDialogProps> = ({
               {searchResults.map((psychologist) => (
                 <div
                   key={psychologist.id}
-                  className={`p-3 rounded-md border cursor-pointer transition-colors ${
-                    selectedPsychologist === psychologist.id
-                      ? 'border-purple-500 bg-purple-50'
-                      : 'border-gray-200 hover:bg-gray-50'
+                  className={`p-3 rounded-md border transition-colors ${
+                    psychologist.alreadyInvited 
+                      ? 'border-gray-200 border-dashed bg-gray-50 opacity-70 cursor-not-allowed'
+                      : selectedPsychologist === psychologist.id
+                        ? 'border-purple-500 bg-purple-50 cursor-pointer'
+                        : 'border-gray-200 hover:bg-gray-50 cursor-pointer'
                   }`}
-                  onClick={() => setSelectedPsychologist(psychologist.id)}
+                  onClick={() => {
+                    // Só permite selecionar se não estiver já convidado
+                    if (!psychologist.alreadyInvited) {
+                      setSelectedPsychologist(psychologist.id);
+                    }
+                  }}
                 >
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
@@ -204,7 +211,14 @@ const PsychologistSearchDialog: React.FC<PsychologistSearchDialogProps> = ({
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <p className="font-medium">{psychologist.name}</p>
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium">{psychologist.name}</p>
+                        {psychologist.alreadyInvited && (
+                          <Badge className="ml-2 bg-yellow-100 text-yellow-800 border-yellow-200">
+                            Já Convidado
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-500">{psychologist.email}</p>
                       <div className="flex items-center gap-2 mt-1">
                         {psychologist.crp && (
@@ -232,7 +246,7 @@ const PsychologistSearchDialog: React.FC<PsychologistSearchDialogProps> = ({
           </Button>
           <Button
             onClick={handleAddPsychologist}
-            disabled={!selectedPsychologist || isAdding}
+            disabled={!selectedPsychologist || isAdding || searchResults.find(p => p.id === selectedPsychologist)?.alreadyInvited}
             className="bg-portal-purple hover:bg-portal-purple-dark"
           >
             {isAdding ? (

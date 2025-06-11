@@ -10,6 +10,8 @@ export interface PsychologistSearchResult {
   email: string;
   crp?: string;
   specialization?: string;
+  alreadyInvited?: boolean; // Indica se o psicólogo já foi convidado (status 'pending')
+  inviteStatus?: string;    // Status do convite ('pending', 'active', 'rejected', etc.)
 }
 
 // Tipo para representar um psicólogo associado a uma empresa
@@ -488,18 +490,52 @@ export const fetchAllAvailablePsychologists = async (companyId: string): Promise
       return [];
     }
     
-    // Buscar psicólogos já conectados à empresa
+    // Buscar psicólogos já conectados à empresa (ativos)
     const companyPsychologists = await fetchCompanyPsychologists(companyId);
     const connectedPsychologistIds = companyPsychologists.map(cp => cp.psychologist_id);
     
-    console.log('IDs de psicólogos já conectados:', connectedPsychologistIds);
+    // Buscar psicólogos com convites pendentes
+    const { data: pendingAssociations, error: pendingError } = await supabaseAny
+      .from('company_psychologists')
+      .select('psychologist_id, status')
+      .eq('company_id', companyId)
+      .eq('status', 'pending')
+      .is('ended_at', null);
+      
+    if (pendingError) {
+      console.error('Erro ao buscar psicólogos pendentes:', pendingError);
+      throw pendingError;
+    }
     
-    // Filtrar psicólogos já conectados
-    const availablePsychologists = data.filter(psychologist => !connectedPsychologistIds.includes(psychologist.id));
+    // Criar um mapa de psicólogos pendentes para fácil acesso
+    const pendingPsychologistsMap: Record<string, string> = {};
+    pendingAssociations?.forEach((assoc: any) => {
+      pendingPsychologistsMap[assoc.psychologist_id] = assoc.status;
+    });
     
-    console.log('Psicólogos disponíveis após filtragem:', availablePsychologists);
+    console.log('IDs de psicólogos já conectados (ativos):', connectedPsychologistIds);
+    console.log('IDs de psicólogos com convites pendentes:', Object.keys(pendingPsychologistsMap));
     
-    return availablePsychologists;
+    // Mapear todos os psicólogos, marcando os que já foram convidados
+    const mappedPsychologists = data.map(psychologist => {
+      // Verificar se o psicólogo já está conectado (ativo)
+      if (connectedPsychologistIds.includes(psychologist.id)) {
+        return null; // Será filtrado depois
+      }
+      
+      // Verificar se o psicólogo já foi convidado (pendente)
+      const inviteStatus = pendingPsychologistsMap[psychologist.id];
+      
+      return {
+        ...psychologist,
+        alreadyInvited: !!inviteStatus,
+        inviteStatus: inviteStatus || null
+      };
+    }).filter(Boolean) as PsychologistSearchResult[]; // Filtrar os nulos
+    
+    console.log('Psicólogos mapeados:', mappedPsychologists);
+    
+    return mappedPsychologists;
   } catch (error) {
     console.error('Erro ao buscar psicólogos:', error);
     throw error;
@@ -533,18 +569,52 @@ export const searchAvailablePsychologists = async (query: string, companyId: str
       return [];
     }
     
-    // Buscar psicólogos já conectados à empresa
+    // Buscar psicólogos já conectados à empresa (ativos)
     const companyPsychologists = await fetchCompanyPsychologists(companyId);
     const connectedPsychologistIds = companyPsychologists.map(cp => cp.psychologist_id);
     
-    console.log('IDs de psicólogos já conectados:', connectedPsychologistIds);
+    // Buscar psicólogos com convites pendentes
+    const { data: pendingAssociations, error: pendingError } = await supabaseAny
+      .from('company_psychologists')
+      .select('psychologist_id, status')
+      .eq('company_id', companyId)
+      .eq('status', 'pending')
+      .is('ended_at', null);
+      
+    if (pendingError) {
+      console.error('Erro ao buscar psicólogos pendentes:', pendingError);
+      throw pendingError;
+    }
     
-    // Filtrar psicólogos já conectados
-    const availablePsychologists = data.filter(psychologist => !connectedPsychologistIds.includes(psychologist.id));
+    // Criar um mapa de psicólogos pendentes para fácil acesso
+    const pendingPsychologistsMap: Record<string, string> = {};
+    pendingAssociations?.forEach((assoc: any) => {
+      pendingPsychologistsMap[assoc.psychologist_id] = assoc.status;
+    });
     
-    console.log('Psicólogos disponíveis após filtragem:', availablePsychologists);
+    console.log('IDs de psicólogos já conectados (ativos):', connectedPsychologistIds);
+    console.log('IDs de psicólogos com convites pendentes:', Object.keys(pendingPsychologistsMap));
     
-    return availablePsychologists;
+    // Mapear todos os psicólogos, marcando os que já foram convidados
+    const mappedPsychologists = data.map(psychologist => {
+      // Verificar se o psicólogo já está conectado (ativo)
+      if (connectedPsychologistIds.includes(psychologist.id)) {
+        return null; // Será filtrado depois
+      }
+      
+      // Verificar se o psicólogo já foi convidado (pendente)
+      const inviteStatus = pendingPsychologistsMap[psychologist.id];
+      
+      return {
+        ...psychologist,
+        alreadyInvited: !!inviteStatus,
+        inviteStatus: inviteStatus || null
+      };
+    }).filter(Boolean) as PsychologistSearchResult[]; // Filtrar os nulos
+    
+    console.log('Psicólogos mapeados:', mappedPsychologists);
+    
+    return mappedPsychologists;
   } catch (error) {
     console.error('Erro ao buscar psicólogos:', error);
     throw error;
