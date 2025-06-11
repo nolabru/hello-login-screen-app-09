@@ -61,7 +61,30 @@ const CompanyFormFields: React.FC<CompanyFormFieldsProps> = ({
                 CNPJ
               </FormLabel>
               <FormControl>
-                <Input placeholder="XX.XXX.XXX/0001-XX" {...field} />
+                <Input 
+                  placeholder="XX.XXX.XXX/0001-XX" 
+                  {...field}
+                  onChange={(e) => {
+                    // Aplicar máscara de CNPJ
+                    let value = e.target.value.replace(/\D/g, '');
+                    
+                    // Limitar a 14 dígitos
+                    value = value.slice(0, 14);
+                    
+                    // Aplicar formatação XX.XXX.XXX/XXXX-XX
+                    if (value.length > 12) {
+                      value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+                    } else if (value.length > 8) {
+                      value = value.replace(/^(\d{2})(\d{3})(\d{3})(\d+)$/, '$1.$2.$3/$4');
+                    } else if (value.length > 5) {
+                      value = value.replace(/^(\d{2})(\d{3})(\d+)$/, '$1.$2.$3');
+                    } else if (value.length > 2) {
+                      value = value.replace(/^(\d{2})(\d+)$/, '$1.$2');
+                    }
+                    
+                    field.onChange(value);
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>} />

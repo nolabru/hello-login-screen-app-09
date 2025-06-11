@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import EmailVerified from "./pages/EmailVerified";
+import ResetPassword from "./pages/ResetPassword";
 import PsychologistRegistration from "./pages/PsychologistRegistration";
 import CompanyRegistration from "./pages/CompanyRegistration";
 import PsychologistDashboard from "./pages/PsychologistDashboard";
@@ -47,6 +48,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/email-verificado" element={<EmailVerified />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/register/psychologist" element={<PsychologistRegistration />} />
               <Route path="/register/company" element={<CompanyRegistration />} />
               <Route path="/redirect-invite" element={<RedirectInvite />} />

@@ -18,11 +18,11 @@ const PsychologistFormFields: React.FC<PsychologistFormFieldsProps> = ({
       }) => <FormItem>
               <FormLabel className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 <UserRound size={16} className="text-portal-purple" />
-                Nome <span className="text-red-500">*</span>
+                Nome Completo <span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
                 <Input placeholder="Nome do Psicólogo" {...field} />
-              </FormControl>
+              </FormControl>  
               <FormMessage />
             </FormItem>} />
 
@@ -60,7 +60,19 @@ const PsychologistFormFields: React.FC<PsychologistFormFieldsProps> = ({
                 CRP <span className="text-red-500">*</span>
               </FormLabel>
               <FormControl>
-                <Input placeholder="Número do CRP" {...field} />
+                <Input 
+                  placeholder="Número do CRP (7 dígitos)" 
+                  maxLength={7} 
+                  pattern="\d{7}"
+                  inputMode="numeric"
+                  {...field} 
+                  onChange={(e) => {
+                    // Permitir apenas números
+                    const value = e.target.value.replace(/\D/g, '');
+                    // Limitar a 7 caracteres
+                    field.onChange(value.slice(0, 7));
+                  }}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>} />

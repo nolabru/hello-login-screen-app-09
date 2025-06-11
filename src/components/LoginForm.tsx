@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import TabsCustom from './ui/tabs-custom';
 import CheckboxCustom from './ui/checkbox-custom';
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, X } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from "@/integrations/supabase/client";
 const LoginForm: React.FC = () => {
@@ -13,10 +13,52 @@ const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [adminMode, setAdminMode] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
   const navigate = useNavigate();
   const {
     toast
   } = useToast();
+  
+  // Função para solicitar redefinição de senha
+  const handleForgotPassword = async (email: string) => {
+    if (!email) {
+      toast({
+        title: "E-mail obrigatório",
+        description: "Por favor, informe seu e-mail para recuperar a senha.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setResetLoading(true);
+    
+    try {
+      // Remover o parâmetro redirectTo para usar a abordagem baseada em token
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      
+      if (error) throw error;
+      
+      // Mostrar mensagem de sucesso
+      toast({
+        title: "E-mail enviado",
+        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      });
+      
+      // Fechar o modal
+      setForgotPasswordOpen(false);
+    } catch (error: any) {
+      // Mostrar mensagem de erro
+      toast({
+        title: "Erro",
+        description: error.message || "Não foi possível enviar o e-mail de redefinição.",
+        variant: "destructive"
+      });
+    } finally {
+      setResetLoading(false);
+    }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
@@ -255,7 +297,15 @@ const LoginForm: React.FC = () => {
             <label htmlFor="password" className="block text-sm font-medium text-gray-700">
               Senha
             </label>
-            {!adminMode && <a href="#" className="text-sm text-portal-purple hover:text-portal-purple-dark">
+            {!adminMode && <a 
+                onClick={(e) => {
+                  e.preventDefault();
+                  setResetEmail(email); // Pré-preencher com o e-mail já digitado no login
+                  setForgotPasswordOpen(true);
+                }} 
+                href="#" 
+                className="text-sm text-portal-purple hover:text-portal-purple-dark cursor-pointer"
+              >
                 Esqueceu a senha?
               </a>}
           </div>
@@ -303,6 +353,65 @@ const LoginForm: React.FC = () => {
           {adminMode ? "Voltar para Login Normal" : "Acesso para Administradores"}
         </button>
       </div>
+      
+      {/* Modal de Recuperação de Senha */}
+      {forgotPasswordOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Recuperar Senha</h3>
+              <button 
+                onClick={() => setForgotPasswordOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">
+              Digite seu e-mail e enviaremos instruções para redefinir sua senha.
+            </p>
+            
+            <div className="space-y-4">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail size={20} className="text-gray-400" />
+                </div>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="Seu e-mail"
+                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent"
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => setForgotPasswordOpen(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => handleForgotPassword(resetEmail)}
+                  disabled={resetLoading}
+                  className="px-4 py-2 bg-gradient-button text-white rounded-lg hover:opacity-90 disabled:opacity-70 flex items-center gap-2"
+                >
+                  {resetLoading ? (
+                    <>
+                      <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      <span>Enviando...</span>
+                    </>
+                  ) : (
+                    <span>Enviar</span>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>;
 };
 export default LoginForm;
