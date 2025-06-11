@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Bell } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import NotificationsPopover from './NotificationsPopover';
@@ -8,27 +8,31 @@ const NotificationBell: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
   
+  // Extrair a função para carregar a contagem de notificações não lidas
+  // para que possamos passá-la como prop para o NotificationsPopover
+  const loadUnreadCount = useCallback(async () => {
+    try {
+      const count = await fetchUnreadNotificationsCount();
+      setUnreadCount(count);
+    } catch (error) {
+      console.error('Erro ao buscar contagem de notificações:', error);
+    }
+  }, []);
+  
   useEffect(() => {
-    const loadUnreadCount = async () => {
-      try {
-        const count = await fetchUnreadNotificationsCount();
-        setUnreadCount(count);
-      } catch (error) {
-        console.error('Erro ao buscar contagem de notificações:', error);
-      }
-    };
-    
+    // Carregar a contagem inicial
     loadUnreadCount();
     
     // Atualizar a cada 30 segundos
     const interval = setInterval(loadUnreadCount, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [loadUnreadCount]);
   
   return (
     <NotificationsPopover
       open={open}
       onOpenChange={setOpen}
+      onNotificationProcessed={loadUnreadCount} // Passar a função para atualizar o contador
       trigger={
         <button 
           className="p-2 rounded-full hover:bg-gray-100 relative"

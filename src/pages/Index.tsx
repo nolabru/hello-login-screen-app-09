@@ -15,7 +15,7 @@ const Index = () => {
       </Helmet>
       <div className="min-h-screen flex items-center justify-center bg-gradient-portal">
         <div className="flex flex-col items-center w-full max-w-md p-6">
-          <Logo />
+          <Logo size="md" />
           <LoginForm />
         </div>
       </div>

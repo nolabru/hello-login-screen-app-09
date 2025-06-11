@@ -177,33 +177,11 @@ const CompanyLicenseInfo: React.FC<CompanyLicenseInfoProps> = ({ license, onLice
                     license.payment_status === 'canceled' ? 'Cancelado' : 'Falha'}
                   </Badge>
                 </div>
-                {license.used_licenses > 0 && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="flex items-center gap-1"
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent card click event
-                      setShowUsersDialog(true);
-                    }}
-                  >
-                    <Users size={16} />
-                    <span>Ver Usuários</span>
-                  </Button>
-                )}
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      <LicenseUsersDialog 
-        open={showUsersDialog}
-        onOpenChange={setShowUsersDialog}
-        companyId={companyId}
-        licenseId={license.id}
-        planName={license.plan?.name || 'Plano'}
-      />
     </>
   );
 };

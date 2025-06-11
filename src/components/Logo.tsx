@@ -8,13 +8,12 @@ const Logo: React.FC<LogoProps> = ({
   size = 'md'
 }) => {
   const sizeClasses = {
-    sm: 'w-12 h-12',
-    md: 'w-16 h-16',
-    lg: 'w-24 h-24'
+    sm: 'w-16 h-15',    
+    md: 'w-24 h-23',     
+    lg: 'w-32 h-30'      
   };
   return <div className="flex flex-col items-center">
-      <img src="/lovable-uploads/d0782692-3dfe-4b96-8a00-34b22396d341.png" alt="Portal Calma Logo" className={`${sizeClasses[size]} mb-2`} />
-      {showTextLogo}
+      <img src="/lovable-uploads/splash-screen.png" alt="Portal Calma Logo" className={`${sizeClasses[size]} mb-2`} />
     </div>;
 };
 export default Logo;

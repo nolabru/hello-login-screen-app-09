@@ -11,12 +11,14 @@ interface NotificationsPopoverProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   trigger: React.ReactNode;
+  onNotificationProcessed?: () => Promise<void>; // Função para atualizar o contador de notificações
 }
 
 const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({ 
   open, 
   onOpenChange,
-  trigger 
+  trigger,
+  onNotificationProcessed 
 }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +59,13 @@ const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
         description: 'Você aceitou o convite da empresa.',
       });
       
+      // Atualizar a lista de notificações
       loadNotifications();
+      
+      // Atualizar o contador de notificações não lidas
+      if (onNotificationProcessed) {
+        await onNotificationProcessed();
+      }
     } catch (error) {
       console.error('Erro ao aceitar convite:', error);
       toast({
@@ -81,11 +89,17 @@ const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
       await markNotificationAsRead(notification.id);
       
       toast({
-        title: 'Convite rejeitado',
+        title: 'Convite Rejeitado',
         description: 'Você rejeitou o convite da empresa.',
       });
       
+      // Atualizar a lista de notificações
       loadNotifications();
+      
+      // Atualizar o contador de notificações não lidas
+      if (onNotificationProcessed) {
+        await onNotificationProcessed();
+      }
     } catch (error) {
       console.error('Erro ao rejeitar convite:', error);
       toast({
@@ -113,7 +127,13 @@ const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
         description: 'Você aceitou a solicitação do paciente.',
       });
       
+      // Atualizar a lista de notificações
       loadNotifications();
+      
+      // Atualizar o contador de notificações não lidas
+      if (onNotificationProcessed) {
+        await onNotificationProcessed();
+      }
     } catch (error) {
       console.error('Erro ao aceitar solicitação de paciente:', error);
       toast({
@@ -141,7 +161,13 @@ const NotificationsPopover: React.FC<NotificationsPopoverProps> = ({
         description: 'Você rejeitou a solicitação do paciente.',
       });
       
+      // Atualizar a lista de notificações
       loadNotifications();
+      
+      // Atualizar o contador de notificações não lidas
+      if (onNotificationProcessed) {
+        await onNotificationProcessed();
+      }
     } catch (error) {
       console.error('Erro ao rejeitar solicitação de paciente:', error);
       toast({
