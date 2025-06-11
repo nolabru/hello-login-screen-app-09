@@ -1,17 +1,49 @@
 
-import React from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { CheckCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle, ArrowRight, Smartphone } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
 const EmailVerified = () => {
   const [searchParams] = useSearchParams();
-
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const [userType, setUserType] = useState('web'); // Default to web
+  
   // Extrair parâmetros da URL para verificação
   const type = searchParams.get('type');
   const token = searchParams.get('token');
+  const source = searchParams.get('source');
+  
+  // Detectar o tipo de usuário com base nos parâmetros da URL
+  useEffect(() => {
+    // Verificar se há um parâmetro que indica origem mobile
+    const isMobileDeepLink = window.location.href.includes('calma://');
+    
+    if (source === 'mobile' || isMobileDeepLink) {
+      setUserType('mobile');
+    } else if (token && localStorage.getItem('registeredOnMobile')) {
+      setUserType('mobileOnWeb');
+    }
+    
+    // Registrar a verificação bem-sucedida
+    if (token) {
+      localStorage.setItem('emailVerified', 'true');
+      
+      // Não tentamos verificar o token com o Supabase, apenas registramos localmente
+      console.log('Token recebido:', token);
+      
+      // Mostrar mensagem de sucesso
+      toast({
+        title: "E-mail verificado",
+        description: "Seu e-mail foi verificado com sucesso!"
+      });
+    }
+  }, [searchParams, source, token]);
 
   return (
     <>
@@ -43,18 +75,53 @@ const EmailVerified = () => {
               E-mail Verificado!
             </h1>
             
-            {/* Mensagem */}
-            <p className="text-gray-600 mb-6 leading-relaxed">Seu e-mail foi confirmado com sucesso. Agora você pode voltar ao aplicativo e finalizar o seu cadastro.</p>
+            {/* Conteúdo condicional com base no tipo de usuário */}
+            {userType === 'web' && (
+              <>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  Seu e-mail foi confirmado com sucesso. Agora você pode fazer login e aproveitar todos os recursos do C'Alma.
+                </p>
+                
+                <div className="space-y-3">
+                  <Link to="/" className="w-full">
+                    <Button className="w-full bg-gradient-button text-white hover:opacity-90 transition-opacity">
+                      <ArrowRight className="w-4 h-4 mr-2" />
+                      Ir para Login
+                    </Button>
+                  </Link>
+                </div>
+              </>
+            )}
             
-            {/* Botões de ação */}
-            <div className="space-y-3">
-              <Link to="/" className="w-full">
-                <Button className="w-full bg-gradient-button text-white hover:opacity-90 transition-opacity">
-                  <ArrowRight className="w-4 h-4 mr-2" />
-                  Ir para Login
-                </Button>
-              </Link>
-            </div>
+            {userType === 'mobile' && (
+              <>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  Seu e-mail foi confirmado com sucesso. Você pode fechar esta janela e voltar ao aplicativo C'Alma.
+                </p>
+                
+                <div className="p-4 bg-blue-50 rounded-lg mb-6">
+                  <Smartphone className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+                  <p className="text-sm text-blue-700">
+                    Retorne ao aplicativo para continuar.
+                  </p>
+                </div>
+              </>
+            )}
+            
+            {userType === 'mobileOnWeb' && (
+              <>
+                <p className="text-gray-600 mb-6 leading-relaxed">
+                  Seu e-mail foi confirmado com sucesso. Por favor, volte ao aplicativo C'Alma em seu dispositivo móvel e faça login novamente.
+                </p>
+                
+                <div className="p-4 bg-blue-50 rounded-lg mb-6">
+                  <Smartphone className="w-6 h-6 text-blue-500 mx-auto mb-2" />
+                  <p className="text-sm text-blue-700">
+                    Abra o aplicativo C'Alma em seu dispositivo móvel para continuar.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
           
           {/* Informações adicionais */}

@@ -21,7 +21,8 @@ export const usePsychologistRegistration = () => {
           data: { 
             user_type: 'psychologist',
             name: data.name
-          }
+          },
+          emailRedirectTo: 'http://localhost:8080/email-verificado' // Especificar redirecionamento após verificação
         }
       });
       
@@ -52,7 +53,7 @@ export const usePsychologistRegistration = () => {
       }
       
       // 2. Inserir dados específicos do psicólogo na tabela 'psychologists'
-      // @ts-ignore - Ignorar erro de tipo para o campo user_id que foi adicionado à tabela
+      // Usar 'as any' para contornar problemas de tipo, já que a estrutura da tabela mudou
       const { data: insertedData, error } = await supabase
         .from('psychologists')
         .insert({
@@ -63,9 +64,8 @@ export const usePsychologistRegistration = () => {
           crp: data.crp,
           specialization: data.specialization,
           bio: data.biography,
-          password: data.password, // Manter password por enquanto para compatibilidade
           status: true
-        })
+        } as any)
         .select();
       
       if (error) {
@@ -168,11 +168,16 @@ export const usePsychologistRegistration = () => {
       // Success message
       toast({
         title: "Cadastro Enviado!",
-        description: "Seus dados foram enviados com sucesso.",
+        description: "Seus dados foram enviados com sucesso. Verifique seu e-mail para ativar sua conta.",
       });
       
-      // Navigate to home after successful registration
-      setTimeout(() => navigate('/'), 2000);
+      // Navigate to verification pending page
+      navigate('/verificacao-pendente', { 
+        state: { 
+          email: data.email,
+          userType: 'psychologist'
+        } 
+      });
     } catch (err) {
       console.error('Unexpected error:', err);
       toast({

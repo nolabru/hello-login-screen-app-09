@@ -21,7 +21,8 @@ export const useCompanyRegistration = () => {
           data: { 
             user_type: 'company',
             name: data.companyName
-          }
+          },
+          emailRedirectTo: 'http://localhost:8080/email-verificado' // Especificar redirecionamento após verificação
         }
       });
       
@@ -52,7 +53,7 @@ export const useCompanyRegistration = () => {
       }
       
       // 2. Inserir dados específicos da empresa na tabela 'companies'
-      // @ts-ignore - Ignorar erro de tipo para o campo user_id que foi adicionado à tabela
+      // Usar 'as any' para contornar problemas de tipo, já que a estrutura da tabela mudou
       const { error } = await supabase.from('companies').insert({
         user_id: authData.user.id, // Vincular ao usuário criado
         name: data.companyName,
@@ -60,9 +61,8 @@ export const useCompanyRegistration = () => {
         email: data.corporateEmail,
         cnpj: data.cnpj,
         corp_email: data.contactEmail,
-        password: data.password, // Manter password por enquanto para compatibilidade
         phone: data.contactPhone
-      });
+      } as any);
 
       if (error) {
         console.error('Erro ao inserir dados da empresa:', error);
@@ -83,14 +83,19 @@ export const useCompanyRegistration = () => {
         return;
       }
 
-      // Show success toast and redirect to login page
+      // Show success toast and redirect to verification pending page
       toast({
         title: "Cadastro realizado com sucesso",
-        description: "O cadastro da empresa foi realizado. Em breve entraremos em contato.",
+        description: "O cadastro da empresa foi realizado. Verifique seu e-mail para ativar sua conta.",
       });
       
-      // In a real application, you would implement email verification and proper onboarding
-      setTimeout(() => navigate('/'), 2000);
+      // Navigate to verification pending page
+      navigate('/verificacao-pendente', { 
+        state: { 
+          email: data.corporateEmail,
+          userType: 'company'
+        } 
+      });
     } catch (error) {
       console.error('Error registering company:', error);
       toast({

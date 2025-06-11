@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import TabsCustom from './ui/tabs-custom';
@@ -65,7 +67,6 @@ const LoginForm: React.FC = () => {
     
     try {
       // Enviar e-mail com código de redefinição
-      // Nota: A API do Supabase pode não suportar o parâmetro data diretamente
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       
       if (error) throw error;
@@ -201,34 +202,94 @@ const LoginForm: React.FC = () => {
         password
       });
       
-      // Se houver erro na autenticação, tentar o método antigo
+      // Se houver erro na autenticação, verificar se é devido à falta de verificação de e-mail
       if (error) {
         console.log('Erro na autenticação com Supabase Auth:', error);
         console.log('Detalhes do erro:', error.message, error.status, error.code);
+        
+        // Verificar se o erro é devido à falta de verificação de e-mail
+        if (error.message.includes('Email not confirmed') || 
+            error.message.includes('email not confirmed') || 
+            error.message.includes('not confirmed') ||
+            error.status === 400) {
+          toast({
+            title: "E-mail não verificado",
+            description: "Por favor, verifique seu e-mail e clique no link de confirmação antes de fazer login.",
+            variant: "destructive"
+          });
+          
+          // Oferecer opção para reenviar e-mail de verificação
+          const shouldResend = window.confirm("Deseja reenviar o e-mail de verificação?");
+          if (shouldResend) {
+            try {
+              const { error: resendError } = await supabase.auth.resend({
+                type: 'signup',
+                email: email,
+                options: {
+                  emailRedirectTo: 'http://localhost:8080/email-verificado' // Especificar redirecionamento após verificação
+                }
+              });
+              
+              if (resendError) throw resendError;
+              
+              toast({
+                title: "E-mail reenviado",
+                description: "Um novo e-mail de verificação foi enviado para o seu endereço.",
+              });
+              
+              // Redirecionar para a página de verificação pendente
+              navigate('/verificacao-pendente', { 
+                state: { 
+                  email: email,
+                  userType: userType === 'psychologists' ? 'psychologist' : 'company'
+                } 
+              });
+              return;
+            } catch (resendError: any) {
+              console.error('Erro ao reenviar e-mail:', resendError);
+              toast({
+                title: "Erro ao reenviar e-mail",
+                description: resendError.message || "Não foi possível reenviar o e-mail de verificação.",
+                variant: "destructive"
+              });
+            }
+          }
+          setLoading(false);
+          return;
+        }
+        
         console.log('Tentando método antigo de login...');
         
         // Método antigo para login de psicólogos
         if (userType === 'psychologists') {
           console.log('Tentando login como psicólogo com método antigo para:', email);
-          // Primeiro, vamos verificar se o psicólogo existe
+          // Verificar se o psicólogo existe, mas não verificar a senha (já que foi removida da tabela)
+          // Nota: Este método antigo não é mais recomendado, pois não é seguro
+          console.log('O método antigo de login não é mais suportado. A coluna password foi removida.');
+          
+          // Verificar apenas se o psicólogo existe
           const { data: psychologistCheck, error: checkError } = await supabase
             .from('psychologists')
-            .select('id, name, email, password')
+            .select('id, name, email')
             .eq('email', email)
             .single();
             
           if (checkError) {
             console.error('Erro ao verificar psicólogo:', checkError);
-            throw new Error('Psicólogo não encontrado');
+            throw new Error('Psicólogo não encontrado ou senha incorreta');
           }
           
           console.log('Psicólogo encontrado:', psychologistCheck);
           
-          // Agora verificamos a senha
-          if (psychologistCheck.password !== password) {
-            console.error('Senha incorreta para o psicólogo');
-            throw new Error('Senha incorreta');
-          }
+          // Não podemos mais verificar a senha diretamente
+          // Recomendamos ao usuário que redefina sua senha para usar o novo sistema de autenticação
+          toast({
+            title: "Método de login antigo",
+            description: "Por favor, use a opção 'Esqueceu a senha?' para redefinir sua senha e usar o novo sistema de autenticação.",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
           
           // Se chegou aqui, o login é válido
           const psychologist = psychologistCheck;
@@ -250,10 +311,14 @@ const LoginForm: React.FC = () => {
         // Método antigo para login de empresas
         else if (userType === 'companies') {
           console.log('Tentando login como empresa com método antigo para:', email);
-          // Primeiro, verificamos se a empresa existe com o email principal
+          // Verificar se a empresa existe, mas não verificar a senha (já que foi removida da tabela)
+          // Nota: Este método antigo não é mais recomendado, pois não é seguro
+          console.log('O método antigo de login não é mais suportado. A coluna password foi removida.');
+          
+          // Verificar apenas se a empresa existe com o email principal
           let { data: companyCheck, error: checkError } = await supabase
             .from('companies')
-            .select('id, name, email, corp_email, password')
+            .select('id, name, email, corp_email')
             .eq('email', email)
             .single();
             
@@ -262,7 +327,7 @@ const LoginForm: React.FC = () => {
             console.log('Empresa não encontrada com email principal, tentando email corporativo');
             const result = await supabase
               .from('companies')
-              .select('id, name, email, corp_email, password')
+              .select('id, name, email, corp_email')
               .eq('corp_email', email)
               .single();
               
@@ -272,16 +337,20 @@ const LoginForm: React.FC = () => {
           
           if (checkError) {
             console.error('Erro ao verificar empresa:', checkError);
-            throw new Error('Empresa não encontrada');
+            throw new Error('Empresa não encontrada ou senha incorreta');
           }
           
           console.log('Empresa encontrada:', companyCheck);
           
-          // Verificar a senha
-          if (companyCheck.password !== password) {
-            console.error('Senha incorreta para a empresa');
-            throw new Error('Senha incorreta');
-          }
+          // Não podemos mais verificar a senha diretamente
+          // Recomendamos ao usuário que redefina sua senha para usar o novo sistema de autenticação
+          toast({
+            title: "Método de login antigo",
+            description: "Por favor, use a opção 'Esqueceu a senha?' para redefinir sua senha e usar o novo sistema de autenticação.",
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
           
           // Se chegou aqui, o login é válido
           const company = companyCheck;
