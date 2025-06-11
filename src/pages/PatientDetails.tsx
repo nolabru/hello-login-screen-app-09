@@ -5,6 +5,7 @@ import { usePatientInsights } from '@/hooks/usePatientInsights';
 import PatientDetailsHeader from '@/components/dashboard/patients/PatientDetailsHeader';
 import PatientInfoSection from '@/components/dashboard/patients/PatientInfoSection';
 import PatientInsightsList from '@/components/dashboard/patients/PatientInsightsList';
+import PatientWeeklySummary from '@/components/dashboard/patients/PatientWeeklySummary';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const PatientDetails: React.FC = () => {
@@ -50,6 +51,7 @@ const PatientDetails: React.FC = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="info">Informações</TabsTrigger>
           <TabsTrigger value="insights">Insights</TabsTrigger>
+          <TabsTrigger value="weekly">Resumo Semanal</TabsTrigger>
         </TabsList>
         
         <TabsContent value="info" className="space-y-6">
@@ -76,6 +78,10 @@ const PatientDetails: React.FC = () => {
               <PatientInsightsList insights={insights} />
             )}
           </div>
+        </TabsContent>
+        
+        <TabsContent value="weekly" className='rounded-lg border bg-card text-card-foreground shadow-sm'>
+          <PatientWeeklySummary patient={patient} />
         </TabsContent>
       </Tabs>
     </div>
