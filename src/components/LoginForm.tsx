@@ -40,6 +40,11 @@ const LoginForm: React.FC = () => {
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
+  const [resetStep, setResetStep] = useState('request'); // 'request', 'code', 'newPassword'
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const navigate = useNavigate();
   const {
     toast
@@ -59,7 +64,8 @@ const LoginForm: React.FC = () => {
     setResetLoading(true);
     
     try {
-      // Remover o parâmetro redirectTo para usar a abordagem baseada em token
+      // Enviar e-mail com código de redefinição
+      // Nota: A API do Supabase pode não suportar o parâmetro data diretamente
       const { error } = await supabase.auth.resetPasswordForEmail(email);
       
       if (error) throw error;
@@ -67,16 +73,111 @@ const LoginForm: React.FC = () => {
       // Mostrar mensagem de sucesso
       toast({
         title: "E-mail enviado",
-        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+        description: "Verifique sua caixa de entrada para o código de redefinição de senha.",
       });
       
-      // Fechar o modal
-      setForgotPasswordOpen(false);
+      // Avançar para o próximo passo
+      setResetStep('code');
     } catch (error: any) {
       // Mostrar mensagem de erro
       toast({
         title: "Erro",
         description: error.message || "Não foi possível enviar o e-mail de redefinição.",
+        variant: "destructive"
+      });
+    } finally {
+      setResetLoading(false);
+    }
+  };
+  
+  // Verificar o código de redefinição
+  const verifyResetCode = async (code: string) => {
+    if (!code || code.length < 6) {
+      toast({
+        title: "Código inválido",
+        description: "Por favor, insira o código completo recebido por e-mail.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setResetLoading(true);
+    
+    try {
+      // Verificar o código usando a API do Supabase
+      const { error } = await supabase.auth.verifyOtp({
+        email: resetEmail,
+        token: code,
+        type: 'recovery'
+      });
+      
+      if (error) throw error;
+      
+      // Avançar para o próximo passo
+      setResetStep('newPassword');
+      toast({
+        title: "Código verificado",
+        description: "Agora você pode definir uma nova senha.",
+      });
+    } catch (error: any) {
+      console.error('Erro ao verificar código:', error);
+      toast({
+        title: "Código inválido",
+        description: "O código informado é inválido ou expirou.",
+        variant: "destructive"
+      });
+    } finally {
+      setResetLoading(false);
+    }
+  };
+  
+  // Atualizar a senha
+  const updatePassword = async (password: string) => {
+    if (password.length < 6) {
+      toast({
+        title: "Senha muito curta",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "Senhas não coincidem",
+        description: "A confirmação de senha não corresponde à senha inserida.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setResetLoading(true);
+    
+    try {
+      // Atualizar a senha usando a API do Supabase
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Senha atualizada",
+        description: "Sua senha foi atualizada com sucesso. Você já pode fazer login."
+      });
+      
+      // Fechar o modal e resetar os estados
+      setForgotPasswordOpen(false);
+      setResetStep('request');
+      setResetEmail('');
+      setResetCode('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      console.error('Erro ao atualizar senha:', error);
+      toast({
+        title: "Erro ao atualizar senha",
+        description: error.message || "Ocorreu um erro ao atualizar sua senha. Tente novamente.",
         variant: "destructive"
       });
     } finally {
@@ -233,7 +334,7 @@ const LoginForm: React.FC = () => {
         }
         
         // Se chegou aqui, nenhum método funcionou
-        throw new Error('Credenciais inválidas');
+        throw new Error('Credenciais Inválidas');
       }
       
       // Garantir que temos um usuário
@@ -450,7 +551,7 @@ const LoginForm: React.FC = () => {
     } catch (err) {
       console.error('Erro no login:', err);
       toast({
-        title: "Credenciais inválidas",
+        title: "Credenciais Inválidas",
         description: "E-mail ou senha incorretos.",
         variant: "destructive"
       });
@@ -558,56 +659,181 @@ const LoginForm: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Recuperar Senha</h3>
+              <h3 className="text-lg font-medium">
+                {resetStep === 'request' && "Recuperar Senha"}
+                {resetStep === 'code' && "Insira o Código"}
+                {resetStep === 'newPassword' && "Nova Senha"}
+              </h3>
               <button 
-                onClick={() => setForgotPasswordOpen(false)}
+                onClick={() => {
+                  setForgotPasswordOpen(false);
+                  setResetStep('request'); // Reset ao fechar
+                  setResetCode('');
+                  setNewPassword('');
+                  setConfirmPassword('');
+                }}
                 className="text-gray-500 hover:text-gray-700"
               >
                 <X size={20} />
               </button>
             </div>
             
-            <p className="text-sm text-gray-600 mb-4">
-              Digite seu e-mail e enviaremos instruções para redefinir sua senha.
-            </p>
-            
-            <div className="space-y-4">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail size={20} className="text-gray-400" />
+            {/* Etapa 1: Solicitar código */}
+            {resetStep === 'request' && (
+              <>
+                <p className="text-sm text-gray-600 mb-4">
+                  Digite seu e-mail e enviaremos um código para redefinir sua senha.
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Mail size={20} className="text-gray-400" />
+                    </div>
+                    <input
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      placeholder="Seu e-mail"
+                      className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent"
+                    />
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2">
+                    <button
+                      onClick={() => setForgotPasswordOpen(false)}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      onClick={() => handleForgotPassword(resetEmail)}
+                      disabled={resetLoading}
+                      className="px-4 py-2 bg-gradient-button text-white rounded-lg hover:opacity-90 disabled:opacity-70 flex items-center gap-2"
+                    >
+                      {resetLoading ? (
+                        <>
+                          <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                          <span>Enviando...</span>
+                        </>
+                      ) : (
+                        <span>Enviar</span>
+                      )}
+                    </button>
+                  </div>
                 </div>
-                <input
-                  type="email"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  placeholder="Seu e-mail"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent"
-                />
-              </div>
-              
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={() => setForgotPasswordOpen(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => handleForgotPassword(resetEmail)}
-                  disabled={resetLoading}
-                  className="px-4 py-2 bg-gradient-button text-white rounded-lg hover:opacity-90 disabled:opacity-70 flex items-center gap-2"
-                >
-                  {resetLoading ? (
-                    <>
-                      <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      <span>Enviando...</span>
-                    </>
-                  ) : (
-                    <span>Enviar</span>
-                  )}
-                </button>
-              </div>
-            </div>
+              </>
+            )}
+            
+            {/* Etapa 2: Inserir código */}
+            {resetStep === 'code' && (
+              <>
+                <p className="text-sm text-gray-600 mb-4">
+                  Digite o código que enviamos para <strong>{resetEmail}</strong>.
+                </p>
+                
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    value={resetCode}
+                    onChange={(e) => setResetCode(e.target.value)}
+                    placeholder="Código de redefinição"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent"
+                    maxLength={6}
+                  />
+                  
+                  <div className="flex justify-between space-x-2">
+                    <button
+                      onClick={() => setResetStep('request')}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                    >
+                      Voltar
+                    </button>
+                    <button
+                      onClick={() => verifyResetCode(resetCode)}
+                      disabled={resetLoading || resetCode.length < 6}
+                      className="px-4 py-2 bg-gradient-button text-white rounded-lg hover:opacity-90 disabled:opacity-70 flex items-center gap-2"
+                    >
+                      {resetLoading ? (
+                        <>
+                          <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                          <span>Verificando...</span>
+                        </>
+                      ) : (
+                        <span>Verificar</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+            
+            {/* Etapa 3: Nova senha */}
+            {resetStep === 'newPassword' && (
+              <>
+                <p className="text-sm text-gray-600 mb-4">
+                  Digite sua nova senha.
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock size={20} className="text-gray-400" />
+                    </div>
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Nova senha (mínimo 6 caracteres)"
+                      className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                    >
+                      {showNewPassword ? <EyeOff size={20} className="text-gray-400" /> : <Eye size={20} className="text-gray-400" />}
+                    </button>
+                  </div>
+                  
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock size={20} className="text-gray-400" />
+                    </div>
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirme a nova senha"
+                      className="w-full pl-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent"
+                    />
+                  </div>
+                  
+                  <div className="flex justify-between space-x-2">
+                    <button
+                      onClick={() => setResetStep('code')}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                    >
+                      Voltar
+                    </button>
+                    <button
+                      onClick={() => updatePassword(newPassword)}
+                      disabled={resetLoading || newPassword.length < 6 || newPassword !== confirmPassword}
+                      className="px-4 py-2 bg-gradient-button text-white rounded-lg hover:opacity-90 disabled:opacity-70 flex items-center gap-2"
+                    >
+                      {resetLoading ? (
+                        <>
+                          <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                          <span>Atualizando...</span>
+                        </>
+                      ) : (
+                        <span>Atualizar Senha</span>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
