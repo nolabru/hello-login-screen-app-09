@@ -10,6 +10,7 @@ import { checkLicenseAvailability, updateLicenseCountForExistingEmployees } from
 import { fetchCompanyPsychologists } from '@/integrations/supabase/companyPsychologistsService';
 import { useToast } from '@/components/ui/use-toast';
 import { RefreshCw } from 'lucide-react';
+import { useCompanySentimentData } from '@/hooks/useCompanySentimentData';
 
 // Usando any para o tipo do Supabase para contornar erros de tipo
 const supabaseAny: any = supabase;
@@ -23,10 +24,12 @@ const CompanyDashboard: React.FC = () => {
     pendingEmployees: 0,
     activePsychologists: 0,
     pendingPsychologists: 0,
-    wellBeingIndex: 'N/A',
     availableLicenses: 0,
     totalLicenses: 0
   });
+  
+  // Usar o hook para obter o índice de bem-estar
+  const { wellBeingIndex, getWellBeingColor } = useCompanySentimentData('week');
   const [loading, setLoading] = useState(true);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [isAddEmployeeDialogOpen, setIsAddEmployeeDialogOpen] = useState(false);
@@ -84,7 +87,6 @@ const CompanyDashboard: React.FC = () => {
           pendingEmployees: 0, // Não estamos mais usando a distinção entre ativos e pendentes
           activePsychologists: activePsychs,
           pendingPsychologists: pendingPsychs,
-          wellBeingIndex: 'N/A',
           availableLicenses: licenseStats.available,
           totalLicenses: licenseStats.total
         });
@@ -244,41 +246,53 @@ const CompanyDashboard: React.FC = () => {
                   <h2 className="text-xl font-medium text-neutral-700">
                     Licenças e Bem-estar
                   </h2>
-                  {companyId && (
+                  <div className="flex gap-2">
                     <Button 
-                      onClick={async () => {
-                        try {
-                          await updateLicenseCountForExistingEmployees(companyId);
-                          
-                          // Atualizar as estatísticas após a atualização do contador
-                          const licenseStats = await checkLicenseAvailability(companyId);
-                          setStats(prev => ({
-                            ...prev,
-                            availableLicenses: licenseStats.available,
-                            totalLicenses: licenseStats.total
-                          }));
-                          
-                          toast({
-                            title: 'Contador de Licenças Atualizado',
-                            description: 'O contador de licenças foi atualizado com base nos funcionários existentes.'
-                          });
-                        } catch (error) {
-                          console.error('Erro ao atualizar contador de licenças:', error);
-                          toast({
-                            title: 'Erro',
-                            description: 'Não foi possível atualizar o contador de licenças. Tente novamente.',
-                            variant: 'destructive'
-                          });
-                        }
-                      }}
+                      onClick={() => window.location.reload()}
                       variant="outline" 
                       size="sm"
                       className="flex items-center gap-1"
                     >
                       <RefreshCw className="h-4 w-4" />
-                      <span>Atualizar Licenças</span>
+                      <span>Atualizar Índice</span>
                     </Button>
-                  )}
+                    
+                    {companyId && (
+                      <Button 
+                        onClick={async () => {
+                          try {
+                            await updateLicenseCountForExistingEmployees(companyId);
+                            
+                            // Atualizar as estatísticas após a atualização do contador
+                            const licenseStats = await checkLicenseAvailability(companyId);
+                            setStats(prev => ({
+                              ...prev,
+                              availableLicenses: licenseStats.available,
+                              totalLicenses: licenseStats.total
+                            }));
+                            
+                            toast({
+                              title: 'Contador de Licenças Atualizado',
+                              description: 'O contador de licenças foi atualizado com base nos funcionários existentes.'
+                            });
+                          } catch (error) {
+                            console.error('Erro ao atualizar contador de licenças:', error);
+                            toast({
+                              title: 'Erro',
+                              description: 'Não foi possível atualizar o contador de licenças. Tente novamente.',
+                              variant: 'destructive'
+                            });
+                          }
+                        }}
+                        variant="outline" 
+                        size="sm"
+                        className="flex items-center gap-1"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                        <span>Atualizar Licenças</span>
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -299,8 +313,26 @@ const CompanyDashboard: React.FC = () => {
                       <div className="mb-2">
                         <h3 className="text-gray-700">Índice de Bem-Estar</h3>
                       </div>
-                      <p className="text-4xl font-bold text-portal-purple">{stats.wellBeingIndex}</p>
-                      <p className="text-sm text-gray-500 mt-2">Média Atual da Equipe</p>
+                      <p 
+                        className="text-4xl font-bold" 
+                        style={{ color: getWellBeingColor(wellBeingIndex) }}
+                      >
+                        {wellBeingIndex === 'N/A' ? 'N/A' : `${wellBeingIndex}/100`}
+                      </p>
+                      <p className="text-sm text-gray-500 mt-2">
+                        {wellBeingIndex === 'N/A' 
+                          ? 'Sem dados suficientes' 
+                          : wellBeingIndex >= 80 
+                            ? 'Excelente' 
+                            : wellBeingIndex >= 60 
+                              ? 'Bom' 
+                              : wellBeingIndex >= 40 
+                                ? 'Médio' 
+                                : wellBeingIndex >= 20 
+                                  ? 'Preocupante' 
+                                  : 'Crítico'
+                        }
+                      </p>
                     </CardContent>
                   </Card>
                 </div>

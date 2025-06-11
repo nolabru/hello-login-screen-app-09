@@ -130,7 +130,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 
 const CompanySentimentChart: React.FC = () => {
   const [period, setPeriod] = useState<"month" | "week">("week");
-  const { sentimentData, loading, error } = useCompanySentimentData(period);
+  const { sentimentData, loading, error, wellBeingIndex, getWellBeingColor } = useCompanySentimentData(period);
 
   // Determinar quais dados exibir
   const displayData = sentimentData.length > 0 ? sentimentData : fallbackData;

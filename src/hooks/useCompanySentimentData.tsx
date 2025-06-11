@@ -10,10 +10,59 @@ export interface CompanySentimentData {
   neutro: number;
 }
 
+// Pesos para cada sentimento (escala de 0-5)
+export const SENTIMENT_WEIGHTS = {
+  feliz: 5,    // Sentimento mais positivo
+  neutro: 3,   // Sentimento neutro
+  ansioso: 2,  // Sentimento moderadamente negativo
+  triste: 1,   // Sentimento mais negativo
+  irritado: 0  // Sentimento mais negativo
+};
+
+// Função para calcular o índice de bem-estar
+export function calculateWellBeingIndex(sentimentData: CompanySentimentData[]): number | 'N/A' {
+  if (!sentimentData || sentimentData.length === 0) return 'N/A';
+  
+  // Somar todos os sentimentos de todos os períodos
+  let totalCount = 0;
+  let weightedSum = 0;
+  
+  sentimentData.forEach(period => {
+    Object.entries(SENTIMENT_WEIGHTS).forEach(([sentiment, weight]) => {
+      const count = period[sentiment as keyof typeof SENTIMENT_WEIGHTS] || 0;
+      totalCount += count;
+      weightedSum += count * weight;
+    });
+  });
+  
+  if (totalCount === 0) return 'N/A';
+  
+  // Calcular média ponderada e normalizar para escala 0-100
+  const rawIndex = weightedSum / totalCount;
+  const normalizedIndex = Math.round((rawIndex / 5) * 100);
+  
+  return normalizedIndex;
+}
+
+// Função para obter a cor do índice de bem-estar
+export function getWellBeingColor(index: number | 'N/A'): string {
+  if (index === 'N/A') return '#808080'; // Cinza para N/A
+  
+  // Já temos um número, não precisamos converter
+  const numericIndex = index as number;
+  
+  if (numericIndex >= 80) return '#4CAF50'; // Verde (excelente)
+  if (numericIndex >= 60) return '#8BC34A'; // Verde-claro (bom)
+  if (numericIndex >= 40) return '#FFC107'; // Amarelo (médio)
+  if (numericIndex >= 20) return '#FF9800'; // Laranja (preocupante)
+  return '#F44336'; // Vermelho (crítico)
+}
+
 export function useCompanySentimentData(period: 'month' | 'week' = 'week') {
   const [sentimentData, setSentimentData] = useState<CompanySentimentData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [wellBeingIndex, setWellBeingIndex] = useState<number | 'N/A'>('N/A');
 
   useEffect(() => {
     async function fetchCompanySentimentData() {
@@ -82,7 +131,12 @@ export function useCompanySentimentData(period: 'month' | 'week' = 'week') {
         const aggregatedData = aggregateByPeriod(sessions, period);
         console.log('Dados agregados:', aggregatedData);
         
+        // Calcular o índice de bem-estar
+        const index = calculateWellBeingIndex(aggregatedData);
+        console.log('Índice de bem-estar calculado:', index);
+        
         setSentimentData(aggregatedData);
+        setWellBeingIndex(index);
       } catch (error: any) {
         console.error('Erro ao buscar dados de sentimentos da empresa:', error);
         setError(error.message);
@@ -94,7 +148,7 @@ export function useCompanySentimentData(period: 'month' | 'week' = 'week') {
     fetchCompanySentimentData();
   }, [period]);
   
-  return { sentimentData, loading, error };
+  return { sentimentData, loading, error, wellBeingIndex, getWellBeingColor };
 }
 
 // Função auxiliar para agregar dados por período
