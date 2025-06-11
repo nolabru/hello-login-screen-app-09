@@ -208,10 +208,13 @@ const LoginForm: React.FC = () => {
         console.log('Detalhes do erro:', error.message, error.status, error.code);
         
         // Verificar se o erro é devido à falta de verificação de e-mail
-        if (error.message.includes('Email not confirmed') || 
+        // E se o e-mail não foi verificado localmente
+        if ((error.message.includes('Email not confirmed') || 
             error.message.includes('email not confirmed') || 
-            error.message.includes('not confirmed') ||
-            error.status === 400) {
+            error.message.includes('not confirmed')) && 
+            localStorage.getItem('emailVerified') !== 'true') {
+          
+          console.log('E-mail não verificado, mostrando mensagem de verificação');
           toast({
             title: "E-mail não verificado",
             description: "Por favor, verifique seu e-mail e clique no link de confirmação antes de fazer login.",
