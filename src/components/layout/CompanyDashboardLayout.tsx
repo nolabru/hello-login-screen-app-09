@@ -45,13 +45,20 @@ const CompanyDashboardLayout: React.FC<CompanyDashboardLayoutProps> = ({
         // Caso contrário, busque do banco de dados
         const companyIdNumber = parseInt(companyId, 10);
         const {
-          data: company
-        } = await supabase.from('companies').select('name, email, contact_email').eq('id', companyIdNumber).single();
+          data: company,
+          error
+        } = await supabase.from('companies').select('name, email, corp_email').eq('id', companyIdNumber).single();
+        
+        if (error) {
+          console.error('Erro ao buscar dados da empresa:', error);
+          return;
+        }
+        
         if (company) {
           setCompanyName(company.name);
-          setCompanyEmail(company.email || company.contact_email);
+          setCompanyEmail(company.email || company.corp_email || '');
           localStorage.setItem('companyName', company.name);
-          localStorage.setItem('companyEmail', company.email || company.contact_email);
+          localStorage.setItem('companyEmail', company.email || company.corp_email || '');
         }
       }
     };
@@ -87,12 +94,18 @@ const CompanyDashboardLayout: React.FC<CompanyDashboardLayoutProps> = ({
     label: 'Report e Conformidade',
     icon: FileText
   }];
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
+      // Fazer logout no sistema de autenticação do Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+      
       // Limpar localStorage
       localStorage.removeItem('companyId');
       localStorage.removeItem('companyName');
       localStorage.removeItem('companyEmail');
+      
       toast({
         title: "Logout Realizado",
         description: "Sua sessão foi encerrada com sucesso."

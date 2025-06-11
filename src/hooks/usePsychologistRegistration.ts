@@ -13,26 +13,23 @@ export const usePsychologistRegistration = () => {
   const handleSubmit = async (data: PsychologistFormValues) => {
     setIsSubmitting(true);
     try {
-      // Insert the psychologist data into the database
-      const { data: insertedData, error } = await supabase
-        .from('psychologists')
-        .insert({
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          crp: data.crp,
-          specialization: data.specialization,
-          bio: data.biography,
-          password: data.password,
-          status: true
-        })
-        .select();
+      // 1. Criar usuário no sistema de autenticação do Supabase
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: { 
+            user_type: 'psychologist',
+            name: data.name
+          }
+        }
+      });
       
-      if (error) {
-        console.error('Error inserting data:', error);
+      if (authError) {
+        console.error('Erro ao criar usuário:', authError);
         
-        // Handle duplicate email error
-        if (error.code === '23505' && error.message.includes('email')) {
+        // Tratar erro de e-mail duplicado
+        if (authError.message.includes('email')) {
           toast({
             variant: 'destructive',
             title: "Erro no cadastro",
@@ -44,12 +41,53 @@ export const usePsychologistRegistration = () => {
         toast({
           variant: 'destructive',
           title: "Erro no cadastro",
+          description: authError.message || "Houve um problema ao registrar seus dados. Por favor, tente novamente.",
+        });
+        return;
+      }
+      
+      // Verificar se o usuário foi criado com sucesso
+      if (!authData.user) {
+        throw new Error("Falha ao criar usuário");
+      }
+      
+      // 2. Inserir dados específicos do psicólogo na tabela 'psychologists'
+      // @ts-ignore - Ignorar erro de tipo para o campo user_id que foi adicionado à tabela
+      const { data: insertedData, error } = await supabase
+        .from('psychologists')
+        .insert({
+          user_id: authData.user.id, // Vincular ao usuário criado
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          crp: data.crp,
+          specialization: data.specialization,
+          bio: data.biography,
+          password: data.password, // Manter password por enquanto para compatibilidade
+          status: true
+        })
+        .select();
+      
+      if (error) {
+        console.error('Erro ao inserir dados:', error);
+        
+        // Tentar remover o usuário criado para evitar inconsistências
+        try {
+          // Nota: Esta operação pode requerer permissões de admin
+          await supabase.auth.admin.deleteUser(authData.user.id);
+        } catch (deleteError) {
+          console.error('Erro ao remover usuário após falha:', deleteError);
+        }
+        
+        toast({
+          variant: 'destructive',
+          title: "Erro no cadastro",
           description: "Houve um problema ao registrar seus dados. Por favor, tente novamente.",
         });
         return;
       }
 
-      // Get the inserted psychologist ID
+      // Obter o ID do psicólogo inserido
       const psychologistId = insertedData?.[0]?.id?.toString();
       
       if (psychologistId) {

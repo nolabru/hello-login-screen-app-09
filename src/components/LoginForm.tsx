@@ -5,6 +5,30 @@ import CheckboxCustom from './ui/checkbox-custom';
 import { Eye, EyeOff, Lock, Mail, X } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from "@/integrations/supabase/client";
+import { Session, User } from '@supabase/supabase-js';
+
+// Definir interfaces para os tipos de dados
+interface UserMetadata {
+  user_type?: string;
+  name?: string;
+  email_verified?: boolean;
+  [key: string]: any; // Para permitir propriedades adicionais
+}
+
+interface Psychologist {
+  id: string | number;
+  name: string;
+  email: string;
+  [key: string]: any;
+}
+
+interface Company {
+  id: string | number;
+  name: string;
+  email?: string;
+  corp_email?: string;
+  [key: string]: any;
+}
 const LoginForm: React.FC = () => {
   const [userType, setUserType] = useState('psychologists');
   const [email, setEmail] = useState('');
@@ -70,65 +94,249 @@ const LoginForm: React.FC = () => {
     }
     setLoading(true);
     try {
-      // Admin login handling
-      if (adminMode) {
-        if (email === 'admin@admin.com') {
-          // Verificar se este admin existe e a senha está correta
-          // Usando uma abordagem mais simples para evitar erros de tipo
-          const { data: admin, error: adminError } = await supabase
-            .from('user_profiles')
-            .select('*')
-            .match({ email: 'admin@admin.com', password: password })
+      // 1. Tentar autenticar com Supabase Auth
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      // Se houver erro na autenticação, tentar o método antigo
+      if (error) {
+        console.log('Erro na autenticação com Supabase Auth:', error);
+        console.log('Detalhes do erro:', error.message, error.status, error.code);
+        console.log('Tentando método antigo de login...');
+        
+        // Método antigo para login de psicólogos
+        if (userType === 'psychologists') {
+          console.log('Tentando login como psicólogo com método antigo para:', email);
+          // Primeiro, vamos verificar se o psicólogo existe
+          const { data: psychologistCheck, error: checkError } = await supabase
+            .from('psychologists')
+            .select('id, name, email, password')
+            .eq('email', email)
             .single();
-          if (adminError || !admin) {
+            
+          if (checkError) {
+            console.error('Erro ao verificar psicólogo:', checkError);
+            throw new Error('Psicólogo não encontrado');
+          }
+          
+          console.log('Psicólogo encontrado:', psychologistCheck);
+          
+          // Agora verificamos a senha
+          if (psychologistCheck.password !== password) {
+            console.error('Senha incorreta para o psicólogo');
+            throw new Error('Senha incorreta');
+          }
+          
+          // Se chegou aqui, o login é válido
+          const psychologist = psychologistCheck;
+          
+          // Psicólogo encontrado, salvar dados na sessão
+          localStorage.setItem('psychologistId', psychologist.id.toString());
+          localStorage.setItem('psychologistName', psychologist.name || 'Psicólogo');
+          
+          // Processar convites (código existente)
+          // ...
+          
+          toast({
+            title: "Login Bem-Sucedido",
+            description: `Bem-Vindo(a) de Volta, ${psychologist.name || 'Psicólogo'}!`
+          });
+          navigate('/dashboard');
+          return;
+        } 
+        // Método antigo para login de empresas
+        else if (userType === 'companies') {
+          console.log('Tentando login como empresa com método antigo para:', email);
+          // Primeiro, verificamos se a empresa existe com o email principal
+          let { data: companyCheck, error: checkError } = await supabase
+            .from('companies')
+            .select('id, name, email, corp_email, password')
+            .eq('email', email)
+            .single();
+            
+          // Se não encontrar com o email principal, tentamos com o email corporativo
+          if (checkError) {
+            console.log('Empresa não encontrada com email principal, tentando email corporativo');
+            const result = await supabase
+              .from('companies')
+              .select('id, name, email, corp_email, password')
+              .eq('corp_email', email)
+              .single();
+              
+            companyCheck = result.data;
+            checkError = result.error;
+          }
+          
+          if (checkError) {
+            console.error('Erro ao verificar empresa:', checkError);
+            throw new Error('Empresa não encontrada');
+          }
+          
+          console.log('Empresa encontrada:', companyCheck);
+          
+          // Verificar a senha
+          if (companyCheck.password !== password) {
+            console.error('Senha incorreta para a empresa');
+            throw new Error('Senha incorreta');
+          }
+          
+          // Se chegou aqui, o login é válido
+          const company = companyCheck;
+          
+          // Empresa encontrada, salvar dados na sessão
+          localStorage.setItem('companyId', company.id.toString());
+          localStorage.setItem('companyName', company.name || 'Empresa');
+          localStorage.setItem('companyEmail', company.email || company.corp_email || email);
+          
+          toast({
+            title: "Login Bem-Sucedido",
+            description: `Bem-Vindo(a) de Volta, ${company.name || 'Empresa'}!`
+          });
+          navigate('/company/dashboard');
+          return;
+        }
+        // Admin login handling com método antigo
+        else if (adminMode) {
+          if (email === 'admin@admin.com') {
+            // Verificar se este admin existe e a senha está correta
+            const { data: admin, error: adminError } = await supabase
+              .from('user_profiles')
+              .select('*')
+              .match({ email: 'admin@admin.com', password: password })
+              .single();
+              
+            if (adminError || !admin) {
+              throw new Error('Credenciais de administrador inválidas');
+            }
+            
+            // Admin autenticado
+            localStorage.setItem('adminId', admin.id.toString());
+            localStorage.setItem('adminName', admin.name || 'Administrador');
+            
             toast({
-              title: "Credenciais de administrador inválidas",
+              title: "Login de administrador bem-sucedido",
+              description: "Bem-vindo à área do administrador"
+            });
+            navigate('/admin/dashboard');
+            return;
+          } else {
+            toast({
+              title: "Acesso negado",
+              description: "Somente o administrador pode acessar esta área",
               variant: "destructive"
             });
             setLoading(false);
             return;
           }
-
-          // Admin autenticado
-          localStorage.setItem('adminId', admin.id.toString());
-          localStorage.setItem('adminName', admin.name || 'Administrador');
-          toast({
-            title: "Login de administrador bem-sucedido",
-            description: "Bem-vindo à área do administrador"
-          });
-          navigate('/admin/dashboard');
-          return;
+        }
+        
+        // Se chegou aqui, nenhum método funcionou
+        throw new Error('Credenciais inválidas');
+      }
+      
+      // Garantir que temos um usuário
+      if (!data || !data.user) {
+        throw new Error("Usuário não encontrado");
+      }
+      
+      // 2. Verificar o tipo de usuário
+      const user: User = data.user;
+      const userMetadata = user.user_metadata as UserMetadata;
+      
+      // Inicialmente, tentamos obter o tipo do usuário dos metadados
+      let userTypeFromAuth = userMetadata.user_type || '';
+      
+      // Se não houver tipo de usuário nos metadados, vamos determinar com base nas tabelas
+      if (!userTypeFromAuth) {
+        console.log('Tipo de usuário não encontrado nos metadados, verificando nas tabelas...');
+        
+        // Verificar se é um psicólogo
+        const { data: psychCheck, error: psychError } = await supabase
+          .from('psychologists')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (psychCheck && !psychError) {
+          console.log('Usuário encontrado na tabela psychologists');
+          userTypeFromAuth = 'psychologist';
         } else {
-          toast({
-            title: "Acesso negado",
-            description: "Somente o administrador pode acessar esta área",
-            variant: "destructive"
+          // Verificar se é uma empresa
+          const { data: companyCheck, error: companyError } = await supabase
+            .from('companies')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+            
+          if (companyCheck && !companyError) {
+            console.log('Usuário encontrado na tabela companies');
+            userTypeFromAuth = 'company';
+          }
+        }
+        
+        // Se encontramos o tipo, vamos atualizar os metadados para futuras autenticações
+        if (userTypeFromAuth) {
+          console.log('Atualizando metadados do usuário com o tipo:', userTypeFromAuth);
+          // Atualizar apenas o campo user_type para evitar problemas
+          await supabase.auth.updateUser({
+            data: { 
+              user_type: userTypeFromAuth
+            }
           });
-          setLoading(false);
-          return;
+        } else {
+          console.error('Não foi possível determinar o tipo de usuário');
         }
       }
+      
+      console.log('Tipo de usuário determinado:', userTypeFromAuth);
+      
+      // Admin login handling
+      if (userTypeFromAuth === 'admin' || (adminMode && email === 'admin@admin.com')) {
+        // Admin autenticado
+        localStorage.setItem('adminId', data.user.id);
+        localStorage.setItem('adminName', userMetadata.name || 'Administrador');
+        toast({
+          title: "Login de administrador bem-sucedido",
+          description: "Bem-vindo à área do administrador"
+        });
+        navigate('/admin/dashboard');
+        return;
+      }
+      
+      // Verificar se estamos em modo admin mas o usuário não é admin
+      if (adminMode) {
+        toast({
+          title: "Acesso negado",
+          description: "Somente o administrador pode acessar esta área",
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
 
-      // Regular login (Non-admin) continues with existing logic
-      if (userType === 'psychologists') {
-        // Verificar se o psicólogo existe na tabela psychologists
-        // Usando uma abordagem mais simples para evitar erros de tipo
-        const { data: psychologist, error: fetchError } = await supabase
+      // 3. Buscar dados adicionais e redirecionar com base no tipo
+      if (userTypeFromAuth === 'psychologist') {
+        // Buscar dados do psicólogo
+        // @ts-ignore - Ignorar erro de tipo complexo
+        const { data: psychologistData, error: psychError } = await supabase
           .from('psychologists')
           .select('*')
-          .match({ email: email, password: password })
+          .eq('user_id', user.id)
           .single();
-        if (fetchError || !psychologist) {
-          console.error('Erro ao fazer login:', fetchError);
-          toast({
-            title: "Credenciais inválidas",
-            description: "E-mail ou senha incorretos.",
-            variant: "destructive"
-          });
-          setLoading(false);
-          return;
+        
+        if (psychError) {
+          console.error('Erro ao buscar dados do psicólogo:', psychError);
+          throw new Error('Erro ao buscar dados do psicólogo');
         }
-
+        
+        if (!psychologistData) {
+          throw new Error('Psicólogo não encontrado');
+        }
+        
+        const psychologist = psychologistData as Psychologist;
+        
         // Psicólogo encontrado, salvar dados na sessão
         localStorage.setItem('psychologistId', psychologist.id.toString());
         localStorage.setItem('psychologistName', psychologist.name || 'Psicólogo');
@@ -203,56 +411,47 @@ const LoginForm: React.FC = () => {
           description: `Bem-Vindo(a) de Volta, ${psychologist.name || 'Psicólogo'}!`
         });
         navigate('/dashboard');
-      } else {
-        // Lógica para empresas
-        console.log('Tentando fazer login como empresa');
-
-        // Verificar se a empresa existe na tabela companies
-        // Primeiro tentamos com o email principal
-        let { data: company, error: fetchError } = await supabase
+      } 
+      else if (userTypeFromAuth === 'company') {
+        // Buscar dados da empresa
+        // @ts-ignore - Ignorar erro de tipo complexo
+        const { data: companyData, error: companyError } = await supabase
           .from('companies')
           .select('*')
-          .match({ email: email, password: password })
+          .eq('user_id', user.id)
           .single();
+        
+        if (companyError) {
+          console.error('Erro ao buscar dados da empresa:', companyError);
+          throw new Error('Erro ao buscar dados da empresa');
+        }
+        
+        if (!companyData) {
+          throw new Error('Empresa não encontrada');
+        }
           
-        // Se não encontrar, tentamos com o email corporativo
-        if (fetchError || !company) {
-          const result = await supabase
-            .from('companies')
-            .select('*')
-            .match({ corp_email: email, password: password })
-            .single();
-            
-          company = result.data;
-          fetchError = result.error;
-        }
-        if (fetchError || !company) {
-          console.error('Erro ao fazer login como empresa:', fetchError);
-          toast({
-            title: "Credenciais inválidas",
-            description: "E-mail ou senha incorretos.",
-            variant: "destructive"
-          });
-          setLoading(false);
-          return;
-        }
-        console.log('Empresa encontrada:', company);
-
+        const company = companyData as Company;
+        
         // Empresa encontrada, salvar dados na sessão
         localStorage.setItem('companyId', company.id.toString());
         localStorage.setItem('companyName', company.name || 'Empresa');
         localStorage.setItem('companyEmail', company.email || company.corp_email || email);
+        
         toast({
           title: "Login Bem-Sucedido",
           description: `Bem-Vindo(a) de Volta, ${company.name || 'Empresa'}!`
         });
         navigate('/company/dashboard');
       }
+      else {
+        // Tipo de usuário desconhecido
+        throw new Error("Tipo de usuário desconhecido");
+      }
     } catch (err) {
-      console.error('Erro inesperado:', err);
+      console.error('Erro no login:', err);
       toast({
-        title: "Erro no servidor",
-        description: "Ocorreu um erro ao processar seu login. Tente novamente mais tarde.",
+        title: "Credenciais inválidas",
+        description: "E-mail ou senha incorretos.",
         variant: "destructive"
       });
     } finally {

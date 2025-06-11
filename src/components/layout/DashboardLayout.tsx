@@ -80,11 +80,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     label: 'Configurações',
     icon: Settings
   }];
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
+      // Fazer logout no sistema de autenticação do Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+      
       // Limpar localStorage
       localStorage.removeItem('psychologistId');
       localStorage.removeItem('psychologistName');
+      
       toast({
         title: "Logout Realizado",
         description: "Sua sessão foi encerrada com sucesso."
