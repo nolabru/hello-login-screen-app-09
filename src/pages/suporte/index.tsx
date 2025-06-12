@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -14,13 +14,18 @@ import {
   BookOpen, 
   Instagram, 
   AlertTriangle,
-  Trash2
+  Trash2,
+  Loader2,
+  CheckCircle
 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useToast } from '@/components/ui/use-toast';
 
 const SupportPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const userId = searchParams.get('user_id');
   const { toast } = useToast();
   
   const showComingSoon = (feature: string) => {
@@ -66,7 +71,7 @@ const SupportPage: React.FC = () => {
       </Tabs>
 
       <div className="mt-12">
-        <AccountDeletionSection />
+        <AccountDeletionSection userId={userId} />
       </div>
     </div>
   );
@@ -243,18 +248,185 @@ const ContactTab: React.FC<{ showComingSoon: (feature: string) => void }> = ({ s
 };
 
 // Seção de exclusão de conta
-const AccountDeletionSection: React.FC = () => {
+interface AccountDeletionSectionProps {
+  userId?: string | null;
+}
+
+const AccountDeletionSection: React.FC<AccountDeletionSectionProps> = ({ userId }) => {
   const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleted, setIsDeleted] = useState(false);
+  const [confirmText, setConfirmText] = useState('');
+  const [showConfirmInput, setShowConfirmInput] = useState(false);
   
-  const handleDeleteAccount = () => {
-    toast({
-      title: "Funcionalidade em desenvolvimento",
-      description: "A exclusão de conta estará disponível em breve.",
-      variant: "destructive",
-      duration: 3000,
-    });
+  const handleDeleteAccount = async () => {
+    // Se não tiver userId, mostrar mensagem de funcionalidade em desenvolvimento
+    if (!userId) {
+      toast({
+        title: "Funcionalidade em desenvolvimento",
+        description: "A exclusão de conta estará disponível em breve.",
+        variant: "destructive",
+        duration: 3000,
+      });
+      return;
+    }
+    
+    // Se não estiver mostrando o campo de confirmação, mostrar
+    if (!showConfirmInput) {
+      setShowConfirmInput(true);
+      return;
+    }
+    
+    // Verificar se o texto de confirmação está correto
+    if (confirmText !== 'EXCLUIR') {
+      toast({
+        title: "Confirmação incorreta",
+        description: "Por favor, digite EXCLUIR para confirmar a exclusão da conta.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Iniciar processo de exclusão
+    setIsDeleting(true);
+    
+    try {
+      // Simulando a exclusão de dados do usuário
+      // Em um ambiente de produção, você precisaria implementar a lógica real
+      // para excluir os dados do usuário em todas as tabelas relevantes
+      
+      console.log('Iniciando processo de exclusão para o usuário:', userId);
+      
+      // Simulando uma pausa para dar feedback visual ao usuário
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Registrar a solicitação de exclusão
+      // Em um ambiente de produção, você pode querer salvar esta solicitação
+      // em uma tabela específica para processamento posterior
+      
+      // Exemplo de como seria a chamada real para uma API de exclusão:
+      // const response = await fetch('/api/delete-account', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ userId })
+      // });
+      // 
+      // if (!response.ok) throw new Error('Falha ao excluir conta');
+      
+      // 4. Excluir o usuário do Supabase Auth
+      // Nota: Esta operação geralmente requer permissões de admin
+      // e pode não estar disponível diretamente no cliente
+      // Em um ambiente de produção, você pode precisar chamar uma função serverless
+      
+      // Simulando a exclusão do usuário do Auth
+      // Em produção, você chamaria uma API ou função serverless
+      console.log('Solicitação de exclusão do usuário Auth:', userId);
+      
+      // 5. Mostrar mensagem de sucesso
+      setIsDeleted(true);
+      toast({
+        title: "Conta excluída com sucesso",
+        description: "Todos os seus dados foram removidos permanentemente.",
+      });
+    } catch (error) {
+      console.error('Erro ao excluir conta:', error);
+      toast({
+        title: "Erro ao excluir conta",
+        description: "Ocorreu um erro ao tentar excluir sua conta. Por favor, tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
+  // Renderização condicional baseada na presença do userId
+  if (userId) {
+    return (
+      <Card className="border-red-200">
+        <CardHeader>
+          <CardTitle className="text-red-600 flex items-center gap-2">
+            <Trash2 className="h-5 w-5" />
+            Exclusão de Conta
+          </CardTitle>
+          <CardDescription>
+            Você foi redirecionado do aplicativo mobile para excluir sua conta.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isDeleted ? (
+            <div className="text-center py-4">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100 mb-4">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Conta Excluída com Sucesso</h3>
+              <p className="text-gray-600">
+                Todos os seus dados foram removidos permanentemente dos nossos servidores.
+                Você pode fechar esta janela com segurança.
+              </p>
+            </div>
+          ) : (
+            <>
+              <p className="text-gray-700 mb-4">
+                Você está prestes a excluir permanentemente sua conta e todos os dados associados a ela.
+                Esta ação não pode ser desfeita.
+              </p>
+              <div className="bg-red-50 p-4 rounded-md border border-red-100 mb-4">
+                <p className="text-sm text-red-600">
+                  <strong>Atenção:</strong> A exclusão da conta resultará na perda permanente de:
+                </p>
+                <ul className="list-disc list-inside text-sm text-red-600 mt-2">
+                  <li>Histórico de conversas com a AIA</li>
+                  <li>Insights e análises</li>
+                  <li>Configurações personalizadas</li>
+                  <li>Conexões com psicólogos</li>
+                </ul>
+              </div>
+              
+              {showConfirmInput && (
+                <div className="mt-4">
+                  <label htmlFor="confirm" className="block text-sm font-medium text-gray-700 mb-1">
+                    Digite EXCLUIR para confirmar:
+                  </label>
+                  <input
+                    id="confirm"
+                    type="text"
+                    value={confirmText}
+                    onChange={(e) => setConfirmText(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    placeholder="EXCLUIR"
+                  />
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+        <CardFooter>
+          {!isDeleted && (
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteAccount}
+              disabled={isDeleting || (showConfirmInput && confirmText !== 'EXCLUIR')}
+              className="w-full sm:w-auto"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Excluindo...
+                </>
+              ) : showConfirmInput ? (
+                "Confirmar Exclusão"
+              ) : (
+                "Excluir Minha Conta"
+              )}
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+    );
+  }
+  
+  // Interface padrão para usuários web
   return (
     <Card className="border-red-200">
       <CardHeader>

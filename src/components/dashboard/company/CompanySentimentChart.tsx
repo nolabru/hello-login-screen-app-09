@@ -21,29 +21,16 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { 
+  SENTIMENT_BACKGROUND_COLORS, 
+  SENTIMENT_TEXT_COLORS,
+  getSentimentBackgroundColor,
+  getSentimentTextColor
+} from "@/lib/sentimentColors";
 
-// Cores para cada sentimento (fundo)
-const SENTIMENT_COLORS = {
-  feliz: "#A5D6A7",    // Verde mais escuro
-  triste: "#90CAF9",   // Azul mais escuro
-  ansioso: "#FFCC80",  // Laranja mais escuro
-  neutro: "#FFD54F",   // Amarelo mais escuro
-  irritado: "#EF9A9A", // Vermelho mais escuro
-};
-
-// Cores para texto (mais escuras para contraste)
-const SENTIMENT_TEXT_COLORS = {
-  feliz: "#388E3C",    // Verde escuro
-  triste: "#1976D2",   // Azul escuro
-  ansioso: "#FF933B",  // Laranja escuro
-  neutro: "#F5CC00",   // Cinza escuro
-  irritado: "#D32F2F", // Vermelho escuro
-};
-
-// Função para obter a cor de texto baseada no sentimento
-const getTextColor = (sentiment: string): string => {
-  return SENTIMENT_TEXT_COLORS[sentiment as keyof typeof SENTIMENT_TEXT_COLORS] || "#333333";
-};
+// Função para obter a cor de texto baseada no sentimento (usando a função importada)
+// Mantida para compatibilidade com o código existente
+const getTextColor = getSentimentTextColor;
 
 // Dados de fallback para quando não há dados reais
 const fallbackData = [
@@ -95,7 +82,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p className="text-gray-900 font-medium mb-3 capitalize">{`Período: ${label}`}</p>
 
         {payload.map((entry: any, index: number) => {
-          const sentiment = entry.dataKey as keyof typeof SENTIMENT_COLORS;
+          const sentiment = entry.dataKey as keyof typeof SENTIMENT_BACKGROUND_COLORS;
           const percentage =
             total > 0 ? Math.round((entry.value / total) * 100) : 0;
 
@@ -104,7 +91,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
               <div
                 className="w-3 h-3 rounded-full mr-2"
                 style={{
-                  backgroundColor: SENTIMENT_COLORS[sentiment] || entry.fill,
+                  backgroundColor: SENTIMENT_BACKGROUND_COLORS[sentiment] || entry.fill,
                 }}
               />
               <span className="text-neutral-600 font-medium mr-2">
@@ -192,7 +179,7 @@ const CompanySentimentChart: React.FC = () => {
     return {
       name: maxSentiment.charAt(0).toUpperCase() + maxSentiment.slice(1),
       value: maxValue,
-      color: SENTIMENT_COLORS[maxSentiment as keyof typeof SENTIMENT_COLORS],
+      color: SENTIMENT_BACKGROUND_COLORS[maxSentiment as keyof typeof SENTIMENT_BACKGROUND_COLORS],
     };
   }, [displayData]);
 
@@ -292,7 +279,7 @@ const CompanySentimentChart: React.FC = () => {
                 <Line
                   type="monotone"
                   dataKey="feliz"
-                  stroke={SENTIMENT_COLORS.feliz}
+                  stroke={SENTIMENT_BACKGROUND_COLORS.feliz}
                   name="Feliz"
                   strokeWidth={2}
                   dot={{ r: 4 }}
@@ -303,7 +290,7 @@ const CompanySentimentChart: React.FC = () => {
                 <Line
                   type="monotone"
                   dataKey="triste"
-                  stroke={SENTIMENT_COLORS.triste}
+                  stroke={SENTIMENT_BACKGROUND_COLORS.triste}
                   name="Triste"
                   strokeWidth={2}
                   dot={{ r: 4 }}
@@ -314,7 +301,7 @@ const CompanySentimentChart: React.FC = () => {
                 <Line
                   type="monotone"
                   dataKey="ansioso"
-                  stroke={SENTIMENT_COLORS.ansioso}
+                  stroke={SENTIMENT_BACKGROUND_COLORS.ansioso}
                   name="Ansioso"
                   strokeWidth={2}
                   dot={{ r: 4 }}
@@ -325,7 +312,7 @@ const CompanySentimentChart: React.FC = () => {
                 <Line
                   type="monotone"
                   dataKey="neutro"
-                  stroke={SENTIMENT_COLORS.neutro}
+                  stroke={SENTIMENT_BACKGROUND_COLORS.neutro}
                   name="Neutro"
                   strokeWidth={2}
                   dot={{ r: 4 }}
@@ -336,7 +323,7 @@ const CompanySentimentChart: React.FC = () => {
                 <Line
                   type="monotone"
                   dataKey="irritado"
-                  stroke={SENTIMENT_COLORS.irritado}
+                  stroke={SENTIMENT_BACKGROUND_COLORS.irritado}
                   name="Irritado"
                   strokeWidth={2}
                   dot={{ r: 4 }}

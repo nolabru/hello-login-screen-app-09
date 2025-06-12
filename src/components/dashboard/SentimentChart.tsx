@@ -31,29 +31,12 @@ import {
 } from "lucide-react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Badge } from "@/components/ui/badge";
-
-// Cores para cada sentimento (fundo)
-const SENTIMENT_COLORS = {
-  feliz: "#A5D6A7",    // Verde mais escuro
-  triste: "#90CAF9",   // Azul mais escuro
-  ansioso: "#FFCC80",  // Laranja mais escuro
-  neutro: "#FFD54F",   // Amarelo mais escuro
-  irritado: "#EF9A9A", // Vermelho mais escuro
-};
-
-// Cores para texto (mais escuras para contraste)
-const SENTIMENT_TEXT_COLORS = {
-  feliz: "#388E3C",    // Verde escuro
-  triste: "#1976D2",   // Azul escuro
-  ansioso: "#FF933B",  // Laranja escuro
-  neutro: "#F5CC00",   // Cinza escuro
-  irritado: "#D32F2F", // Vermelho escuro
-};
-
-// Função para obter a cor de texto baseada no sentimento
-const getTextColor = (sentiment: string): string => {
-  return SENTIMENT_TEXT_COLORS[sentiment as keyof typeof SENTIMENT_TEXT_COLORS] || "#333333";
-};
+import { 
+  SENTIMENT_BACKGROUND_COLORS, 
+  SENTIMENT_TEXT_COLORS,
+  getSentimentBackgroundColor,
+  getSentimentTextColor
+} from "@/lib/sentimentColors";
 
 
 // Dados de fallback para quando não há dados reais
@@ -98,7 +81,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <p className="text-gray-900 font-medium mb-3 capitalize">{`Período: ${label}`}</p>
 
         {payload.map((entry: any, index: number) => {
-          const sentiment = entry.dataKey as keyof typeof SENTIMENT_COLORS;
+          const sentiment = entry.dataKey as keyof typeof SENTIMENT_BACKGROUND_COLORS;
           const percentage =
             total > 0 ? Math.round((entry.value / total) * 100) : 0;
 
@@ -107,7 +90,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
               <div
                 className="w-3 h-3 rounded-full mr-2"
                 style={{
-                  backgroundColor: SENTIMENT_COLORS[sentiment] || entry.fill,
+                  backgroundColor: getSentimentBackgroundColor(sentiment) || entry.fill,
                 }}
               />
               <span className="text-neutral-600 font-medium mr-2">
@@ -170,7 +153,7 @@ const SentimentChart: React.FC = () => {
       .map(([key, value]) => ({
         name: key.charAt(0).toUpperCase() + key.slice(1), // Capitalizar
         value,
-        color: SENTIMENT_COLORS[key as keyof typeof SENTIMENT_COLORS],
+        color: SENTIMENT_BACKGROUND_COLORS[key as keyof typeof SENTIMENT_BACKGROUND_COLORS],
       }));
   }, [displayData]);
 
@@ -205,7 +188,7 @@ const SentimentChart: React.FC = () => {
                   className="font-medium"
                   style={{ 
                     backgroundColor: predominantSentiment.color,
-                    color: getTextColor(predominantSentiment.name.toLowerCase())
+                    color: getSentimentTextColor(predominantSentiment.name.toLowerCase())
                   }}
                 >
                   Sentimento Predominante dos seus Pacientes: {predominantSentiment.name}
@@ -296,7 +279,7 @@ const SentimentChart: React.FC = () => {
                         </svg>
                         <span 
                           className="text-neutral-600"
-                          style={{ color: getTextColor(value.toLowerCase()) }}
+                          style={{ color: getSentimentTextColor(value.toLowerCase()) }}
                         >
                           {value}
                         </span>
@@ -306,7 +289,7 @@ const SentimentChart: React.FC = () => {
                   <Bar
                     dataKey="feliz"
                     stackId="a"
-                    fill={SENTIMENT_COLORS.feliz}
+                    fill={SENTIMENT_BACKGROUND_COLORS.feliz}
                     name="Feliz"
                     radius={[4, 4, 0, 0]}
                     animationDuration={800}
@@ -314,7 +297,7 @@ const SentimentChart: React.FC = () => {
                   <Bar
                     dataKey="triste"
                     stackId="a"
-                    fill={SENTIMENT_COLORS.triste}
+                    fill={SENTIMENT_BACKGROUND_COLORS.triste}
                     name="Triste"
                     radius={[0, 0, 0, 0]}
                     animationDuration={800}
@@ -322,7 +305,7 @@ const SentimentChart: React.FC = () => {
                   <Bar
                     dataKey="ansioso"
                     stackId="a"
-                    fill={SENTIMENT_COLORS.ansioso}
+                    fill={SENTIMENT_BACKGROUND_COLORS.ansioso}
                     name="Ansioso"
                     radius={[0, 0, 0, 0]}
                     animationDuration={800}
@@ -330,7 +313,7 @@ const SentimentChart: React.FC = () => {
                   <Bar
                     dataKey="neutro"
                     stackId="a"
-                    fill={SENTIMENT_COLORS.neutro}
+                    fill={SENTIMENT_BACKGROUND_COLORS.neutro}
                     name="Neutro"
                     radius={[0, 0, 0, 0]}
                     animationDuration={800}
@@ -338,7 +321,7 @@ const SentimentChart: React.FC = () => {
                   <Bar
                     dataKey="irritado"
                     stackId="a"
-                    fill={SENTIMENT_COLORS.irritado}
+                    fill={SENTIMENT_BACKGROUND_COLORS.irritado}
                     name="Irritado"
                     radius={[0, 0, 0, 0]}
                     animationDuration={800}
@@ -383,7 +366,7 @@ const SentimentChart: React.FC = () => {
                         </svg>
                         <span 
                           className="text-neutral-600"
-                          style={{ color: getTextColor(value.toLowerCase()) }}
+                          style={{ color: getSentimentTextColor(value.toLowerCase()) }}
                         >
                           {value}
                         </span>

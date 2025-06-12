@@ -5,7 +5,8 @@ import { usePatientInsights } from '@/hooks/usePatientInsights';
 import PatientDetailsHeader from '@/components/dashboard/patients/PatientDetailsHeader';
 import PatientInfoSection from '@/components/dashboard/patients/PatientInfoSection';
 import PatientInsightsList from '@/components/dashboard/patients/PatientInsightsList';
-import PatientWeeklySummary from '@/components/dashboard/patients/PatientWeeklySummary';
+import PatientGeneralSummary from '@/components/dashboard/patients/PatientGeneralSummary';
+import PatientPreConsultation from '@/components/dashboard/patients/PatientPreConsultation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const PatientDetails: React.FC = () => {
@@ -51,7 +52,8 @@ const PatientDetails: React.FC = () => {
         <TabsList className="mb-4">
           <TabsTrigger value="info">Informações</TabsTrigger>
           <TabsTrigger value="insights">Insights</TabsTrigger>
-          <TabsTrigger value="weekly">Resumo Semanal</TabsTrigger>
+          <TabsTrigger value="general">Resumo Geral</TabsTrigger>
+          <TabsTrigger value="preconsultation">Pré Consulta</TabsTrigger>
         </TabsList>
         
         <TabsContent value="info" className="space-y-6">
@@ -80,8 +82,12 @@ const PatientDetails: React.FC = () => {
           </div>
         </TabsContent>
         
-        <TabsContent value="weekly" className='rounded-lg border bg-card text-card-foreground shadow-sm'>
-          <PatientWeeklySummary patient={patient} />
+        <TabsContent value="general" className='rounded-lg border bg-card text-card-foreground shadow-sm'>
+          <PatientGeneralSummary patient={patient} />
+        </TabsContent>
+        
+        <TabsContent value="preconsultation" className='rounded-lg border bg-card text-card-foreground shadow-sm'>
+          <PatientPreConsultation patient={patient} />
         </TabsContent>
       </Tabs>
     </div>
