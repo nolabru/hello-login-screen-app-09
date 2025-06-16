@@ -176,6 +176,56 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_content_reports: {
+        Row: {
+          id: string
+          user_id: string
+          category: string
+          description: string
+          timestamp_of_incident: string
+          status: string
+          created_at: string
+          updated_at: string
+          reviewed_by: string | null
+          reviewed_at: string | null
+          admin_notes: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          category: string
+          description: string
+          timestamp_of_incident: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          admin_notes?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          category?: string
+          description?: string
+          timestamp_of_incident?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          admin_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_content_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          }
+        ]
+      }
       session_insights: {
         Row: {
           id: number

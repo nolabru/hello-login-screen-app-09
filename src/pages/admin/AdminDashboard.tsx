@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AdminDashboardLayout from '@/components/layout/AdminDashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Building2, Key, AlertCircle } from 'lucide-react';
+import { Users, Building2, Key, AlertCircle, Flag } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,7 @@ interface PendingAction {
 }
 
 interface Psychologist {
-  id: number;
+  id: string;
   name: string;
   email: string;
   crp: string;
@@ -37,7 +37,7 @@ interface Company {
 
 interface License {
   id: number;
-  company_id: number;
+  company_id: string;
   company_name: string;
   plan_name: string;
   total_licenses: number;
@@ -55,6 +55,8 @@ const AdminDashboard = () => {
   const [psychologistsCount, setPsychologistsCount] = useState(0);
   const [companiesCount, setCompaniesCount] = useState(0);
   const [licensesCount, setLicensesCount] = useState(0);
+  const [aiReportsCount, setAiReportsCount] = useState(0);
+  const [pendingReportsCount, setPendingReportsCount] = useState(0);
   const [pendingActions, setPendingActions] = useState<PendingAction[]>([]);
   
   // For dialog states
@@ -91,6 +93,23 @@ const AdminDashboard = () => {
         
         if (licError) throw licError;
         setLicensesCount(licCount || 0);
+
+        // Fetch count of AI reports
+        const { count: aiReportsTotal, error: aiReportsError } = await supabase
+          .from('ai_content_reports')
+          .select('*', { count: 'exact', head: true });
+        
+        if (aiReportsError) throw aiReportsError;
+        setAiReportsCount(aiReportsTotal || 0);
+
+        // Fetch count of pending AI reports
+        const { count: pendingReports, error: pendingReportsError } = await supabase
+          .from('ai_content_reports')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'pending');
+        
+        if (pendingReportsError) throw pendingReportsError;
+        setPendingReportsCount(pendingReports || 0);
 
         // Não há mais ações pendentes relacionadas a conexões
         setPendingActions([]);
@@ -198,7 +217,7 @@ const AdminDashboard = () => {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick('psychologists')}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                   <CardTitle className="text-sm font-medium">Psicólogos</CardTitle>
@@ -234,6 +253,25 @@ const AdminDashboard = () => {
                   <div className="text-2xl font-bold">{licensesCount}</div>
                   <p className="text-xs text-muted-foreground">
                     Licenças emitidas
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/admin/ai-reports')}>
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                  <CardTitle className="text-sm font-medium">Denúncias IA</CardTitle>
+                  <Flag className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{aiReportsCount}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {pendingReportsCount > 0 ? (
+                      <span className="text-amber-600 font-medium">
+                        {pendingReportsCount} pendentes
+                      </span>
+                    ) : (
+                      'Todas analisadas'
+                    )}
                   </p>
                 </CardContent>
               </Card>
