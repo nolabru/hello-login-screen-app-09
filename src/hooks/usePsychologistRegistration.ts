@@ -22,7 +22,7 @@ export const usePsychologistRegistration = () => {
             user_type: 'psychologist',
             name: data.name
           },
-          emailRedirectTo: 'http://localhost:8080/email-verificado' // Especificar redirecionamento após verificação
+          emailRedirectTo: 'http://calma.inventu.ai:8080/email-verificado' // Especificar redirecionamento após verificação
         }
       });
       

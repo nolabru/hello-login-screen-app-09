@@ -22,7 +22,7 @@ export const useCompanyRegistration = () => {
             user_type: 'company',
             name: data.companyName
           },
-          emailRedirectTo: 'http://localhost:8080/email-verificado' // Especificar redirecionamento após verificação
+          emailRedirectTo: 'http://calma.inventu.ai:8080/email-verificado' // Especificar redirecionamento após verificação
         }
       });
       

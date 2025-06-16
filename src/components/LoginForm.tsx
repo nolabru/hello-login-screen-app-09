@@ -229,7 +229,7 @@ const LoginForm: React.FC = () => {
                 type: 'signup',
                 email: email,
                 options: {
-                  emailRedirectTo: 'http://localhost:8080/email-verificado' // Especificar redirecionamento após verificação
+                  emailRedirectTo: 'http://calma.inventu.ai/email-verificado' // Especificar redirecionamento após verificação
                 }
               });
               
