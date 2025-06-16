@@ -34,6 +34,7 @@ import PsychologistInviteHandler from "./pages/PsychologistInviteHandler";
 import RedirectInvite from "./pages/RedirectInvite";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import SupportPage from "./pages/suporte";
+import UserProfile from "./pages/UserProfile";
 
 // Create a new QueryClient instance outside the component
 const queryClient = new QueryClient();
@@ -85,6 +86,9 @@ const App = () => {
               
               {/* Página de Suporte */}
               <Route path="/suporte" element={<SupportPage />} />
+              
+              {/* Página de Perfil do Usuário */}
+              <Route path="/user/profile" element={<UserProfile />} />
               
               {/* Catch-all route for 404 */}
               <Route path="*" element={<NotFound />} />
