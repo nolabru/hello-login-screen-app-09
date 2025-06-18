@@ -372,12 +372,12 @@ const LoginForm: React.FC = () => {
         }
         // Admin login handling com método antigo
         else if (adminMode) {
-          if (email === 'admin@admin.com') {
+          if (email === 'calma@admin.com') {
             // Verificar se este admin existe e a senha está correta
             const { data: admin, error: adminError } = await supabase
               .from('user_profiles')
               .select('*')
-              .match({ email: 'admin@admin.com', password: password })
+              .match({ email: 'calma@admin.com', password: password })
               .single();
               
             if (adminError || !admin) {
@@ -466,7 +466,7 @@ const LoginForm: React.FC = () => {
       console.log('Tipo de usuário determinado:', userTypeFromAuth);
       
       // Admin login handling
-      if (userTypeFromAuth === 'admin' || (adminMode && email === 'admin@admin.com')) {
+      if (userTypeFromAuth === 'admin' || (adminMode && email === 'calma@admin.com')) {
         // Admin autenticado
         localStorage.setItem('adminId', data.user.id);
         localStorage.setItem('adminName', userMetadata.name || 'Administrador');
@@ -660,7 +660,7 @@ const LoginForm: React.FC = () => {
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Mail size={20} className="text-gray-400" />
             </div>
-            <input id="email" name="email" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent" placeholder={adminMode ? "admin@admin.com" : "seu@email.com"} />
+            <input id="email" name="email" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-portal-purple focus:border-transparent" placeholder={adminMode ? "calma@admin.com" : "seu@email.com"} />
           </div>
         </div>
 

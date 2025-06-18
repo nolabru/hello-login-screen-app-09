@@ -1,41 +1,73 @@
-
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
 import AdminDashboardLayout from '@/components/layout/AdminDashboardLayout';
-import { checkLicenseAvailability } from '@/services/licenseService';
-import { UserProfile } from '@/types/user';
-import { Company } from '@/types/company';
-import { CompanyLicense } from '@/types/license';
+import { 
+  Table, 
+  TableHeader, 
+  TableHead, 
+  TableRow, 
+  TableBody, 
+  TableCell 
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { SearchBar } from '@/components/ui/search-bar';
+import { Trash2 } from 'lucide-react';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 
-// Import our new components
-import UserSearch from '@/components/admin/UserSearch';
-import UserTable from '@/components/admin/UserTable';
-import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
-import AssignCompanyDialog from '@/components/admin/AssignCompanyDialog';
+// Interface baseada no schema real
+interface UserProfileWithCompany {
+  id: string;
+  user_id: string | null;
+  full_name: string | null;
+  email: string | null;
+  phone_number: string | null;
+  company_id: string | null;
+  employee_status: string;
+  preferred_name: string;
+  created_at: string;
+  updated_at: string;
+  company_name: string | null; // Via JOIN
+}
 
 const AdminUsers: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
-  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
-  const [userToAssign, setUserToAssign] = useState<UserProfile | null>(null);
-  const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
-  const [licenseInfo, setLicenseInfo] = useState<CompanyLicense | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserProfileWithCompany | null>(null);
 
-  // Fetch users
+  // Fetch users with company info
   const { data: users, isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ['adminUsers'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('*')
-        .order('nome', { ascending: true });
+        .select(`
+          id,
+          user_id,
+          full_name,
+          email,
+          phone_number,
+          company_id,
+          employee_status,
+          created_at,
+          updated_at,
+          companies!user_profiles_companie_id_fkey(name)
+        `)
+        .order('full_name', { ascending: true });
         
       if (error) {
         console.error("Error fetching users:", error);
@@ -47,34 +79,28 @@ const AdminUsers: React.FC = () => {
         throw error;
       }
       
-      return data as UserProfile[];
-    }
-  });
-
-  // Fetch companies
-  const { data: companies, isLoading: companiesLoading } = useQuery({
-    queryKey: ['adminCompanies'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('companies')
-        .select('id, name')
-        .order('name', { ascending: true });
-        
-      if (error) {
-        console.error("Error fetching companies:", error);
-        toast({
-          title: "Erro ao carregar empresas",
-          description: "Não foi possível carregar a lista de empresas.",
-          variant: "destructive"
-        });
-        throw error;
-      }
+      // Transform data to include company_name and full_name
+      const transformedData = data?.map((user: any) => ({
+        ...user,
+        full_name: user.full_name, // Use full_name from database
+        company_name: user.companies?.name || null
+      })) || [];
       
-      return data as Company[];
+      return transformedData as UserProfileWithCompany[];
     }
   });
+  
+  const filteredUsers = users?.filter(user => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      user.full_name?.toLowerCase().includes(searchLower) ||
+      user.preferred_name?.toLowerCase().includes(searchLower) ||
+      user.email?.toLowerCase().includes(searchLower) ||
+      user.company_name?.toLowerCase().includes(searchLower)
+    );
+  });
 
-  const handleDeleteClick = (user: UserProfile) => {
+  const handleDeleteClick = (user: UserProfileWithCompany) => {
     setUserToDelete(user);
     setDeleteDialogOpen(true);
   };
@@ -83,26 +109,16 @@ const AdminUsers: React.FC = () => {
     if (!userToDelete) return;
     
     try {
-      // Check if user has an active license that needs to be freed
-      if (userToDelete.license_status === 'active' && userToDelete.id_empresa) {
-        // First update license_status to inactive
-        await supabase
-          .from('user_profiles')
-          .update({ license_status: 'inactive' })
-          .eq('id', userToDelete.id);
-      }
-      
-      // Then delete the user
       const { error } = await supabase
         .from('user_profiles')
         .delete()
-        .eq('id', userToDelete.id);
+        .eq('id', userToDelete.id as any);
 
       if (error) throw error;
 
       toast({
         title: "Usuário removido",
-        description: `O usuário ${userToDelete.nome} foi removido com sucesso.`,
+        description: `O usuário ${userToDelete.full_name || userToDelete.preferred_name} foi removido com sucesso.`,
       });
       
       // Refresh data
@@ -120,114 +136,6 @@ const AdminUsers: React.FC = () => {
     }
   };
 
-  const handleAssignClick = (user: UserProfile) => {
-    setUserToAssign(user);
-    setSelectedCompanyId(user.id_empresa ? String(user.id_empresa) : '');
-    setAssignDialogOpen(true);
-    
-    // Reset license info when opening dialog
-    setLicenseInfo(null);
-    
-    // If a company is already selected, fetch its license info
-    if (user.id_empresa) {
-      fetchCompanyLicenseInfo(user.id_empresa);
-    }
-  };
-  
-  const fetchCompanyLicenseInfo = async (companyId: number) => {
-    try {
-      const licenseData = await checkLicenseAvailability(companyId);
-      setLicenseInfo(licenseData);
-    } catch (error) {
-      console.error("Error fetching license info:", error);
-      setLicenseInfo(null);
-      toast({
-        title: "Erro ao carregar informações de licença",
-        description: "Não foi possível verificar a disponibilidade de licenças.",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  const handleCompanyChange = (value: string) => {
-    setSelectedCompanyId(value);
-    
-    // Fetch license info when company is selected
-    if (value && value !== 'null') {
-      fetchCompanyLicenseInfo(parseInt(value));
-    } else {
-      setLicenseInfo(null);
-    }
-  };
-
-  const handleAssignConfirm = async () => {
-    if (!userToAssign) return;
-    setIsLoading(true);
-    
-    try {
-      const newCompanyId = selectedCompanyId === 'null' ? null : selectedCompanyId ? parseInt(selectedCompanyId) : null;
-      const prevCompanyId = userToAssign.id_empresa;
-      const wasLicensed = userToAssign.license_status === 'active';
-      
-      // Check if assigning to a company and if there are available licenses
-      if (newCompanyId && (!licenseInfo || licenseInfo.available <= 0)) {
-        toast({
-          title: "Erro ao atribuir usuário",
-          description: "A empresa não possui licenças disponíveis para atribuir a este usuário.",
-          variant: "destructive"
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      // Update the user with the selected company ID and activate license
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ 
-          id_empresa: newCompanyId,
-          license_status: newCompanyId ? 'active' : 'inactive' // Set license status based on company assignment
-        })
-        .eq('id', userToAssign.id);
-
-      if (error) throw error;
-
-      const companyName = newCompanyId 
-        ? companies?.find(c => c.id === parseInt(String(newCompanyId)))?.name 
-        : 'nenhuma empresa';
-
-      toast({
-        title: "Usuário atualizado",
-        description: `${userToAssign.nome} foi atribuído a ${companyName}.`,
-      });
-      
-      // Refresh data
-      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
-      
-      // If company changed and license was previously active, refresh the old company's license info
-      if (prevCompanyId && prevCompanyId !== newCompanyId && wasLicensed) {
-        queryClient.invalidateQueries({ queryKey: ['companyLicenses', prevCompanyId] });
-      }
-      
-      // If assigned to a new company, refresh that company's license info
-      if (newCompanyId) {
-        queryClient.invalidateQueries({ queryKey: ['companyLicenses', newCompanyId] });
-      }
-    } catch (error) {
-      console.error("Error assigning user to company:", error);
-      toast({
-        title: "Erro ao atribuir usuário",
-        description: "Não foi possível atribuir o usuário à empresa. Tente novamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-      setAssignDialogOpen(false);
-      setUserToAssign(null);
-      setSelectedCompanyId('');
-      setLicenseInfo(null);
-    }
-  };
-
   return (
     <>
       <Helmet>
@@ -236,46 +144,109 @@ const AdminUsers: React.FC = () => {
       <AdminDashboardLayout>
         <div className="p-6">
           <div className="mb-6">
-            <h1 className="text-3xl font-medium mb-2">Usuários</h1>
+            <h1 className="text-2xl font-medium text-neutral-700">Usuários</h1>
             <p className="text-gray-500">Gerencie todos os usuários cadastrados no sistema</p>
           </div>
 
-          <UserSearch 
-            searchQuery={searchQuery} 
-            onSearchQueryChange={setSearchQuery} 
+          <SearchBar
+            placeholder="Buscar usuário por nome, email ou empresa..."
+            value={searchQuery}
+            onChange={setSearchQuery}
           />
 
-          <UserTable 
-            users={users}
-            isLoading={usersLoading}
-            error={usersError}
-            searchQuery={searchQuery}
-            companies={companies}
-            onAssignClick={handleAssignClick}
-            onDeleteClick={handleDeleteClick}
-          />
+          {usersLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <p>Carregando usuários...</p>
+            </div>
+          ) : usersError ? (
+            <div className="flex justify-center items-center h-64">
+              <p className="text-red-500">Erro ao carregar dados. Por favor, tente novamente.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-50">
+                  <TableHead className="font-medium">Nome</TableHead>
+                  <TableHead className="font-medium">Email</TableHead>
+                  <TableHead className="font-medium">Telefone</TableHead>
+                  <TableHead className="font-medium">Empresa</TableHead>
+                  <TableHead className="font-medium">Status Usuário</TableHead>
+                  <TableHead className="font-medium">Status Licença</TableHead>
+                  <TableHead className="text-right font-medium">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers && filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">
+                        {user.full_name || user.preferred_name || '-'}
+                      </TableCell>
+                      <TableCell>{user.email || '-'}</TableCell>
+                      <TableCell>{user.phone_number || '-'}</TableCell>
+                      <TableCell>{user.company_name || 'Sem empresa'}</TableCell>
+                      <TableCell>
+                        <Badge className="bg-green-100 text-green-800">
+                          Ativo
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          className={
+                            user.company_id 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }
+                        >
+                          {user.company_id ? 'Ativa' : 'Inativa'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="outline" 
+                          size="icon" 
+                          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDeleteClick(user)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      {searchQuery 
+                        ? 'Nenhum usuário encontrado para essa busca.' 
+                        : 'Nenhum usuário cadastrado no sistema.'}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </AdminDashboardLayout>
 
-      <DeleteConfirmationDialog 
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        userToDelete={userToDelete}
-        onConfirmDelete={handleDeleteConfirm}
-      />
-
-      <AssignCompanyDialog 
-        open={assignDialogOpen}
-        onOpenChange={setAssignDialogOpen}
-        userToAssign={userToAssign}
-        companies={companies}
-        companiesLoading={companiesLoading}
-        onConfirmAssign={handleAssignConfirm}
-        selectedCompanyId={selectedCompanyId}
-        onSelectedCompanyIdChange={handleCompanyChange}
-        licenseInfo={licenseInfo}
-        isLoading={isLoading}
-      />
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o usuário {userToDelete?.full_name || userToDelete?.preferred_name}? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

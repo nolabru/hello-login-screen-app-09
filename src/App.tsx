@@ -23,10 +23,8 @@ import CompanyPsychologists from "./pages/CompanyPsychologists";
 import CompanyLicenses from "./pages/CompanyLicenses";
 import CompanyComplianceReport from "./pages/CompanyComplianceReport";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminConnections from "./pages/admin/AdminConnections";
 import AdminPsychologists from "./pages/admin/AdminPsychologists";
 import AdminCompanies from "./pages/admin/AdminCompanies";
-import AdminEmployees from "./pages/admin/AdminEmployees";
 import AdminLicenses from "./pages/admin/AdminLicenses";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSettings from "./pages/admin/AdminSettings";
@@ -76,8 +74,6 @@ const App = () => {
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/psychologists" element={<AdminPsychologists />} />
               <Route path="/admin/companies" element={<AdminCompanies />} />
-              <Route path="/admin/employees" element={<AdminEmployees />} />
-              <Route path="/admin/connections" element={<AdminConnections />} />
               <Route path="/admin/licenses" element={<AdminLicenses />} />
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/settings" element={<AdminSettings />} />

@@ -14,7 +14,7 @@ const PsychologistDashboard: React.FC = () => {
       </Helmet>
       <DashboardLayout>
         <div className="p-6">
-          <h1 className=" text-2xl font-medium text-neutral-700">Visão Geral</h1>
+          <h1 className="text-2xl font-medium text-neutral-700">Visão Geral</h1>
           <p className="text-gray-500 mb-6">Acompanhe seus pacientes e sua interação com a AIA</p>
           
           <div className="flex justify-start mb-6">

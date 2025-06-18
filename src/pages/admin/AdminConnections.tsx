@@ -8,9 +8,9 @@ const AdminConnections = () => {
 
   return (
     <AdminDashboardLayout>
-      <div className="container mx-auto p-6">
+      <div className="p-6">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold">Gerenciamento de Conexões</h1>
+          <h1 className="text-2xl font-medium text-neutral-700">Gerenciamento de Conexões</h1>
           <p className="text-gray-500 mt-2">Administre conexões entre psicólogos e empresas</p>
         </header>
 

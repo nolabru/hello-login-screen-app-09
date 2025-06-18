@@ -2,7 +2,7 @@
 import React, { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '@/components/Logo';
-import { Home, Users, Building2, Settings, LogOut, Menu, X, Key, Link as LinkIcon, User, Briefcase, FileEdit } from 'lucide-react';
+import { Home, Users, Building2, Settings, LogOut, Menu, X, Key, User, FileEdit, AlertTriangle } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/components/ui/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -36,25 +36,12 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ children })
         return;
       }
       
-      // Se houver um nome salvo, use-o
+      // Se houver um nome salvo, use-o, senão use nome padrão
       if (adminNameStored) {
         setAdminName(adminNameStored);
       } else {
-        // Caso contrário, busque do banco de dados
-        const { data: admin } = await supabase
-          .from('user_profiles')
-          .select('nome')
-          .eq('id', parseInt(adminId, 10))
-          .eq('email', 'admin@admin.com')
-          .single();
-          
-        if (admin) {
-          setAdminName(admin.nome || 'Administrador');
-          localStorage.setItem('adminName', admin.nome || 'Administrador');
-        } else {
-          // Se não encontrar o admin, fazer logout
-          handleLogout();
-        }
+        setAdminName('Administrador');
+        localStorage.setItem('adminName', 'Administrador');
       }
     };
     
@@ -74,8 +61,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ children })
     { path: '/admin/dashboard', label: 'Dashboard', icon: Home },
     { path: '/admin/psychologists', label: 'Psicólogos', icon: Users },
     { path: '/admin/companies', label: 'Empresas', icon: Building2 },
-    { path: '/admin/employees', label: 'Funcionários', icon: Briefcase },
-    { path: '/admin/connections', label: 'Conexões', icon: LinkIcon },
+    { path: '/admin/ai-reports', label: 'Denúncias', icon: AlertTriangle },
     { path: '/admin/licenses', label: 'Licenças', icon: Key },
     { path: '/admin/users', label: 'Usuários', icon: User },
     { path: '/admin/settings', label: 'Prompt da AIA', icon: FileEdit },
@@ -136,11 +122,11 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ children })
           </div>
           
           <div className="p-4 border-b">
-            <p className="text-sm text-gray-500">Administrador</p>
+            <p className="text-sm text-gray-500">Bem-vindo(a),</p>
             <h2 className="font-medium text-xl">{adminName}</h2>
           </div>
           
-          <div className="py-4 overflow-y-auto flex-1">
+          <div className="overflow-y-auto flex-1">
             <nav>
               <ul>
                 {navItems.map((item) => {

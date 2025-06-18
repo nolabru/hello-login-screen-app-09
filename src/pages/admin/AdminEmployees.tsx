@@ -133,7 +133,7 @@ const AdminEmployees: React.FC = () => {
       <AdminDashboardLayout>
         <div className="p-6">
           <div className="mb-6">
-            <h1 className="text-3xl font-medium mb-2">Funcionários</h1>
+            <h1 className="text-2xl font-medium text-neutral-700">Funcionários</h1>
             <p className="text-gray-500">Gerencie todos os funcionários vinculados às empresas</p>
           </div>
 

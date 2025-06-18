@@ -1,8 +1,6 @@
 
 import React from 'react';
-import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { SearchBar } from '@/components/ui/search-bar';
 
 interface UserSearchProps {
   searchQuery: string;
@@ -11,19 +9,11 @@ interface UserSearchProps {
 
 const UserSearch: React.FC<UserSearchProps> = ({ searchQuery, onSearchQueryChange }) => {
   return (
-    <Card className="mb-6">
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2">
-          <Search className="text-gray-400" size={20} />
-          <Input
-            placeholder="Buscar usuário por nome, email ou CPF..."
-            value={searchQuery}
-            onChange={(e) => onSearchQueryChange(e.target.value)}
-            className="flex-1"
-          />
-        </div>
-      </CardContent>
-    </Card>
+    <SearchBar
+      placeholder="Buscar usuário por nome, email ou CPF..."
+      value={searchQuery}
+      onChange={onSearchQueryChange}
+    />
   );
 };
 

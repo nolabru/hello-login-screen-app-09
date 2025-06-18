@@ -2,10 +2,9 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Search, Building2, Trash2 } from 'lucide-react';
+import { Building2, Trash2 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import AdminDashboardLayout from '@/components/layout/AdminDashboardLayout';
-import { Input } from '@/components/ui/input';
 import { 
   Table, 
   TableHeader, 
@@ -15,7 +14,7 @@ import {
   TableCell 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import { SearchBar } from '@/components/ui/search-bar';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { 
@@ -32,11 +31,14 @@ import {
 interface Company {
   id: number;
   name: string;
-  contact_email: string;
+  corp_email: string;
   email: string;
   cnpj: string;
   status: boolean;
-  razao_social: string;
+  legal_name: string;
+  phone: string;
+  created_at: string;
+  updated_at: string;
 }
 
 const AdminCompanies: React.FC = () => {
@@ -72,10 +74,10 @@ const AdminCompanies: React.FC = () => {
     const searchLower = searchQuery.toLowerCase();
     return (
       company.name?.toLowerCase().includes(searchLower) ||
-      company.contact_email?.toLowerCase().includes(searchLower) ||
+      company.corp_email?.toLowerCase().includes(searchLower) ||
       company.email?.toLowerCase().includes(searchLower) ||
       company.cnpj?.includes(searchQuery) ||
-      company.razao_social?.toLowerCase().includes(searchLower)
+      company.legal_name?.toLowerCase().includes(searchLower)
     );
   });
 
@@ -123,23 +125,15 @@ const AdminCompanies: React.FC = () => {
       <AdminDashboardLayout>
         <div className="p-6">
           <div className="mb-6">
-            <h1 className="text-3xl font-medium mb-2">Empresas</h1>
+            <h1 className="text-2xl font-medium text-neutral-700">Empresas</h1>
             <p className="text-gray-500">Gerencie todas as empresas cadastradas no sistema</p>
           </div>
 
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Search className="text-gray-400" size={20} />
-                <Input
-                  placeholder="Buscar empresa por nome, email ou CNPJ..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <SearchBar
+            placeholder="Buscar empresa por nome, email, CNPJ ou razão social..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
 
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
@@ -150,60 +144,68 @@ const AdminCompanies: React.FC = () => {
               <p className="text-red-500">Erro ao carregar dados. Por favor, tente novamente.</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-medium">Nome</TableHead>
-                  <TableHead className="font-medium">Email de Contato</TableHead>
-                  <TableHead className="font-medium">Email</TableHead>
-                  <TableHead className="font-medium">CNPJ</TableHead>
-                  <TableHead className="font-medium">Razão Social</TableHead>
-                  <TableHead className="font-medium">Status</TableHead>
-                  <TableHead className="text-right font-medium">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredCompanies && filteredCompanies.length > 0 ? (
-                  filteredCompanies.map((company) => (
-                    <TableRow key={company.id}>
-                      <TableCell className="font-medium flex items-center">
-                        <Building2 className="h-4 w-4 text-gray-500 mr-2" />
-                        {company.name}
-                      </TableCell>
-                      <TableCell>{company.contact_email}</TableCell>
-                      <TableCell>{company.email}</TableCell>
-                      <TableCell>{company.cnpj}</TableCell>
-                      <TableCell>{company.razao_social}</TableCell>
-                      <TableCell>
-                        <Badge 
-                          className={company.status ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-red-100 text-red-800 hover:bg-red-100'}
-                        >
-                          {company.status ? 'Ativo' : 'Inativo'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleDeleteClick(company)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-medium w-[200px]">Nome</TableHead>
+                    <TableHead className="font-medium w-[250px]">Email</TableHead>
+                    <TableHead className="font-medium w-[150px]">CNPJ</TableHead>
+                    <TableHead className="font-medium w-[300px]">Razão Social</TableHead>
+                    <TableHead className="font-medium w-[100px]">Status</TableHead>
+                    <TableHead className="text-right font-medium w-[80px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCompanies && filteredCompanies.length > 0 ? (
+                    filteredCompanies.map((company) => (
+                      <TableRow key={company.id}>
+                        <TableCell className="font-medium w-[200px]">
+                          <div className="flex items-center">
+                            <Building2 className="h-4 w-4 text-gray-500 mr-2 flex-shrink-0" />
+                            <span className="truncate">{company.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="w-[250px]">
+                          <span className="truncate block">{company.corp_email || company.email || '-'}</span>
+                        </TableCell>
+                        <TableCell className="w-[150px]">
+                          <span className="font-mono text-sm">{company.cnpj || '-'}</span>
+                        </TableCell>
+                        <TableCell className="w-[300px]">
+                          <span className="truncate block">{company.legal_name || '-'}</span>
+                        </TableCell>
+                        <TableCell className="w-[100px]">
+                          <Badge 
+                            className={company.status ? 'bg-green-100 text-green-800 hover:bg-green-100' : 'bg-red-100 text-red-800 hover:bg-red-100'}
+                          >
+                            {company.status ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right w-[80px]">
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDeleteClick(company)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                        {searchQuery 
+                          ? 'Nenhuma empresa encontrada para essa busca.' 
+                          : 'Nenhuma empresa cadastrada no sistema.'}
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                      {searchQuery 
-                        ? 'Nenhuma empresa encontrada para essa busca.' 
-                        : 'Nenhuma empresa cadastrada no sistema.'}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </div>
       </AdminDashboardLayout>

@@ -2,10 +2,9 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Search, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import AdminDashboardLayout from '@/components/layout/AdminDashboardLayout';
-import { Input } from '@/components/ui/input';
 import { 
   Table, 
   TableHeader, 
@@ -15,8 +14,8 @@ import {
   TableCell 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { SearchBar } from '@/components/ui/search-bar';
 import { useToast } from '@/hooks/use-toast';
 import { 
   AlertDialog,
@@ -28,16 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-
-interface Psychologist {
-  id: number;
-  nome: string;
-  email: string;
-  crp: string;
-  especialidade: string | null;
-  status: boolean;
-  phone: string | null;
-}
+import { Psychologist } from '@/types/additional';
 
 const AdminPsychologists: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,8 +41,8 @@ const AdminPsychologists: React.FC = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('psychologists')
-        .select('*')
-        .order('nome', { ascending: true });
+        .select('id, crp, name, specialization, email, updated_at, created_at, bio, phone, status')
+        .order('name', { ascending: true });
         
       if (error) {
         console.error("Error fetching psychologists:", error);
@@ -71,10 +61,10 @@ const AdminPsychologists: React.FC = () => {
   const filteredPsychologists = psychologists?.filter(psychologist => {
     const searchLower = searchQuery.toLowerCase();
     return (
-      psychologist.nome?.toLowerCase().includes(searchLower) ||
+      psychologist.name?.toLowerCase().includes(searchLower) ||
       psychologist.email?.toLowerCase().includes(searchLower) ||
       psychologist.crp?.toLowerCase().includes(searchLower) ||
-      psychologist.especialidade?.toLowerCase().includes(searchLower)
+      psychologist.specialization?.toLowerCase().includes(searchLower)
     );
   });
 
@@ -96,7 +86,7 @@ const AdminPsychologists: React.FC = () => {
 
       toast({
         title: "Psicólogo removido",
-        description: `O psicólogo ${psychologistToDelete.nome} foi removido com sucesso.`,
+        description: `O psicólogo ${psychologistToDelete.name} foi removido com sucesso.`,
       });
       
       // Refresh data
@@ -122,23 +112,15 @@ const AdminPsychologists: React.FC = () => {
       <AdminDashboardLayout>
         <div className="p-6">
           <div className="mb-6">
-            <h1 className="text-3xl font-medium mb-2">Psicólogos</h1>
+            <h1 className="text-2xl font-medium text-neutral-700">Psicólogos</h1>
             <p className="text-gray-500">Gerencie todos os psicólogos cadastrados no sistema</p>
           </div>
 
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Search className="text-gray-400" size={20} />
-                <Input
-                  placeholder="Buscar psicólogo por nome, email ou CRP..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <SearchBar
+            placeholder="Buscar psicólogo por nome, email, CRP ou especialidade..."
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
 
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
@@ -165,16 +147,20 @@ const AdminPsychologists: React.FC = () => {
                 {filteredPsychologists && filteredPsychologists.length > 0 ? (
                   filteredPsychologists.map((psychologist) => (
                     <TableRow key={psychologist.id}>
-                      <TableCell className="font-medium">{psychologist.nome}</TableCell>
+                      <TableCell className="font-medium">{psychologist.name}</TableCell>
                       <TableCell>{psychologist.email}</TableCell>
                       <TableCell>{psychologist.crp}</TableCell>
-                      <TableCell>{psychologist.especialidade || '-'}</TableCell>
+                      <TableCell>{psychologist.specialization || '-'}</TableCell>
                       <TableCell>{psychologist.phone || '-'}</TableCell>
                       <TableCell>
                         <Badge 
-                          className={psychologist.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+                          className={
+                            (typeof psychologist.status === 'string' ? psychologist.status === 'active' : psychologist.status) 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }
                         >
-                          {psychologist.status ? 'Ativo' : 'Inativo'}
+                          {(typeof psychologist.status === 'string' ? psychologist.status === 'active' : psychologist.status) ? 'Ativo' : 'Inativo'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -209,7 +195,7 @@ const AdminPsychologists: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o psicólogo {psychologistToDelete?.nome}? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir o psicólogo {psychologistToDelete?.name}? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

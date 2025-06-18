@@ -205,10 +205,10 @@ const AdminDashboard = () => {
 
   return (
     <AdminDashboardLayout>
-      <div className="container mx-auto p-6">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold">Painel do Administrador</h1>
-          <p className="text-gray-500 mt-2">Gerenciamento central do Portal Calma</p>
+      <div className="p-6">
+        <header>
+          <h1 className="text-2xl font-medium text-neutral-700">Painel do Administrador</h1>
+          <p className="text-gray-500">Gerenciamento central do Portal Calma</p>
         </header>
 
         {loading ? (
@@ -221,12 +221,12 @@ const AdminDashboard = () => {
               <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick('psychologists')}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                   <CardTitle className="text-sm font-medium">Psicólogos</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <Users className="h-4 w-4 text-muted-foreground text-portal-purple" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{psychologistsCount}</div>
                   <p className="text-xs text-muted-foreground">
-                    Psicólogos cadastrados
+                    Psicólogos Cadastrados
                   </p>
                 </CardContent>
               </Card>
@@ -234,7 +234,7 @@ const AdminDashboard = () => {
               <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick('companies')}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                   <CardTitle className="text-sm font-medium">Empresas</CardTitle>
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <Building2 className="h-4 w-4 text-muted-foreground text-portal-purple" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{companiesCount}</div>
@@ -247,20 +247,20 @@ const AdminDashboard = () => {
               <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCardClick('licenses')}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                   <CardTitle className="text-sm font-medium">Licenças</CardTitle>
-                  <Key className="h-4 w-4 text-muted-foreground" />
+                  <Key className="h-4 w-4 text-muted-foreground text-portal-purple" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{licensesCount}</div>
                   <p className="text-xs text-muted-foreground">
-                    Licenças emitidas
+                    Licenças Emitidas
                   </p>
                 </CardContent>
               </Card>
 
               <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/admin/ai-reports')}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                  <CardTitle className="text-sm font-medium">Denúncias IA</CardTitle>
-                  <Flag className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Denúncias AIA</CardTitle>
+                  <Flag className="h-4 w-4 text-muted-foreground text-portal-purple" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{aiReportsCount}</div>
@@ -270,7 +270,7 @@ const AdminDashboard = () => {
                         {pendingReportsCount} pendentes
                       </span>
                     ) : (
-                      'Todas analisadas'
+                      'Todas Analisadas'
                     )}
                   </p>
                 </CardContent>

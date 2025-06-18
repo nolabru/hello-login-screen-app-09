@@ -13,7 +13,7 @@ const AdminSettings: React.FC = () => {
       <AdminDashboardLayout>
         <div className="p-6">
           <div className="mb-6">
-            <h1 className="text-3xl font-medium mb-2">Prompt da AIA</h1>
+            <h1 className="text-2xl font-medium text-neutral-700">Prompt da AIA</h1>
             <p className="text-gray-500">Gerencie os prompts usados pelo assistente de IA</p>
           </div>
 
