@@ -29,6 +29,7 @@ import AdminLicenses from "./pages/admin/AdminLicenses";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminAIReports from "./pages/admin/AdminAIReports";
+import AdminPrompts from "./pages/admin/AdminPrompts";
 import PsychologistInviteHandler from "./pages/PsychologistInviteHandler";
 import RedirectInvite from "./pages/RedirectInvite";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -78,6 +79,7 @@ const App = () => {
               <Route path="/admin/users" element={<AdminUsers />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/admin/ai-reports" element={<AdminAIReports />} />
+              <Route path="/admin/prompts" element={<AdminPrompts />} />
               
               {/* Página de Política de Privacidade */}
               <Route path="/politica-privacidade" element={<PrivacyPolicy />} />

@@ -189,6 +189,7 @@ export type Database = {
           reviewed_by: string | null
           reviewed_at: string | null
           admin_notes: string | null
+          admin_name: string | null
         }
         Insert: {
           id?: string
@@ -202,6 +203,7 @@ export type Database = {
           reviewed_by?: string | null
           reviewed_at?: string | null
           admin_notes?: string | null
+          admin_name?: string | null
         }
         Update: {
           id?: string
@@ -215,6 +217,7 @@ export type Database = {
           reviewed_by?: string | null
           reviewed_at?: string | null
           admin_notes?: string | null
+          admin_name?: string | null
         }
         Relationships: [
           {
@@ -223,6 +226,47 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["user_id"]
+          }
+        ]
+      }
+      ai_prompts: {
+        Row: {
+          id: string
+          name: string
+          content: string
+          version: number | null
+          is_active: boolean | null
+          created_at: string | null
+          updated_at: string | null
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          content: string
+          version?: number | null
+          is_active?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          content?: string
+          version?: number | null
+          is_active?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_prompts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
           }
         ]
       }

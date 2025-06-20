@@ -2,7 +2,7 @@
 import React, { ReactNode, useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Logo from '@/components/Logo';
-import { Home, Users, Building2, Settings, LogOut, Menu, X, Key, User, FileEdit, AlertTriangle } from 'lucide-react';
+import { Home, Users, Building2, Settings, LogOut, Menu, X, Key, User, FileEdit, AlertTriangle, MessageSquare } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/components/ui/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -62,9 +62,10 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ children })
     { path: '/admin/psychologists', label: 'Psicólogos', icon: Users },
     { path: '/admin/companies', label: 'Empresas', icon: Building2 },
     { path: '/admin/ai-reports', label: 'Denúncias', icon: AlertTriangle },
+    { path: '/admin/prompts', label: 'Prompts da IA', icon: MessageSquare },
     { path: '/admin/licenses', label: 'Licenças', icon: Key },
     { path: '/admin/users', label: 'Usuários', icon: User },
-    { path: '/admin/settings', label: 'Prompt da AIA', icon: FileEdit },
+    { path: '/admin/settings', label: 'Configurações', icon: Settings },
   ];
 
   const handleLogout = () => {
