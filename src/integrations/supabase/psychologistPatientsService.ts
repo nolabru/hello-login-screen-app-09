@@ -167,6 +167,30 @@ export const disassociatePatientFromPsychologist = async (patientId: string, psy
   try {
     console.log('Iniciando desvinculação com patientId:', patientId, 'psychologistId:', psychologistId);
     
+    // Buscar o email do paciente para limpeza de convites
+    let patientEmail = '';
+    const { data: userProfile, error: profileError } = await supabaseAny
+      .from('user_profiles')
+      .select('user_id, email')
+      .eq('user_id', patientId)
+      .maybeSingle();
+      
+    if (!profileError && userProfile) {
+      patientEmail = userProfile.email;
+    } else {
+      // Se não encontrou por user_id, tentar por id
+      const { data: userProfileById, error: profileError2 } = await supabaseAny
+        .from('user_profiles')
+        .select('user_id, email')
+        .eq('id', patientId)
+        .maybeSingle();
+        
+      if (!profileError2 && userProfileById) {
+        patientEmail = userProfileById.email;
+        patientId = userProfileById.user_id; // Atualizar patientId para user_id correto
+      }
+    }
+    
     // Buscar a associação ativa
     const { data: association, error: findError } = await supabaseAny
       .from('psychologists_patients')
@@ -242,6 +266,23 @@ export const disassociatePatientFromPsychologist = async (patientId: string, psy
       }
       
       console.log('Paciente desvinculado com sucesso usando user_id!');
+      
+      // 🔥 SOLUÇÃO: Deletar todos os convites relacionados
+      if (patientEmail) {
+        console.log('Limpando convites relacionados para:', patientEmail);
+        const { error: deleteInvitesError } = await supabaseAny
+          .from('psychologists_patients')
+          .delete()
+          .eq('psychologist_id', psychologistId)
+          .eq('patient_email', patientEmail);
+          
+        if (deleteInvitesError) {
+          console.error('Aviso: Erro ao deletar convites:', deleteInvitesError);
+        } else {
+          console.log('Convites relacionados deletados com sucesso!');
+        }
+      }
+      
       return;
     }
 
@@ -276,18 +317,29 @@ export const disassociatePatientFromPsychologist = async (patientId: string, psy
     } else {
       console.log('Perfil do usuário atualizado com sucesso!');
     }
+    
+    // 🔥 SOLUÇÃO: Deletar todos os convites relacionados
+    if (patientEmail) {
+      console.log('Limpando convites relacionados para:', patientEmail);
+      const { error: deleteInvitesError } = await supabaseAny
+        .from('psychologists_patients')
+        .delete()
+        .eq('psychologist_id', psychologistId)
+        .eq('patient_email', patientEmail);
+        
+      if (deleteInvitesError) {
+        console.error('Aviso: Erro ao deletar convites:', deleteInvitesError);
+      } else {
+        console.log('Convites relacionados deletados com sucesso!');
+      }
+    }
+    
   } catch (error) {
     console.error('Erro ao desassociar paciente do psicólogo:', error);
     throw error;
   }
 };
 
-/**
- * Convida um paciente para se conectar com um psicólogo
- * @param psychologistId ID do psicólogo
- * @param patientEmail Email do paciente
- * @returns ID da conexão criada
- */
 /**
  * Busca pacientes com convites pendentes enviados pelo psicólogo
  * @param psychologistId ID do psicólogo
@@ -345,13 +397,10 @@ export const cancelPendingInvite = async (connectionId: string, psychologistId: 
   try {
     console.log('Cancelando convite pendente:', connectionId);
     
-    // Atualizar o status da conexão para cancelado
+    // 🔥 SOLUÇÃO: Deletar o convite ao invés de apenas marcar como cancelado
     const { error } = await supabaseAny
       .from('psychologists_patients')
-      .update({
-        status: 'cancelled',
-        ended_at: new Date().toISOString()
-      })
+      .delete()
       .eq('id', connectionId)
       .eq('psychologist_id', psychologistId)
       .eq('status', 'pending');
@@ -361,13 +410,19 @@ export const cancelPendingInvite = async (connectionId: string, psychologistId: 
       throw error;
     }
     
-    console.log('Convite cancelado com sucesso!');
+    console.log('Convite deletado com sucesso!');
   } catch (error) {
     console.error('Erro ao cancelar convite pendente:', error);
     throw error;
   }
 };
 
+/**
+ * Convida um paciente para se conectar com um psicólogo
+ * @param psychologistId ID do psicólogo
+ * @param patientEmail Email do paciente
+ * @returns ID da conexão criada
+ */
 export const invitePatient = async (psychologistId: string, patientEmail: string): Promise<string> => {
   try {
     // Buscar o paciente pelo email
@@ -388,26 +443,28 @@ export const invitePatient = async (psychologistId: string, patientEmail: string
     
     console.log('Paciente encontrado:', patient);
     
-    // Verificar se já existe uma conexão
-    const { data: existingConnection, error: connectionError } = await supabaseAny
+    // 🔥 SOLUÇÃO: Verificar se já existe uma conexão (buscar todas e filtrar)
+    const { data: existingConnections, error: connectionError } = await supabaseAny
       .from('psychologists_patients')
       .select('id, status')
       .eq('psychologist_id', psychologistId)
       .eq('patient_id', patient.user_id)
-      .maybeSingle();
+      .order('started_at', { ascending: false });
       
     if (connectionError) {
       console.error('Erro ao verificar conexão existente:', connectionError);
       throw connectionError;
     }
     
-    // Se já existe uma conexão ativa, não fazer nada
-    if (existingConnection && existingConnection.status === 'active') {
+    // Verificar se há conexão ativa
+    const activeConnection = existingConnections?.find(conn => conn.status === 'active');
+    if (activeConnection) {
       throw new Error('Este paciente já está conectado a você');
     }
     
-    // Se existe uma conexão pendente, não criar outra
-    if (existingConnection && existingConnection.status === 'pending') {
+    // Verificar se há conexão pendente
+    const pendingConnection = existingConnections?.find(conn => conn.status === 'pending');
+    if (pendingConnection) {
       throw new Error('Já existe um convite pendente para este paciente');
     }
     
