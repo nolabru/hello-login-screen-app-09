@@ -1,36 +1,86 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   getSentimentBackgroundClass, 
   getSentimentTextClass,
   getSentimentEmoji
 } from '@/lib/sentimentColors';
+import { usePatientPreConsultation } from '@/hooks/usePatientPreConsultation';
 
 interface PatientPreConsultationProps {
   patient: any;
 }
 
 const PatientPreConsultation: React.FC<PatientPreConsultationProps> = ({ patient }) => {
-  // Lógica para determinar o sentimento predominante (hardcoded por enquanto)
-  const predominantMood = "Triste";
-  
   // Usar full_name ou preferred_name
   const patientName = patient.full_name || patient.preferred_name || "Paciente";
   
+  // Buscar dados reais do banco (últimas 2 semanas)
+  const {
+    conversationCount,
+    predominantMood,
+    topTopics,
+    moodDistribution,
+    consultationSummary,
+    loading,
+    error
+  } = usePatientPreConsultation(patient.user_id);
 
-  // Dados hardcoded para a pré-consulta
+  // Se estiver carregando, mostrar skeleton
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="flex items-center mb-6">
+          <Skeleton className="w-12 h-12 rounded-full mr-4" />
+          <Skeleton className="h-6 w-80" />
+        </div>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => (
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-8 w-16 mb-1" />
+                  <Skeleton className="h-3 w-20" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <Card>
+            <CardContent className="p-4">
+              <Skeleton className="h-4 w-32 mb-2" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Se houver erro, mostrar mensagem
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <h3 className="text-lg font-semibold text-red-600 mb-2">Erro ao carregar pré-consulta</h3>
+          <p className="text-red-500">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Dados reais do banco (últimas 2 semanas)
   const preConsultationData = {
-    predominantMood: predominantMood.toLowerCase(),
-    conversationCount: 12,
-    topTopics: ["Ansiedade", "Trabalho", "Relacionamentos"],
-    moodDistribution: {
-      feliz: 20,
-      triste: 45,
-      neutro: 15,
-      ansioso: 15,
-      irritado: 5
-    },
-    consultationSummary: `Para a próxima consulta, é importante notar que ${patientName} tem demonstrado predominantemente sentimentos de tristeza em suas interações recentes. As conversas frequentemente abordam preocupações com trabalho e relacionamentos, com menções recorrentes de ansiedade. Houve momentos de melhora no humor durante discussões sobre hobbies e atividades ao ar livre, mas o tom geral permanece melancólico. ${patientName} expressou interesse em desenvolver estratégias de enfrentamento para lidar com situações estressantes no trabalho e está aberto(a) a explorar técnicas de mindfulness. Recomenda-se abordar estes temas na próxima sessão.`
+    predominantMood: predominantMood || 'neutro',
+    conversationCount,
+    topTopics: topTopics.length > 0 ? topTopics : ['Nenhum tema recente'],
+    moodDistribution,
+    consultationSummary: consultationSummary || 'Dados insuficientes para gerar resumo de pré-consulta.'
   };
 
   return (

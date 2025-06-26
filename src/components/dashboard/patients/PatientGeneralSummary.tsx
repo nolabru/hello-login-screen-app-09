@@ -1,44 +1,98 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   getSentimentBackgroundClass, 
   getSentimentTextClass,
   getSentimentEmoji
 } from '@/lib/sentimentColors';
+import { usePatientGeneralSummary } from '@/hooks/usePatientGeneralSummary';
 
 interface PatientGeneralSummaryProps {
   patient: any;
 }
 
 const PatientGeneralSummary: React.FC<PatientGeneralSummaryProps> = ({ patient }) => {
-  // Lógica para determinar o sentimento predominante (hardcoded por enquanto)
-  const predominantMood = "Neutro";
-  
   // Usar full_name ou preferred_name
   const patientName = patient.full_name || patient.preferred_name || "Paciente";
   
+  // Buscar dados reais do banco
+  const {
+    totalConversations,
+    predominantMood,
+    daysActive,
+    topTopics,
+    moodDistribution,
+    generalSummary,
+    loading,
+    error
+  } = usePatientGeneralSummary(patient.user_id);
 
-  // Número de dias ativos (hardcoded por enquanto)
-  const daysActive = 45;
-  
-  // Dados hardcoded para o resumo geral
+  // Se estiver carregando, mostrar skeleton
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="flex items-center mb-6">
+          <Skeleton className="w-12 h-12 rounded-full mr-4" />
+          <Skeleton className="h-6 w-64" />
+        </div>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[1, 2, 3].map(i => (
+              <Card key={i}>
+                <CardContent className="p-4">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-8 w-16 mb-1" />
+                  <Skeleton className="h-3 w-20" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <Card>
+            <CardContent className="p-4">
+              <Skeleton className="h-4 w-32 mb-2" />
+              <div className="flex flex-wrap gap-2">
+                {[1, 2, 3, 4, 5].map(i => (
+                  <Skeleton key={i} className="h-6 w-20 rounded-full" />
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <Skeleton className="h-4 w-24 mb-2" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Se houver erro, mostrar mensagem
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <h3 className="text-lg font-semibold text-red-600 mb-2">Erro ao carregar resumo</h3>
+          <p className="text-red-500">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Dados reais do banco
   const generalData = {
-    predominantMood: predominantMood.toLowerCase(),
-    totalConversations: 87,
-    daysActive: daysActive,
-    topTopics: ["Ansiedade", "Trabalho", "Relacionamentos", "Saúde", "Família"],
-    moodDistribution: {
-      feliz: 25,
-      triste: 30,
-      neutro: 20,
-      ansioso: 15,
-      irritado: 10
-    },
-    generalSummary: `Desde que começou a usar o app há ${daysActive} dias, ${patientName} tem demonstrado uma tendência variada de humor, com períodos de tristeza e ansiedade intercalados com momentos de neutralidade e felicidade. No geral, o humor predominante tem sido neutro, com flutuações significativas durante períodos de estresse no trabalho e em relacionamentos pessoais.
-
-As conversas frequentemente abordam temas como ansiedade, desafios no ambiente de trabalho e dinâmicas de relacionamentos, com ênfase particular em estratégias de enfrentamento para situações estressantes. Questões relacionadas à saúde e família também aparecem com regularidade.
-
-Ao longo do tempo, observa-se um padrão de maior abertura para discutir emoções difíceis e uma evolução gradual na capacidade de identificar gatilhos de ansiedade. ${patientName} tem demonstrado interesse consistente em técnicas de mindfulness e regulação emocional, com alguns sinais de progresso na implementação dessas estratégias no dia a dia.`
+    predominantMood: predominantMood || 'neutro',
+    totalConversations,
+    daysActive,
+    topTopics: topTopics.length > 0 ? topTopics : ['Nenhum tema identificado'],
+    moodDistribution,
+    generalSummary: generalSummary || 'Dados insuficientes para gerar resumo.'
   };
 
   return (
@@ -65,7 +119,7 @@ Ao longo do tempo, observa-se um padrão de maior abertura para discutir emoçõ
             <CardContent className="p-4">
               <div className="text-sm font-medium text-gray-500">Total de Conversas</div>
               <div className="text-2xl font-bold text-portal-purple">{generalData.totalConversations}</div>
-              <div className="text-xs text-gray-500">Desde o início</div>
+              <div className="text-xs text-gray-500">Desde o Início</div>
             </CardContent>
           </Card>
           
