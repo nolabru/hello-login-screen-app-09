@@ -95,12 +95,16 @@ const ArticleForm: React.FC = () => {
       setSaving(true);
 
       let finalText = form.text;
+      let articleImageUrl: string | null = null;
 
       // Upload image only when saving
       if (imageFile) {
-        const url = await uploadToBucket("article_image", imageFile, "articles");
-        // Insere a imagem no início do texto em Markdown
-        finalText = `![capa](${url})\n\n${finalText}`;
+        const uploadResult = await (supabase.storage.from("article_image").upload(
+          `articles/${Date.now()}-${imageFile.name}`,
+          imageFile
+        ));
+        if (uploadResult.error) throw uploadResult.error;
+        articleImageUrl = uploadResult.data?.path || null;
       }
 
       const payload = {
@@ -110,6 +114,7 @@ const ArticleForm: React.FC = () => {
         summary: form.summary || null,
         long_summary: form.long_summary || null,
         text: finalText,
+        article_image: articleImageUrl,
       };
 
       const { error: insertErr } = await (supabase as any)
