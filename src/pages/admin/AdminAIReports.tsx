@@ -449,7 +449,6 @@ const AdminAIReports = () => {
                   placeholder="Buscar por descrição ou usuário..."
                   value={searchTerm}
                   onChange={setSearchTerm}
-                  className="mb-0"
                 />
                 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>

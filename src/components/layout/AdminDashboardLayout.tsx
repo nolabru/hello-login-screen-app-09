@@ -65,6 +65,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({ children })
     { path: '/admin/prompts', label: 'Prompts da IA', icon: MessageSquare },
     { path: '/admin/licenses', label: 'Licenças', icon: Key },
     { path: '/admin/users', label: 'Usuários', icon: User },
+    { path: '/admin/wellbeing', label: 'Bem-Estar', icon: FileEdit },
     { path: '/admin/settings', label: 'Configurações', icon: Settings },
   ];
 

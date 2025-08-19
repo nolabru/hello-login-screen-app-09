@@ -16,7 +16,6 @@ const EmployeeSearch: React.FC<EmployeeSearchProps> = ({
         placeholder="Buscar funcionário por nome ou email..."
         value={searchQuery}
         onChange={(value) => onSearchChange({ target: { value } } as React.ChangeEvent<HTMLInputElement>)}
-        className="max-w-md"
       />
     </div>
   );

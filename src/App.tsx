@@ -30,6 +30,7 @@ import AdminUsers from "./pages/admin/AdminUsers";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminAIReports from "./pages/admin/AdminAIReports";
 import AdminPrompts from "./pages/admin/AdminPrompts";
+import AdminWellbeing from "./pages/admin/AdminWellbeing";
 import PsychologistInviteHandler from "./pages/PsychologistInviteHandler";
 import RedirectInvite from "./pages/RedirectInvite";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -80,6 +81,7 @@ const App = () => {
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/admin/ai-reports" element={<AdminAIReports />} />
               <Route path="/admin/prompts" element={<AdminPrompts />} />
+              <Route path="/admin/wellbeing" element={<AdminWellbeing />} />
               
               {/* Página de Política de Privacidade */}
               <Route path="/politica-privacidade" element={<PrivacyPolicy />} />
