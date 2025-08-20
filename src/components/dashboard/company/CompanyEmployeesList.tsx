@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { AlertTriangle, Plus, UserMinus } from 'lucide-react';
+import { Plus, UserMinus, Users, Search, Filter, UserPlus } from 'lucide-react';
 import AddEmployeeDialog from './AddEmployeeDialog';
-import EmployeeSearch from './EmployeeSearch';
-import ViewModeToggle from './ViewModeToggle';
+import EditEmployeeDialog from './EditEmployeeDialog';
 import EmployeesTableView from './EmployeesTableView';
-import EmployeesCardView from './EmployeesCardView';
 import EmployeesEmptyState from './EmployeesEmptyState';
+import { Input } from '@/components/ui/input';
 import type { Employee } from './EmployeesTableView';
 import { updateEmployeeLicenseStatus } from '@/services/licenseService';
+import { AuthService } from '@/services/authService';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,16 +34,35 @@ const CompanyEmployeesList: React.FC = () => {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
   const [employeeToRemove, setEmployeeToRemove] = useState<number | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [employeeToEdit, setEmployeeToEdit] = useState<Employee | null>(null);
   
   useEffect(() => {
-    const storedCompanyId = localStorage.getItem('companyId');
-    if (storedCompanyId) {
-      setCompanyId(storedCompanyId);
-    }
-  }, []);
+    const initializeAuth = async () => {
+      console.log('🚀 CompanyEmployeesList: Inicializando autenticação...');
+      
+      // Usar o AuthService padronizado
+      const validatedId = await AuthService.getValidatedCompanyId();
+      
+      if (validatedId) {
+        console.log('✅ CompanyEmployeesList: Company ID validado:', validatedId);
+        setCompanyId(validatedId);
+      } else {
+        console.error('❌ CompanyEmployeesList: Company ID não encontrado');
+        toast({
+          variant: 'destructive',
+          title: 'Erro de autenticação',
+          description: 'Não foi possível validar sua empresa. Faça login novamente.'
+        });
+      }
+    };
+
+    initializeAuth();
+  }, [toast]);
   
   useEffect(() => {
     if (companyId) {
+      console.log('📋 CompanyEmployeesList: Carregando funcionários para empresa:', companyId);
       fetchEmployees();
     }
   }, [companyId]);
@@ -70,8 +90,9 @@ const CompanyEmployeesList: React.FC = () => {
       const companyIdNum = parseInt(companyId, 10);
       console.log('companyId convertido para número:', companyIdNum);
       
-      // Primeiro, vamos tentar com o ID como string
-      let { data, error } = await supabase.from('user_profiles').select('*')
+      // Primeiro, vamos tentar com o ID como string - SEM join por enquanto
+      let { data, error } = await supabase.from('user_profiles')
+        .select('*')
         .eq('company_id', companyId);
         
       console.log('Resultado da consulta com ID como string:', { data, error });
@@ -80,7 +101,8 @@ const CompanyEmployeesList: React.FC = () => {
       if (!data || data.length === 0) {
         console.log('Tentando consulta com ID como número convertido para string...');
         const companyIdNumStr = companyIdNum.toString();
-        const result = await supabase.from('user_profiles').select('*')
+        const result = await supabase.from('user_profiles')
+          .select('*')
           .eq('company_id', companyIdNumStr);
           
         data = result.data;
@@ -93,6 +115,28 @@ const CompanyEmployeesList: React.FC = () => {
       console.log('Dados retornados pela consulta:', data);
       console.log('Número de funcionários encontrados:', data?.length || 0);
 
+      // Buscar departamentos separadamente se houver funcionários com department_id
+      let departmentsMap: Record<string, string> = {};
+      if (data && data.length > 0) {
+        const departmentIds = data
+          .map(e => e.department_id)
+          .filter(Boolean);
+        
+        if (departmentIds.length > 0) {
+          const { data: departments } = await supabase
+            .from('company_departments')
+            .select('id, name')
+            .in('id', departmentIds);
+          
+          if (departments) {
+            departmentsMap = departments.reduce((acc, dept) => {
+              acc[dept.id] = dept.name;
+              return acc;
+            }, {} as Record<string, string>);
+          }
+        }
+      }
+
       // Map the data to include only necessary fields and map correct fields from database
       const mappedEmployees = data?.map(employee => {
         console.log('Mapeando funcionário:', employee);
@@ -104,15 +148,17 @@ const CompanyEmployeesList: React.FC = () => {
           id: employeeData.id,
           nome: employeeData.full_name || employeeData.preferred_name || employeeData.name || 'Nome não disponível',
           email: employeeData.email || employeeData.user_id || '',
-          status: employeeData.employee_status === 'active', // Converter para booleano para compatibilidade
-          employee_status: employeeData.employee_status || 'pending', // Usar o novo campo diretamente
+          status: employeeData.license_status === 'active', // Usar license_status para compatibilidade
+          employee_status: employeeData.license_status || 'pending', // Usar license_status como employee_status
           connection_status: 'active', // Mantemos o campo para compatibilidade, mas não o usamos na interface
           phone: employeeData.phone_number || employeeData.phone || undefined,
           profile_photo: employeeData.profile_photo,
           gender: employeeData.gender,
           age_range: employeeData.age_range,
           created_at: employeeData.created_at,
-          license_status: employeeData.license_status
+          license_status: employeeData.license_status,
+          department_id: employeeData.department_id,
+          department_name: employeeData.department_id ? departmentsMap[employeeData.department_id] || 'Não atribuído' : 'Não atribuído'
         };
       }) || [];
       
@@ -142,6 +188,11 @@ const CompanyEmployeesList: React.FC = () => {
     setIsConfirmDialogOpen(true);
   };
   
+  const handleEditEmployee = (employee: Employee) => {
+    setEmployeeToEdit(employee);
+    setIsEditDialogOpen(true);
+  };
+
   const confirmRemoveEmployee = async () => {
     if (!employeeToRemove) return;
     
@@ -171,9 +222,11 @@ const CompanyEmployeesList: React.FC = () => {
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="py-8 text-center">
-          <p className="text-gray-500">Carregando Funcionários...</p>
-        </div>
+        <Card>
+          <CardContent className="py-8 text-center">
+            <p className="text-gray-500">Carregando funcionários...</p>
+          </CardContent>
+        </Card>
       );
     }
     
@@ -181,34 +234,68 @@ const CompanyEmployeesList: React.FC = () => {
       return <EmployeesEmptyState onAddEmployee={() => setIsAddDialogOpen(true)} />;
     }
     
-    return viewMode === 'table' 
-      ? <EmployeesTableView employees={filteredEmployees} onRemoveEmployee={handleRemoveEmployee} /> 
-      : <EmployeesCardView employees={filteredEmployees} onRemoveEmployee={handleRemoveEmployee} />;
+    return <EmployeesTableView employees={filteredEmployees} onRemoveEmployee={handleRemoveEmployee} onEditEmployee={handleEditEmployee} />;
   };
   
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end items-center mb-6">
-        <Button onClick={() => setIsAddDialogOpen(true)} className="bg-portal-purple hover:bg-portal-purple-dark">
-          <Plus className="h-4 w-4 mr-2" />
-          Convidar Funcionário
-        </Button>
-      </div>
-      
-      <div className="flex justify-between items-center mb-4">
-        <EmployeeSearch searchQuery={searchQuery} onSearchChange={handleSearchChange} />
-        <ViewModeToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-      </div>
-      
-      {renderContent()}
+    <div className="space-y-6">
+      {/* Controles de Ação */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Funcionários da Empresa
+            </CardTitle>
+            <Button 
+              onClick={() => setIsAddDialogOpen(true)} 
+              className="bg-calma hover:bg-calma-dark"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Convidar Funcionário
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {/* Barra de Busca e Filtros */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="relative flex-1 max-w-md">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Buscar por nome ou email..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="pl-9"
+              />
+            </div>
+            <Button variant="outline" size="sm">
+              <Filter className="h-4 w-4 mr-2" />
+              Filtros
+            </Button>
+          </div>
+
+          {/* Conteúdo */}
+          {renderContent()}
+        </CardContent>
+      </Card>
       
       {companyId && (
-        <AddEmployeeDialog 
-          open={isAddDialogOpen} 
-          onOpenChange={setIsAddDialogOpen} 
-          onEmployeeAdded={fetchEmployees} 
-          companyId={companyId} 
-        />
+        <>
+          <AddEmployeeDialog 
+            open={isAddDialogOpen} 
+            onOpenChange={setIsAddDialogOpen} 
+            onEmployeeAdded={fetchEmployees} 
+            companyId={companyId} 
+          />
+          
+          <EditEmployeeDialog
+            open={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            employee={employeeToEdit}
+            companyId={companyId}
+            onEmployeeUpdated={fetchEmployees}
+          />
+        </>
       )}
       
       {/* Diálogo de confirmação para desvincular funcionário */}

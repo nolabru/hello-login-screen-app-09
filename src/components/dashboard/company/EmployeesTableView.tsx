@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { User, Phone, Calendar } from 'lucide-react';
+import { User, Phone, Calendar, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   Table,
@@ -30,16 +30,20 @@ export type Employee = {
   created_at?: string;
   license_status?: string;
   employee_status?: string; // Novo campo para rastrear o status do funcionário
+  department_id?: string | null; // Campo para ID do departamento
+  department_name?: string | null; // Campo para nome do departamento
 };
 
 interface EmployeesTableViewProps {
   employees: Employee[];
   onRemoveEmployee: (id: number) => void;
+  onEditEmployee?: (employee: Employee) => void;
 }
 
 const EmployeesTableView: React.FC<EmployeesTableViewProps> = ({
   employees,
-  onRemoveEmployee
+  onRemoveEmployee,
+  onEditEmployee
 }) => {
   // Estado para armazenar as URLs das imagens de perfil
   const [profileImageUrls, setProfileImageUrls] = useState<Record<string, string>>({});
@@ -95,6 +99,7 @@ const EmployeesTableView: React.FC<EmployeesTableViewProps> = ({
           <TableHead className="font-medium">Nome</TableHead>
           <TableHead className="font-medium">Email</TableHead>
           <TableHead className="font-medium">Telefone</TableHead>
+          <TableHead className="font-medium">Setor</TableHead>
           <TableHead className="font-medium">Status</TableHead>
           <TableHead className="text-right font-medium">Ações</TableHead>
         </TableRow>
@@ -136,17 +141,33 @@ const EmployeesTableView: React.FC<EmployeesTableViewProps> = ({
             <TableCell>{employee.email}</TableCell>
             <TableCell>{employee.phone || 'Não informado'}</TableCell>
             <TableCell>
+              <Badge variant="outline" className="text-xs">
+                {employee.department_name || 'Não atribuído'}
+              </Badge>
+            </TableCell>
+            <TableCell>
               <EmployeeStatusBadge status={employee.employee_status} />
             </TableCell>
             <TableCell className="text-right">
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                onClick={() => onRemoveEmployee(employee.id)}
-              >
-                Desvincular
-              </Button>
+              <div className="flex justify-end gap-2">
+                {onEditEmployee && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => onEditEmployee(employee)}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => onRemoveEmployee(employee.id)}
+                >
+                  Desvincular
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         ))}

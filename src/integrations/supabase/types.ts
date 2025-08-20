@@ -83,6 +83,417 @@ export type Database = {
         }
         Relationships: []
       }
+      company_departments: {
+        Row: {
+          id: string
+          company_id: string
+          name: string
+          status: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          name: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          name?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_company_departments_company"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      company_activities: {
+        Row: {
+          id: string
+          company_id: string
+          title: string
+          description: string | null
+          activity_type: string
+          facilitator_name: string | null
+          facilitator_type: string
+          start_date: string
+          end_date: string | null
+          location: string | null
+          target_audience: string | null
+          max_participants: number | null
+          participants_registered: number
+          participants_attended: number
+          satisfaction_score: number | null
+          effectiveness_score: number | null
+          mandatory: boolean
+          compliance_requirement: string | null
+          evidence_files: Json
+          attendance_list_url: string | null
+          activity_report_url: string | null
+          status: string
+          created_at: string
+          updated_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          title: string
+          description?: string | null
+          activity_type: string
+          facilitator_name?: string | null
+          facilitator_type: string
+          start_date: string
+          end_date?: string | null
+          location?: string | null
+          target_audience?: string | null
+          max_participants?: number | null
+          participants_registered?: number
+          participants_attended?: number
+          satisfaction_score?: number | null
+          effectiveness_score?: number | null
+          mandatory?: boolean
+          compliance_requirement?: string | null
+          evidence_files?: Json
+          attendance_list_url?: string | null
+          activity_report_url?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          title?: string
+          description?: string | null
+          activity_type?: string
+          facilitator_name?: string | null
+          facilitator_type?: string
+          start_date?: string
+          end_date?: string | null
+          location?: string | null
+          target_audience?: string | null
+          max_participants?: number | null
+          participants_registered?: number
+          participants_attended?: number
+          satisfaction_score?: number | null
+          effectiveness_score?: number | null
+          mandatory?: boolean
+          compliance_requirement?: string | null
+          evidence_files?: Json
+          attendance_list_url?: string | null
+          activity_report_url?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_activities_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      activity_participants: {
+        Row: {
+          id: string
+          activity_id: string
+          employee_id: number
+          registered_at: string
+          attended: boolean
+          feedback: string | null
+          rating: number | null
+          completion_certificate_url: string | null
+        }
+        Insert: {
+          id?: string
+          activity_id: string
+          employee_id: number
+          registered_at?: string
+          attended?: boolean
+          feedback?: string | null
+          rating?: number | null
+          completion_certificate_url?: string | null
+        }
+        Update: {
+          id?: string
+          activity_id?: string
+          employee_id?: number
+          registered_at?: string
+          attended?: boolean
+          feedback?: string | null
+          rating?: number | null
+          completion_certificate_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_participants_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "company_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_participants_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      compliance_reports: {
+        Row: {
+          id: string
+          company_id: string
+          report_type: string
+          title: string
+          report_period_start: string
+          report_period_end: string
+          report_data: Json
+          template_version: string
+          status: string
+          generated_at: string
+          generated_by: string | null
+          pdf_url: string | null
+          pdf_size_bytes: number | null
+          approved_by: string | null
+          approved_at: string | null
+          approval_notes: string | null
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          report_type: string
+          title: string
+          report_period_start: string
+          report_period_end: string
+          report_data: Json
+          template_version: string
+          status?: string
+          generated_at?: string
+          generated_by?: string | null
+          pdf_url?: string | null
+          pdf_size_bytes?: number | null
+          approved_by?: string | null
+          approved_at?: string | null
+          approval_notes?: string | null
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          report_type?: string
+          title?: string
+          report_period_start?: string
+          report_period_end?: string
+          report_data?: Json
+          template_version?: string
+          status?: string
+          generated_at?: string
+          generated_by?: string | null
+          pdf_url?: string | null
+          pdf_size_bytes?: number | null
+          approved_by?: string | null
+          approved_at?: string | null
+          approval_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_reports_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_reports_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      mental_health_alerts: {
+        Row: {
+          id: string
+          company_id: string
+          alert_type: string
+          severity: number | null
+          affected_entity_type: string
+          affected_entity_id: string | null
+          title: string
+          description: string
+          trigger_metric: string | null
+          current_value: number | null
+          threshold_value: number | null
+          trend: string
+          status: string
+          assigned_to: string | null
+          action_plan_id: string | null
+          triggered_at: string
+          acknowledged_at: string | null
+          resolved_at: string | null
+          notifications_sent: Json
+          escalation_level: number
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          alert_type: string
+          severity?: number | null
+          affected_entity_type: string
+          affected_entity_id?: string | null
+          title: string
+          description: string
+          trigger_metric?: string | null
+          current_value?: number | null
+          threshold_value?: number | null
+          trend: string
+          status?: string
+          assigned_to?: string | null
+          action_plan_id?: string | null
+          triggered_at?: string
+          acknowledged_at?: string | null
+          resolved_at?: string | null
+          notifications_sent?: Json
+          escalation_level?: number
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          alert_type?: string
+          severity?: number | null
+          affected_entity_type?: string
+          affected_entity_id?: string | null
+          title?: string
+          description?: string
+          trigger_metric?: string | null
+          current_value?: number | null
+          threshold_value?: number | null
+          trend?: string
+          status?: string
+          assigned_to?: string | null
+          action_plan_id?: string | null
+          triggered_at?: string
+          acknowledged_at?: string | null
+          resolved_at?: string | null
+          notifications_sent?: Json
+          escalation_level?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mental_health_alerts_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      action_plans: {
+        Row: {
+          id: string
+          company_id: string
+          alert_id: string | null
+          title: string
+          description: string | null
+          priority: string
+          objectives: Json
+          success_metrics: Json
+          immediate_actions: Json
+          short_term_actions: Json
+          long_term_actions: Json
+          responsible_person: string | null
+          stakeholders: Json
+          target_completion_date: string | null
+          review_frequency: string
+          status: string
+          progress_percentage: number
+          created_at: string
+          approved_at: string | null
+          started_at: string | null
+          completed_at: string | null
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          alert_id?: string | null
+          title: string
+          description?: string | null
+          priority: string
+          objectives: Json
+          success_metrics: Json
+          immediate_actions?: Json
+          short_term_actions?: Json
+          long_term_actions?: Json
+          responsible_person?: string | null
+          stakeholders?: Json
+          target_completion_date?: string | null
+          review_frequency?: string
+          status?: string
+          progress_percentage?: number
+          created_at?: string
+          approved_at?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          alert_id?: string | null
+          title?: string
+          description?: string | null
+          priority?: string
+          objectives?: Json
+          success_metrics?: Json
+          immediate_actions?: Json
+          short_term_actions?: Json
+          long_term_actions?: Json
+          responsible_person?: string | null
+          stakeholders?: Json
+          target_completion_date?: string | null
+          review_frequency?: string
+          status?: string
+          progress_percentage?: number
+          created_at?: string
+          approved_at?: string | null
+          started_at?: string | null
+          completed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "action_plans_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "mental_health_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "action_plans_responsible_person_fkey"
+            columns: ["responsible_person"]
+            isOneToOne: false
+            referencedRelation: "auth.users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       company_licenses: {
         Row: {
           company_id: string
@@ -358,6 +769,7 @@ export type Database = {
           id: number
           user_id: string
           company_id: string | null
+          department_id: string | null
           license_status: string | null
           name: string
           objective: string | null
@@ -376,6 +788,7 @@ export type Database = {
           id?: number
           user_id?: string
           company_id?: string | null
+          department_id?: string | null
           license_status?: string | null
           name: string
           objective?: string | null
@@ -394,6 +807,7 @@ export type Database = {
           id?: number
           user_id?: string
           company_id?: string | null
+          department_id?: string | null
           license_status?: string | null
           name?: string
           objective?: string | null
@@ -410,6 +824,184 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_user_profiles_department"
+            columns: ["department_id"]
+            isOneToOne: false
+            referencedRelation: "company_departments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questionnaires: {
+        Row: {
+          id: string
+          company_id: string
+          title: string
+          description: string | null
+          questions: Json
+          target_department: string | null
+          status: string
+          created_at: string
+          updated_at: string
+          created_by: string
+          start_date: string | null
+          end_date: string | null
+          notification_sent: boolean
+        }
+        Insert: {
+          id?: string
+          company_id: string
+          title: string
+          description?: string | null
+          questions: Json
+          target_department?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+          created_by: string
+          start_date?: string | null
+          end_date?: string | null
+          notification_sent?: boolean
+        }
+        Update: {
+          id?: string
+          company_id?: string
+          title?: string
+          description?: string | null
+          questions?: Json
+          target_department?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+          created_by?: string
+          start_date?: string | null
+          end_date?: string | null
+          notification_sent?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questionnaires_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      questionnaire_responses: {
+        Row: {
+          id: string
+          questionnaire_id: string
+          user_id: string
+          company_id: string
+          department: string | null
+          responses: Json
+          completion_status: string
+          submitted_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          questionnaire_id: string
+          user_id: string
+          company_id: string
+          department?: string | null
+          responses: Json
+          completion_status?: string
+          submitted_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          questionnaire_id?: string
+          user_id?: string
+          company_id?: string
+          department?: string | null
+          responses?: Json
+          completion_status?: string
+          submitted_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questionnaire_responses_questionnaire_id_fkey"
+            columns: ["questionnaire_id"]
+            isOneToOne: false
+            referencedRelation: "questionnaires"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questionnaire_responses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "questionnaire_responses_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      questionnaire_analytics: {
+        Row: {
+          id: string
+          questionnaire_id: string
+          company_id: string
+          total_responses: number
+          completion_rate: number
+          average_score: number | null
+          department_breakdown: Json
+          response_trends: Json
+          generated_at: string
+          period_start: string
+          period_end: string
+        }
+        Insert: {
+          id?: string
+          questionnaire_id: string
+          company_id: string
+          total_responses?: number
+          completion_rate?: number
+          average_score?: number | null
+          department_breakdown?: Json
+          response_trends?: Json
+          generated_at?: string
+          period_start: string
+          period_end: string
+        }
+        Update: {
+          id?: string
+          questionnaire_id?: string
+          company_id?: string
+          total_responses?: number
+          completion_rate?: number
+          average_score?: number | null
+          department_breakdown?: Json
+          response_trends?: Json
+          generated_at?: string
+          period_start?: string
+          period_end?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questionnaire_analytics_questionnaire_id_fkey"
+            columns: ["questionnaire_id"]
+            isOneToOne: false
+            referencedRelation: "questionnaires"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questionnaire_analytics_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          }
         ]
       }
     }

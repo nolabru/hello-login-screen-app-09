@@ -5,24 +5,29 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AddSingleEmployeeFormValues, addSingleEmployeeSchema } from './employeeSchema';
+import { Tables } from '@/integrations/supabase/types';
+
+type Department = Tables<'company_departments'>;
 
 interface AddSingleEmployeeFormProps {
   onSubmit: (data: AddSingleEmployeeFormValues) => void;
   isSubmitting: boolean;
+  departments?: Department[];
 }
 
 const AddSingleEmployeeForm: React.FC<AddSingleEmployeeFormProps> = ({
   onSubmit,
-  isSubmitting
+  isSubmitting,
+  departments = []
 }) => {
   const form = useForm<AddSingleEmployeeFormValues>({
     resolver: zodResolver(addSingleEmployeeSchema),
     defaultValues: {
       nome: '',
       email: '',
-      cpf: '',
-      senha: ''
+      department_id: 'no-department'
     }
   });
 
@@ -57,19 +62,34 @@ const AddSingleEmployeeForm: React.FC<AddSingleEmployeeFormProps> = ({
           )}
         />
         
-        <FormField
-          control={form.control}
-          name="cpf"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>CPF</FormLabel>
-              <FormControl>
-                <Input placeholder="CPF do Funcionário" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        
+        {departments.length > 0 && (
+          <FormField
+            control={form.control}
+            name="department_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Setor (opcional)</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um setor" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="no-department">Sem setor</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept.id} value={dept.id}>
+                        {dept.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         
         <div className="pt-4">
           <Button type="submit" disabled={isSubmitting} className="w-full bg-portal-purple hover:bg-portal-purple-dark">

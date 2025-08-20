@@ -53,10 +53,18 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        "calma": {
+          DEFAULT: "#645CBB",     // Cor principal Calma Blue
+          blue: "#645CBB",        // Mesmo que DEFAULT para compatibilidade
+          "blue-light": "#E5DEFF", // Background suave
+          "blue-dark": "#5247A9",  // Hover states
+          light: "#E5DEFF",       // Alias para blue-light
+          dark: "#5247A9",        // Alias para blue-dark
+        },
         "portal-purple": {
-          DEFAULT: "#9b87f5",
-          dark: "#7E69AB",
-          light: "#D6BCFA",
+          DEFAULT: "#645CBB",     // Atualizado para Calma Blue
+          dark: "#5247A9",        // Atualizado para Calma Blue Dark
+          light: "#E5DEFF",       // Atualizado para Calma Blue Light
         },
       },
       fontFamily: {
@@ -78,8 +86,9 @@ const config: Config = {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
       backgroundImage: {
-        'gradient-portal': 'linear-gradient(135deg, #f5f7ff 0%, #e9ebff 100%)',
-        'gradient-button': 'linear-gradient(90deg, hsla(277, 75%, 84%, 1) 0%, hsla(297, 50%, 51%, 1) 100%)',
+        'gradient-portal': 'linear-gradient(135deg, #F8FAFC 0%, #E5DEFF 100%)',
+        'gradient-button': 'linear-gradient(135deg, #645CBB 0%, #5247A9 100%)',
+        'gradient-calma': 'linear-gradient(135deg, #E5DEFF 0%, #D6BCFA 100%)',
       }
     },
   },

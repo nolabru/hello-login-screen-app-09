@@ -51,8 +51,18 @@
 
     --sidebar-ring: 217.2 91.2% 59.8%;
     
-    --portal-purple: 255 84% 75%;
-    --portal-purple-dark: 255 84% 65%;
+    /* CORES CALMA - Baseadas no app mobile */
+    --calma-blue: 252 47% 55%;           /* #645CBB - Cor principal do app */
+    --calma-blue-light: 252 100% 94%;    /* #E5DEFF - Background suave */
+    --calma-blue-dark: 252 52% 48%;      /* #5247A9 - Hover states */
+    
+    /* GRADIENTES CALMA */
+    --gradient-primary: 252 100% 94%, 280 87% 84%;  /* #E5DEFF to #D6BCFA */
+    --gradient-button: 252 47% 55%, 252 52% 48%;    /* #645CBB to #5247A9 */
+    
+    /* CORES LEGADAS (manter compatibilidade temporária) */
+    --portal-purple: 252 47% 55%;        /* Atualizado para Calma Blue */
+    --portal-purple-dark: 252 52% 48%;   /* Atualizado para Calma Blue Dark */
   }
 
   .dark {
@@ -126,30 +136,115 @@
   }
 }
 
+/* GRADIENTES CALMA */
 .bg-gradient-portal {
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #F8FAFC 0%, #E5DEFF 100%);
 }
 
 .bg-gradient-button {
-  background: linear-gradient(90deg, #9b87f5 0%, #7e69ab 100%);
+  background: linear-gradient(135deg, #645CBB 0%, #5247A9 100%);
+}
+
+.bg-gradient-calma {
+  background: linear-gradient(135deg, #E5DEFF 0%, #D6BCFA 100%);
+}
+
+/* CORES CALMA */
+.text-calma-blue {
+  color: #645CBB;
 }
 
 .text-portal-purple {
-  color: #9b87f5;
+  color: #645CBB; /* Atualizado para Calma Blue */
+}
+
+.bg-calma-blue {
+  background-color: #645CBB;
 }
 
 .bg-portal-purple {
-  background-color: #9b87f5;
+  background-color: #645CBB; /* Atualizado para Calma Blue */
+}
+
+.bg-calma-blue-light {
+  background-color: #E5DEFF;
+}
+
+.border-calma-blue {
+  border-color: #645CBB;
 }
 
 .border-portal-purple {
-  border-color: #9b87f5;
+  border-color: #645CBB; /* Atualizado para Calma Blue */
+}
+
+/* HOVER STATES */
+.hover\:bg-calma-blue:hover {
+  background-color: #645CBB;
 }
 
 .hover\:bg-portal-purple:hover {
-  background-color: #9b87f5;
+  background-color: #645CBB; /* Atualizado para Calma Blue */
+}
+
+.hover\:bg-calma-blue-dark:hover {
+  background-color: #5247A9;
+}
+
+/* FOCUS STATES */
+.focus\:ring-calma-blue:focus {
+  --tw-ring-color: #645CBB;
 }
 
 .focus\:ring-portal-purple:focus {
-  --tw-ring-color: #9b87f5;
+  --tw-ring-color: #645CBB; /* Atualizado para Calma Blue */
+}
+
+/* COMPONENTES CALMA */
+.btn-calma {
+  background: linear-gradient(135deg, #645CBB 0%, #5247A9 100%);
+  color: white;
+  border-radius: 30px;
+  height: 56px;
+  padding: 16px 24px;
+  font-weight: 600;
+  font-size: 16px;
+  border: none;
+  box-shadow: 0 4px 6px -1px rgba(100, 92, 187, 0.1);
+  transition: all 0.2s ease;
+}
+
+.btn-calma:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 15px -3px rgba(100, 92, 187, 0.1);
+}
+
+.card-calma {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 6px -1px rgba(100, 92, 187, 0.1);
+  border: 1px solid #F3F4F6;
+  transition: all 0.2s ease;
+}
+
+.card-calma:hover {
+  box-shadow: 0 10px 15px -3px rgba(100, 92, 187, 0.1);
+  transform: translateY(-2px);
+}
+
+.input-calma {
+  height: 56px;
+  border-radius: 16px;
+  border: 1.5px solid #E5E7EB;
+  padding: 16px 20px;
+  font-size: 16px;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+.input-calma:focus {
+  border-color: #645CBB;
+  box-shadow: 0 0 0 3px rgba(100, 92, 187, 0.1);
+  outline: none;
 }

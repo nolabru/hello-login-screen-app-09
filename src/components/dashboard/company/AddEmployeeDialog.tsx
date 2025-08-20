@@ -9,6 +9,10 @@ import BulkEmployeeUpload from './BulkEmployeeUpload';
 import EmployeeSearchDialog from './EmployeeSearchDialog';
 import { AddSingleEmployeeFormValues } from './employeeSchema';
 import { checkLicenseAvailability, updateEmployeeLicenseStatus } from '@/services/licenseService';
+import { Tables } from '@/integrations/supabase/types';
+
+type Department = Tables<'company_departments'>;
+
 interface AddEmployeeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -27,6 +31,31 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
   const [activeTab, setActiveTab] = useState('add');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasAvailableLicenses, setHasAvailableLicenses] = useState(false);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  
+  // Fetch departments when dialog opens
+  useEffect(() => {
+    if (open && companyId) {
+      fetchDepartments();
+    }
+  }, [open, companyId]);
+  
+  const fetchDepartments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('company_departments')
+        .select('*')
+        .eq('company_id', companyId)
+        .eq('status', 'active')
+        .order('name');
+      
+      if (error) throw error;
+      setDepartments(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar setores:', error);
+    }
+  };
+  
   useEffect(() => {
     if (open) {
       const checkLicenses = async () => {
@@ -67,20 +96,48 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
         return;
       }
 
-      console.log('Adicionando novo funcionário com company_id:', companyId, 'tipo:', typeof companyId);
+      // Logs detalhados para debug
+      console.log('=== DADOS DO FORMULÁRIO ===');
+      console.log('Dados recebidos:', data);
+      console.log('Company ID:', companyId, 'tipo:', typeof companyId);
       
-      // Inserir novo funcionário
-      const { data: newEmployee, error } = await supabase.from('user_profiles').insert({
-        name: data.nome, // Usando 'name' no banco, mas 'nome' no formulário
+      // Processar department_id corretamente - tratar "no-department" como null
+      const processedDepartmentId = data.department_id === 'no-department' ? null : data.department_id;
+      console.log('Department ID original:', data.department_id);
+      console.log('Department ID processado:', processedDepartmentId);
+      
+      const insertData = {
         email: data.email,
-        cpf: data.cpf,
-        password: data.senha, // Usando 'password' no banco, mas 'senha' no formulário
+        full_name: data.nome,
+        preferred_name: data.nome,
         company_id: companyId,
-        status: true, // Definir como true por padrão, já que não usamos mais a distinção na interface
-        employee_status: 'active' // Definir como 'active' quando vinculado a uma empresa
-      }).select('id').single();
+        department_id: processedDepartmentId,
+        employee_status: 'pending',
+        // Campos obrigatórios com valores mínimos
+        gender: 'N/A',
+        age_range: 'N/A',
+        aia_objectives: [],
+        mental_health_experience: 'N/A'
+      };
       
-      if (error) throw error;
+      console.log('=== DADOS PARA INSERÇÃO ===');
+      console.log('Dados para inserir:', insertData);
+      
+      // Inserir novo funcionário (usando casting para contornar tipos desatualizados)
+      const { data: newEmployee, error } = await supabase
+        .from('user_profiles')
+        .insert(insertData as any)
+        .select('id')
+        .single();
+      
+      console.log('=== RESULTADO DA INSERÇÃO ===');
+      console.log('Novo funcionário:', newEmployee);
+      console.log('Erro (se houver):', error);
+      
+      if (error) {
+        console.error('Erro detalhado do Supabase:', error);
+        throw error;
+      }
       
       // Incrementar o contador de licenças usadas
       if (newEmployee) {
@@ -136,7 +193,11 @@ const AddEmployeeDialog: React.FC<AddEmployeeDialogProps> = ({
           </TabsList>
 
           <TabsContent value="add" className="py-2">
-            <AddSingleEmployeeForm onSubmit={handleSingleEmployeeSubmit} isSubmitting={isSubmitting} />
+            <AddSingleEmployeeForm 
+              onSubmit={handleSingleEmployeeSubmit} 
+              isSubmitting={isSubmitting}
+              departments={departments}
+            />
           </TabsContent>
 
           <TabsContent value="link" className="py-2">

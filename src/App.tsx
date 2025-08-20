@@ -18,10 +18,16 @@ import PsychologistSettings from "./pages/PsychologistSettings";
 import PsychologistCompanies from "./pages/PsychologistCompanies";
 import PatientDetails from "./pages/PatientDetails";
 import CompanyDashboard from "./pages/CompanyDashboard";
+import CompanyOrganization from "./pages/CompanyOrganization";
 import CompanyEmployees from "./pages/CompanyEmployees";
 import CompanyPsychologists from "./pages/CompanyPsychologists";
 import CompanyLicenses from "./pages/CompanyLicenses";
+import CompanyDepartments from "./pages/CompanyDepartments";
+import CompanyActivities from "./pages/CompanyActivities";
 import CompanyComplianceReport from "./pages/CompanyComplianceReport";
+import CompanyReports from "./pages/CompanyReports";
+import ReportWizard from "./pages/ReportWizard";
+import Questionnaires from "./pages/Questionnaires";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPsychologists from "./pages/admin/AdminPsychologists";
 import AdminCompanies from "./pages/admin/AdminCompanies";
@@ -66,10 +72,16 @@ const App = () => {
               
               {/* Company Routes */}
               <Route path="/company/dashboard" element={<CompanyDashboard />} />
+              <Route path="/company/organizacao" element={<CompanyOrganization />} />
               <Route path="/company/funcionarios" element={<CompanyEmployees />} />
               <Route path="/company/psicologos" element={<CompanyPsychologists />} />
               <Route path="/company/licencas" element={<CompanyLicenses />} />
+              <Route path="/company/departamentos" element={<CompanyDepartments />} />
+              <Route path="/company/atividades" element={<CompanyActivities />} />
               <Route path="/company/relatorio-conformidade" element={<CompanyComplianceReport />} />
+              <Route path="/company/relatorios" element={<CompanyReports />} />
+              <Route path="/company/relatorios/wizard" element={<ReportWizard />} />
+              <Route path="/company/questionarios" element={<Questionnaires />} />
               
               {/* Admin Routes */}
               <Route path="/admin/dashboard" element={<AdminDashboard />} />

@@ -1,20 +1,23 @@
 
 import React, { useEffect, useState } from 'react';
-import { Phone, Calendar, User } from 'lucide-react';
+import { Phone, Calendar, User, Edit2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import type { Employee } from './EmployeesTableView';
 
 interface EmployeesCardViewProps {
   employees: Employee[];
   onRemoveEmployee: (id: number) => void;
+  onEditEmployee?: (employee: Employee) => void;
 }
 
 const EmployeesCardView: React.FC<EmployeesCardViewProps> = ({
   employees,
-  onRemoveEmployee
+  onRemoveEmployee,
+  onEditEmployee
 }) => {
   // Estado para armazenar as URLs das imagens de perfil
   const [profileImageUrls, setProfileImageUrls] = useState<Record<string, string>>({});
@@ -124,15 +127,30 @@ const EmployeesCardView: React.FC<EmployeesCardViewProps> = ({
                 </span>
               </div>
               
-              <div className="flex justify-end pt-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => onRemoveEmployee(employee.id)}
-                >
-                  Desvincular
-                </Button>
+              <div className="flex items-center justify-between pt-2">
+                <Badge variant="outline" className="text-xs">
+                  {employee.department_name || 'Não atribuído'}
+                </Badge>
+                
+                <div className="flex gap-2">
+                  {onEditEmployee && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => onEditEmployee(employee)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => onRemoveEmployee(employee.id)}
+                  >
+                    Desvincular
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>

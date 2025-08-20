@@ -12,10 +12,50 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error('Certifique-se de que o arquivo .env existe e contém VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY.');
 }
 
+console.log('🔧 Supabase Client Configuration:');
+console.log('URL:', SUPABASE_URL);
+console.log('Anon Key:', SUPABASE_ANON_KEY ? 'Present' : 'Missing');
+
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
 export const supabase = createClient<Database>(
   SUPABASE_URL as string, 
-  SUPABASE_ANON_KEY as string
+  SUPABASE_ANON_KEY as string,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: 'implicit'
+    },
+    global: {
+      headers: {
+        'X-Client-Info': 'calma-portal'
+      }
+    },
+    db: {
+      schema: 'public'
+    }
+  }
 );
+
+// Enhanced auth logging
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('🔐 Auth State Change:', event);
+  console.log('🔐 Session:', session ? {
+    user_id: session.user.id,
+    email: session.user.email,
+    expires_at: session.expires_at,
+    access_token: session.access_token ? 'Present' : 'Missing'
+  } : 'No session');
+});
+
+// Log initial session
+supabase.auth.getSession().then(({ data: { session } }) => {
+  console.log('🔐 Initial Session:', session ? {
+    user_id: session.user.id,
+    email: session.user.email,
+    expires_at: session.expires_at
+  } : 'No initial session');
+});

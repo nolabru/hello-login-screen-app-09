@@ -5,8 +5,7 @@ import * as z from 'zod';
 export const addSingleEmployeeSchema = z.object({
   nome: z.string().min(2, { message: 'Nome é obrigatório' }),
   email: z.string().email({ message: 'Email válido é obrigatório' }),
-  cpf: z.string().min(11, { message: 'CPF válido é obrigatório' }),
-  senha: z.string().min(6, { message: 'Senha deve ter pelo menos 6 caracteres' }),
+  department_id: z.string().optional().nullable(),
 });
 
 export type AddSingleEmployeeFormValues = z.infer<typeof addSingleEmployeeSchema>;

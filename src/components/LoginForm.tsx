@@ -586,33 +586,77 @@ const LoginForm: React.FC = () => {
         navigate('/dashboard');
       } 
       else if (userTypeFromAuth === 'company') {
-        // Buscar dados da empresa
+        // Buscar dados do usuário via user_profiles
         // @ts-ignore - Ignorar erro de tipo complexo
-        const { data: companyData, error: companyError } = await supabase
-          .from('companies')
-          .select('*')
+        const { data: userProfileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select(`
+            id,
+            user_id,
+            preferred_name,
+            email,
+            employee_status,
+            company_id
+          `)
           .eq('user_id', user.id)
           .single();
         
+        if (profileError) {
+          console.error('Erro ao buscar perfil do usuário:', profileError);
+          throw new Error('Erro ao buscar dados do usuário');
+        }
+        
+        if (!userProfileData) {
+          throw new Error('Perfil de usuário não encontrado');
+        }
+
+        if (!userProfileData.company_id) {
+          throw new Error('Usuário não está vinculado a nenhuma empresa');
+        }
+
+        const profile = userProfileData;
+
+        // Buscar dados da empresa separadamente
+        // @ts-ignore - Ignorar erro de tipo complexo
+        const { data: companyData, error: companyError } = await supabase
+          .from('companies')
+          .select('id, name, email, corp_email, user_id')
+          .eq('id', profile.company_id)
+          .single();
+        
         if (companyError) {
-          console.error('Erro ao buscar dados da empresa:', companyError);
+          console.error('Erro ao buscar empresa:', companyError);
           throw new Error('Erro ao buscar dados da empresa');
         }
         
         if (!companyData) {
           throw new Error('Empresa não encontrada');
         }
-          
-        const company = companyData as Company;
+
+        const company = companyData;
+
+        // Verificar permissões de acesso ao painel empresarial
+        const isOwner = company.user_id === user.id;
+        const isAdmin = profile.employee_status === 'admin' || profile.employee_status === 'active'; // Por enquanto, permitir active também
+
+        if (!isOwner && !isAdmin) {
+          throw new Error('Acesso negado - Apenas administradores podem acessar o painel empresarial');
+        }
+
+        // Determinar tipo de acesso
+        const accessType = isOwner ? 'owner' : 'admin';
         
-        // Empresa encontrada, salvar dados na sessão
+        // Salvar dados na sessão
         localStorage.setItem('companyId', company.id.toString());
         localStorage.setItem('companyName', company.name || 'Empresa');
         localStorage.setItem('companyEmail', company.email || company.corp_email || email);
+        localStorage.setItem('userRole', accessType);
+        localStorage.setItem('userId', user.id);
+        localStorage.setItem('userProfileId', profile.id.toString());
         
         toast({
           title: "Login Bem-Sucedido",
-          description: `Bem-Vindo(a) de Volta, ${company.name || 'Empresa'}!`
+          description: `Bem-Vindo(a) de Volta, ${profile.preferred_name}! (${accessType === 'owner' ? 'Proprietário' : 'Administrador'})`
         });
         navigate('/company/dashboard');
       }
