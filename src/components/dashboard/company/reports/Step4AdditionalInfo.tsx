@@ -1,8 +1,9 @@
 import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { 
+import {
   Lightbulb,
   Target,
   AlertTriangle,
@@ -83,7 +84,7 @@ const Step4AdditionalInfo: React.FC<Step4AdditionalInfoProps> = ({
                 Informações Complementares
               </h4>
               <p className="text-sm text-blue-800">
-                Adicione contexto e informações qualitativas que enriqueçam o relatório. 
+                Adicione contexto e informações qualitativas que enriqueçam o relatório.
                 Estes campos ajudam a contar a história por trás dos números.
               </p>
             </div>
@@ -95,7 +96,7 @@ const Step4AdditionalInfo: React.FC<Step4AdditionalInfoProps> = ({
       {sections.map((section) => {
         const IconComponent = section.icon;
         const sectionSuggestions = suggestions[section.id as keyof typeof suggestions];
-        
+
         return (
           <div key={section.id} className="space-y-3">
             <div className="flex items-center gap-3">
@@ -108,7 +109,7 @@ const Step4AdditionalInfo: React.FC<Step4AdditionalInfoProps> = ({
                 </Label>
               </div>
             </div>
-            
+
             <Textarea
               id={section.id}
               value={section.value || ''}
@@ -117,7 +118,7 @@ const Step4AdditionalInfo: React.FC<Step4AdditionalInfoProps> = ({
               rows={5}
               className="resize-none"
             />
-            
+
             {/* Sugestões */}
             {sectionSuggestions && section.value === '' && (
               <div className="space-y-2">
@@ -131,8 +132,8 @@ const Step4AdditionalInfo: React.FC<Step4AdditionalInfoProps> = ({
                       type="button"
                       onClick={() => {
                         const currentValue = reportData[section.id] || '';
-                        const newValue = currentValue 
-                          ? `${currentValue}\n• ${suggestion}` 
+                        const newValue = currentValue
+                          ? `${currentValue}\n• ${suggestion}`
                           : `• ${suggestion}`;
                         updateReportData({ [section.id]: newValue });
                       }}
@@ -144,7 +145,7 @@ const Step4AdditionalInfo: React.FC<Step4AdditionalInfoProps> = ({
                 </div>
               </div>
             )}
-            
+
             {/* Contador de caracteres */}
             <div className="flex justify-between items-center">
               <p className="text-xs text-gray-500">
@@ -163,6 +164,51 @@ const Step4AdditionalInfo: React.FC<Step4AdditionalInfoProps> = ({
           </div>
         );
       })}
+
+      {/* Informações do Aprovador */}
+      <Card className="bg-purple-50 border-purple-200">
+        <div className="p-4">
+          <div className="flex items-start gap-3">
+            <Shield className="h-5 w-5 text-purple-600 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-purple-900 mb-1">
+                Responsável pela Aprovação
+              </h4>
+              <p className="text-sm text-purple-800">
+                Informe os dados da pessoa responsável por aprovar este relatório de compliance.
+              </p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="approver-name" className="text-sm font-medium">
+            Nome Completo do Aprovador *
+          </Label>
+          <Input
+            id="approver-name"
+            placeholder="Digite o nome completo"
+            value={reportData.approverName || ''}
+            onChange={(e) => updateReportData({ approverName: e.target.value })}
+            className="w-full"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="approver-email" className="text-sm font-medium">
+            Email do Aprovador *
+          </Label>
+          <Input
+            id="approver-email"
+            type="email"
+            placeholder="email@empresa.com"
+            value={reportData.approverEmail || ''}
+            onChange={(e) => updateReportData({ approverEmail: e.target.value })}
+            className="w-full"
+          />
+        </div>
+      </div>
 
       {/* Dicas de preenchimento */}
       <Card>
@@ -205,34 +251,36 @@ const Step4AdditionalInfo: React.FC<Step4AdditionalInfoProps> = ({
       </Card>
 
       {/* Status de preenchimento */}
-      <Card className={`border-2 ${
-        reportData.highlights || reportData.plannedActions || reportData.challenges 
-          ? 'bg-green-50 border-green-300' 
+      <Card className={`border-2 ${(reportData.highlights || reportData.plannedActions || reportData.challenges) &&
+          reportData.approverName && reportData.approverEmail
+          ? 'bg-green-50 border-green-300'
           : 'bg-yellow-50 border-yellow-300'
-      }`}>
+        }`}>
         <div className="p-4">
           <div className="flex items-center gap-3">
-            <Shield className={`h-5 w-5 ${
-              reportData.highlights || reportData.plannedActions || reportData.challenges 
-                ? 'text-green-600' 
+            <Shield className={`h-5 w-5 ${(reportData.highlights || reportData.plannedActions || reportData.challenges) &&
+                reportData.approverName && reportData.approverEmail
+                ? 'text-green-600'
                 : 'text-yellow-600'
-            }`} />
+              }`} />
             <div>
-              <p className={`font-medium ${
-                reportData.highlights || reportData.plannedActions || reportData.challenges 
-                  ? 'text-green-900' 
+              <p className={`font-medium ${(reportData.highlights || reportData.plannedActions || reportData.challenges) &&
+                  reportData.approverName && reportData.approverEmail
+                  ? 'text-green-900'
                   : 'text-yellow-900'
-              }`}>
-                {reportData.highlights || reportData.plannedActions || reportData.challenges 
-                  ? 'Informações adicionadas com sucesso!' 
-                  : 'Adicione informações para enriquecer seu relatório'
+                }`}>
+                {(reportData.highlights || reportData.plannedActions || reportData.challenges) &&
+                  reportData.approverName && reportData.approverEmail
+                  ? 'Todas as informações foram preenchidas!'
+                  : 'Complete as informações obrigatórias para continuar'
                 }
               </p>
               <p className="text-sm text-gray-600 mt-1">
                 Campos preenchidos: {
-                  [reportData.highlights, reportData.plannedActions, reportData.challenges]
+                  [reportData.highlights, reportData.plannedActions, reportData.challenges,
+                  reportData.approverName, reportData.approverEmail]
                     .filter(Boolean).length
-                } de 3
+                } de 5
               </p>
             </div>
           </div>

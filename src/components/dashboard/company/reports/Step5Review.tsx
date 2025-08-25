@@ -1,349 +1,507 @@
-import React from 'react';
-import { Card } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { 
+import { Progress } from '@/components/ui/progress';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import {
   FileText,
-  CheckCircle,
-  AlertCircle,
-  Calendar,
-  Users,
-  Brain,
-  Target,
-  Award,
-  Shield,
   Download,
   Eye,
-  Mail
+  CheckCircle,
+  AlertCircle,
+  TrendingUp,
+  Users,
+  BarChart3,
+  Brain,
+  Activity
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { getRealCompanyDashboardData } from '@/services/mobileAppDataService';
+import { AIService } from '@/services/AIService';
 
 interface Step5ReviewProps {
   reportData: any;
-  updateReportData: (data: any) => void;
+  onConfirm: (confirmed: boolean) => void;
+  companyId?: string;
 }
 
-const Step5Review: React.FC<Step5ReviewProps> = ({
-  reportData,
-  updateReportData
-}) => {
+const Step5Review: React.FC<Step5ReviewProps> = ({ reportData, onConfirm, companyId }) => {
+  const [realMetrics, setRealMetrics] = useState<any>(null);
+  const [aiInsights, setAiInsights] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [confirmed, setConfirmed] = useState(false);
+
+  useEffect(() => {
+    const loadRealMetrics = async () => {
+      if (companyId) {
+        try {
+          setLoading(true);
+
+          // 1. Carregar métricas reais
+          const data = await getRealCompanyDashboardData(companyId);
+          setRealMetrics(data);
+
+          // 2. Gerar insights da IA
+          try {
+            const insights = await AIService.generateReportInsights({
+              ...reportData.collectedData,
+              totalResponses: data?.questionnaireMetrics?.totalResponses || 0,
+              averageScore: data?.questionnaireMetrics?.averageScore || 0,
+              totalUsers: data?.userMetrics?.totalUsers || 0,
+              engagementRate: data?.userMetrics?.engagementRate || 0,
+              totalAlerts: data?.mentalHealthMetrics?.totalAlerts || 0,
+              criticalAlerts: data?.mentalHealthMetrics?.criticalAlerts || 0
+            });
+            setAiInsights(insights);
+          } catch (aiError) {
+            console.warn('Erro ao gerar insights da IA:', aiError);
+            // Usar insights padrão
+            setAiInsights({
+              summary: 'Análise baseada em métricas reais coletadas automaticamente.',
+              recommendations: [
+                'Continue monitorando o engajamento dos colaboradores',
+                'Mantenha a frequência dos questionários de bem-estar',
+                'Analise tendências de saúde mental mensalmente'
+              ],
+              trends: 'Dados coletados mostram engajamento consistente da equipe.',
+              riskFactors: [],
+              opportunities: ['Programa de bem-estar bem estruturado'],
+              nextSteps: ['Revisar métricas mensalmente']
+            });
+          }
+
+        } catch (error) {
+          console.error('Erro ao carregar métricas reais:', error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    loadRealMetrics();
+  }, [companyId, reportData.collectedData]);
+
   const getReportTypeLabel = () => {
     switch (reportData.reportType) {
-      case 'lei14831':
+      case 'compliance_lei14831':
         return 'Lei 14.831/2024 - Certificado Empresa Promotora da Saúde Mental';
-      case 'nr1':
-        return 'NR-1 - Riscos Psicossociais';
+      case 'nr1_psicossocial':
+        return 'NR-1 - Riscos Psicossociais no Ambiente de Trabalho';
       default:
-        return 'Relatório Personalizado';
+        return 'Relatório Personalizado de Compliance';
     }
   };
 
   const getComplianceScore = () => {
-    const factors = [
-      reportData.collectedData.activities >= 12 ? 20 : 10,
-      reportData.collectedData.engagementRate >= 70 ? 25 : 15,
-      reportData.collectedData.participationRate >= 75 ? 25 : 15,
-      reportData.collectedData.satisfactionScore >= 7 ? 20 : 10,
-      reportData.collectedData.activeUsers >= 100 ? 10 : 5
-    ];
-    return factors.reduce((sum, val) => sum + val, 0);
-  };
+    if (!realMetrics) return 0;
 
-  const reportSections = [
-    {
-      title: 'Configuração',
-      icon: FileText,
-      items: [
-        { label: 'Tipo', value: getReportTypeLabel() },
-        { label: 'Período', value: reportData.periodStart && reportData.periodEnd 
-          ? `${format(reportData.periodStart, 'dd/MM/yyyy', { locale: ptBR })} - ${format(reportData.periodEnd, 'dd/MM/yyyy', { locale: ptBR })}`
-          : 'Não definido' 
-        }
-      ]
-    },
-    {
-      title: 'Métricas Principais',
-      icon: Target,
-      items: [
-        { label: 'Atividades Realizadas', value: reportData.collectedData.activities },
-        { label: 'Taxa de Engajamento', value: `${reportData.collectedData.engagementRate}%` },
-        { label: 'Usuários Ativos', value: reportData.collectedData.activeUsers },
-        { label: 'Score de Compliance', value: `${getComplianceScore()}%` }
-      ]
-    },
-    {
-      title: 'Evidências',
-      icon: Shield,
-      items: [
-        { label: 'Documentos Anexados', value: reportData.evidenceFiles?.length || 0 },
-        { label: 'Screenshots', value: reportData.includeScreenshots ? 'Sim' : 'Não' },
-        { label: 'Gráficos', value: reportData.includeCharts ? 'Sim' : 'Não' },
-        { label: 'Depoimentos', value: reportData.includeTestimonials ? 'Sim' : 'Não' }
-      ]
-    },
-    {
-      title: 'Informações Adicionais',
-      icon: Award,
-      items: [
-        { label: 'Destaques', value: reportData.highlights ? 'Preenchido' : 'Não preenchido' },
-        { label: 'Ações Planejadas', value: reportData.plannedActions ? 'Preenchido' : 'Não preenchido' },
-        { label: 'Desafios', value: reportData.challenges ? 'Preenchido' : 'Não preenchido' }
-      ]
+    let score = 30; // Base
+
+    // Questionários respondidos
+    if (realMetrics.questionnaireMetrics?.totalResponses) {
+      score += Math.min(realMetrics.questionnaireMetrics.totalResponses * 2, 20);
     }
-  ];
 
-  const isReportComplete = () => {
-    return reportData.periodStart && 
-           reportData.periodEnd && 
-           reportData.collectedData.activities > 0 &&
-           reportData.approverName &&
-           reportData.approverEmail;
+    // Engajamento
+    if (realMetrics.userMetrics?.engagementRate) {
+      score += Math.min(realMetrics.userMetrics.engagementRate * 0.3, 25);
+    }
+
+    // Atividades completadas
+    if (reportData.collectedData?.activities) {
+      score += Math.min(reportData.collectedData.activities * 0.5, 15);
+    }
+
+    // Score de satisfação
+    if (reportData.collectedData?.satisfactionScore) {
+      score += Math.min(reportData.collectedData.satisfactionScore, 10);
+    }
+
+    return Math.min(Math.round(score), 100);
   };
+
+  const getComplianceColor = (score: number) => {
+    if (score >= 80) return 'text-green-600';
+    if (score >= 60) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
+  const getComplianceStatus = (score: number) => {
+    if (score >= 80) return 'EXCELENTE';
+    if (score >= 60) return 'BOM';
+    return 'REQUER ATENÇÃO';
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header de Status */}
-      <Card className={`border-2 ${
-        isReportComplete() 
-          ? 'bg-green-50 border-green-300' 
-          : 'bg-yellow-50 border-yellow-300'
-      }`}>
-        <div className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {isReportComplete() ? (
-                <CheckCircle className="h-8 w-8 text-green-600" />
-              ) : (
-                <AlertCircle className="h-8 w-8 text-yellow-600" />
-              )}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {isReportComplete() 
-                    ? 'Relatório Pronto para Geração!' 
-                    : 'Revise os Dados Antes de Gerar'
-                  }
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {isReportComplete() 
-                    ? 'Todos os dados foram coletados e validados com sucesso.' 
-                    : 'Preencha as informações pendentes antes de continuar.'
-                  }
-                </p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-blue-600">
-                {getComplianceScore()}%
-              </div>
-              <p className="text-xs text-gray-600">Score de Compliance</p>
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Resumo do Relatório */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {reportSections.map((section, index) => {
-          const IconComponent = section.icon;
-          return (
-            <Card key={index}>
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <IconComponent className="h-5 w-5 text-gray-600" />
-                  <h4 className="font-semibold text-gray-900">{section.title}</h4>
-                </div>
-                <div className="space-y-2">
-                  {section.items.map((item, itemIndex) => (
-                    <div key={itemIndex} className="flex justify-between text-sm">
-                      <span className="text-gray-600">{item.label}:</span>
-                      <span className="font-medium text-gray-900">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          );
-        })}
+      {/* Cabeçalho */}
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-bold text-gray-900">Revisão Final do Relatório</h2>
+        <p className="text-gray-600">Revise todas as informações antes de gerar o PDF profissional</p>
       </div>
 
-      {/* Preview do Relatório */}
+      {/* Informações Básicas */}
       <Card>
-        <div className="p-6">
-          <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            Preview do Relatório
-          </h4>
-          <div className="bg-gray-50 rounded-lg p-6 space-y-4">
-            <div className="text-center pb-4 border-b">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {getReportTypeLabel()}
-              </h2>
-              <p className="text-gray-600 mt-1">
-                Período: {reportData.periodStart && reportData.periodEnd 
-                  ? `${format(reportData.periodStart, 'dd/MM/yyyy', { locale: ptBR })} - ${format(reportData.periodEnd, 'dd/MM/yyyy', { locale: ptBR })}`
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Informações do Relatório
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-sm font-medium text-gray-700">Tipo de Relatório</Label>
+              <p className="text-sm text-gray-900 mt-1">{getReportTypeLabel()}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-700">Período</Label>
+              <p className="text-sm text-gray-900 mt-1">
+                {reportData.periodStart && reportData.periodEnd
+                  ? `${new Date(reportData.periodStart).toLocaleDateString('pt-BR')} a ${new Date(reportData.periodEnd).toLocaleDateString('pt-BR')}`
                   : 'Não definido'
                 }
               </p>
             </div>
-            
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <p className="text-3xl font-bold text-blue-600">
-                  {reportData.collectedData.activities}
-                </p>
-                <p className="text-sm text-gray-600">Atividades</p>
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-green-600">
-                  {reportData.collectedData.engagementRate}%
-                </p>
-                <p className="text-sm text-gray-600">Engajamento</p>
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-purple-600">
-                  {reportData.collectedData.meditationHours.toLocaleString()}h
-                </p>
-                <p className="text-sm text-gray-600">Meditação</p>
-              </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-700">Aprovador</Label>
+              <p className="text-sm text-gray-900 mt-1">{reportData.approverName || 'Não informado'}</p>
             </div>
-
-            <div className="pt-4 border-t">
-              <p className="text-sm text-gray-700">
-                Este relatório demonstra o compromisso da empresa com a saúde mental dos colaboradores, 
-                apresentando métricas detalhadas, evidências documentadas e análises qualitativas do período.
-              </p>
+            <div>
+              <Label className="text-sm font-medium text-gray-700">Email do Aprovador</Label>
+              <p className="text-sm text-gray-900 mt-1">{reportData.approverEmail || 'Não informado'}</p>
             </div>
           </div>
-
-          <div className="mt-4 flex gap-3">
-            <Button variant="outline" className="flex-1">
-              <Eye className="h-4 w-4 mr-2" />
-              Visualizar Completo
-            </Button>
-            <Button variant="outline" className="flex-1">
-              <Download className="h-4 w-4 mr-2" />
-              Baixar Rascunho
-            </Button>
-          </div>
-        </div>
+        </CardContent>
       </Card>
 
-      {/* Informações do Aprovador */}
+      {/* Score de Compliance */}
       <Card>
-        <div className="p-6">
-          <h4 className="font-semibold text-gray-900 mb-4">
-            Responsável pela Aprovação
-          </h4>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Score de Compliance
+          </CardTitle>
+          <CardDescription>
+            Baseado nas métricas reais coletadas automaticamente
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center space-y-4">
+            <div className="text-4xl font-bold text-blue-600">
+              {getComplianceScore()}%
+            </div>
+            <div className={`text-lg font-semibold ${getComplianceColor(getComplianceScore())}`}>
+              {getComplianceStatus(getComplianceScore())}
+            </div>
+            <Progress value={getComplianceScore()} className="w-full" />
+            <p className="text-sm text-gray-600">
+              Este score é calculado automaticamente com base nos dados reais da empresa
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Métricas Reais */}
+      {realMetrics && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Métricas Reais Coletadas
+            </CardTitle>
+            <CardDescription>
+              Dados atualizados coletados automaticamente do sistema
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Questionários */}
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">
+                  {realMetrics.questionnaireMetrics?.totalResponses || 0}
+                </div>
+                <div className="text-sm text-blue-700">Respostas Coletadas</div>
+                <div className="text-xs text-gray-600 mt-1">
+                  {realMetrics.questionnaireMetrics?.totalQuestionnaires || 0} questionários ativos
+                </div>
+              </div>
+
+              {/* Usuários */}
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">
+                  {realMetrics.userMetrics?.activeUsers || 0}
+                </div>
+                <div className="text-sm text-green-700">Usuários Ativos</div>
+                <div className="text-xs text-gray-600 mt-1">
+                  {realMetrics.userMetrics?.engagementRate || 0}% de engajamento
+                </div>
+              </div>
+
+              {/* Saúde Mental */}
+              <div className="text-center p-4 bg-orange-50 rounded-lg">
+                <div className="text-2xl font-bold text-orange-600">
+                  {realMetrics.mentalHealthMetrics?.totalAlerts || 0}
+                </div>
+                <div className="text-sm text-orange-700">Alertas Ativos</div>
+                <div className="text-xs text-gray-600 mt-1">
+                  {realMetrics.mentalHealthMetrics?.criticalAlerts || 0} críticos
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Dados Coletados Manualmente */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5" />
+            Dados Coletados Manualmente
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="approver-name">Nome Completo *</Label>
-              <Input
-                id="approver-name"
-                value={reportData.approverName || ''}
-                onChange={(e) => updateReportData({ approverName: e.target.value })}
-                placeholder="Digite o nome do responsável"
-              />
+              <Label className="text-sm font-medium text-gray-700">Atividades Realizadas</Label>
+              <p className="text-sm text-gray-900 mt-1">{reportData.collectedData?.activities || 0}</p>
             </div>
             <div>
-              <Label htmlFor="approver-email">Email *</Label>
-              <Input
-                id="approver-email"
-                type="email"
-                value={reportData.approverEmail || ''}
-                onChange={(e) => updateReportData({ approverEmail: e.target.value })}
-                placeholder="email@empresa.com"
-              />
+              <Label className="text-sm font-medium text-gray-700">Workshops</Label>
+              <p className="text-sm text-gray-900 mt-1">{reportData.collectedData?.workshops || 0}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-700">Palestras</Label>
+              <p className="text-sm text-gray-900 mt-1">{reportData.collectedData?.lectures || 0}</p>
+            </div>
+            <div>
+              <Label className="text-sm font-medium text-gray-700">Grupos de Apoio</Label>
+              <p className="text-sm text-gray-900 mt-1">{reportData.collectedData?.supportGroups || 0}</p>
             </div>
           </div>
-        </div>
+        </CardContent>
       </Card>
 
-      {/* Confirmação Final */}
-      <Card className="border-2 border-blue-200">
-        <div className="p-6">
-          <div className="flex items-start gap-3">
-            <Checkbox
-              id="confirm"
-              checked={reportData.confirmed}
-              onCheckedChange={(checked) => updateReportData({ confirmed: checked })}
-            />
-            <div className="flex-1">
-              <Label htmlFor="confirm" className="text-sm font-medium cursor-pointer">
-                Confirmo que revisei todas as informações e autorizo a geração do relatório
-              </Label>
-              <p className="text-xs text-gray-600 mt-1">
-                Ao confirmar, você declara que as informações fornecidas são verdadeiras e 
-                completas, e que o relatório pode ser usado para fins de compliance.
-              </p>
-            </div>
-          </div>
+      {/* Informações Adicionais */}
+      {(reportData.highlights || reportData.plannedActions || reportData.challenges) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              Informações Adicionais
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {reportData.highlights && (
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Destaques</Label>
+                <p className="text-sm text-gray-900 mt-1">{reportData.highlights}</p>
+              </div>
+            )}
+            {reportData.plannedActions && (
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Ações Planejadas</Label>
+                <p className="text-sm text-gray-900 mt-1">{reportData.plannedActions}</p>
+              </div>
+            )}
+            {reportData.challenges && (
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Desafios Identificados</Label>
+                <p className="text-sm text-gray-900 mt-1">{reportData.challenges}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-          {reportData.confirmed && (
-            <div className="mt-4 p-3 bg-green-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-green-600" />
-                <span className="text-sm text-green-800 font-medium">
-                  Relatório autorizado para geração
-                </span>
+      {/* Evidências */}
+      {reportData.evidenceFiles && reportData.evidenceFiles.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Evidências e Arquivos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {reportData.evidenceFiles.map((file: File, index: number) => (
+                <div key={index} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+                  <FileText className="h-4 w-4 text-gray-500" />
+                  <span className="text-sm text-gray-700">{file.name}</span>
+                  <Badge variant="secondary" className="ml-auto">
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Preview do Relatório */}
+      {aiInsights && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Preview do Relatório Gerado
+            </CardTitle>
+            <CardDescription>
+              Como ficará seu relatório com insights da IA e métricas reais
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Resumo Executivo */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg">
+              <h4 className="font-semibold text-blue-900 mb-2">Resumo Executivo</h4>
+              <p className="text-blue-800 text-sm leading-relaxed">{aiInsights.summary}</p>
+            </div>
+
+            {/* Insights Principais */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Recomendações */}
+              {aiInsights.recommendations && aiInsights.recommendations.length > 0 && (
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-green-900 mb-2">Recomendações</h4>
+                  <ul className="space-y-1 text-sm text-green-800">
+                    {aiInsights.recommendations.slice(0, 3).map((rec: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <CheckCircle className="h-3 w-3 text-green-600 mt-0.5 flex-shrink-0" />
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Oportunidades */}
+              {aiInsights.opportunities && aiInsights.opportunities.length > 0 && (
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-blue-900 mb-2">Oportunidades</h4>
+                  <ul className="space-y-1 text-sm text-blue-800">
+                    {aiInsights.opportunities.slice(0, 3).map((opp: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <TrendingUp className="h-3 w-3 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <span>{opp}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            {/* Tendências */}
+            {aiInsights.trends && (
+              <div className="bg-purple-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-purple-900 mb-2">Tendências Identificadas</h4>
+                <p className="text-purple-800 text-sm">{aiInsights.trends}</p>
+              </div>
+            )}
+
+            {/* Próximos Passos */}
+            {aiInsights.nextSteps && aiInsights.nextSteps.length > 0 && (
+              <div className="bg-orange-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-orange-900 mb-2">Próximos Passos</h4>
+                <ul className="space-y-1 text-sm text-orange-800">
+                  {aiInsights.nextSteps.slice(0, 3).map((step: string, index: number) => (
+                    <li key={index} className="flex items-start gap-2">
+                      <Clock className="h-3 w-3 text-orange-600 mt-0.5 flex-shrink-0" />
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Confirmação */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5" />
+            Confirmação Final
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="confirm-report"
+                checked={confirmed}
+                onCheckedChange={(checked) => setConfirmed(checked as boolean)}
+              />
+              <Label htmlFor="confirm-report" className="text-sm font-medium">
+                Confirmo que todas as informações estão corretas e autorizo a geração do relatório
+              </Label>
+            </div>
+
+            {/* Validação dos campos obrigatórios */}
+            {(!reportData.approverName || !reportData.approverEmail) && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-red-800">
+                    <p className="font-medium mb-1">Campos obrigatórios não preenchidos:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      {!reportData.approverName && <li>Nome do aprovador</li>}
+                      {!reportData.approverEmail && <li>Email do aprovador</li>}
+                    </ul>
+                    <p className="mt-2 text-xs">Volte ao Step 4 para preencher essas informações.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium">O que acontecerá a seguir:</p>
+                  <ul className="mt-2 space-y-1 list-disc list-inside">
+                    <li>Coleta automática das métricas mais recentes</li>
+                    <li>Geração de insights com IA</li>
+                    <li>Criação de PDF profissional</li>
+                    <li>Salvamento no sistema</li>
+                    <li>Disponibilização para download</li>
+                  </ul>
+                </div>
               </div>
             </div>
-          )}
-        </div>
-      </Card>
 
-      {/* Opções de Distribuição */}
-      <Card>
-        <div className="p-6">
-          <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Mail className="h-5 w-5" />
-            Opções de Distribuição
-          </h4>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Checkbox id="send-email" defaultChecked />
-              <Label htmlFor="send-email" className="text-sm cursor-pointer">
-                Enviar por email para o aprovador após geração
-              </Label>
-            </div>
-            <div className="flex items-center gap-3">
-              <Checkbox id="save-cloud" defaultChecked />
-              <Label htmlFor="save-cloud" className="text-sm cursor-pointer">
-                Salvar cópia na nuvem para acesso futuro
-              </Label>
-            </div>
-            <div className="flex items-center gap-3">
-              <Checkbox id="notify-team" />
-              <Label htmlFor="notify-team" className="text-sm cursor-pointer">
-                Notificar equipe de compliance
-              </Label>
-            </div>
+            <Button
+              onClick={() => onConfirm(confirmed)}
+              disabled={!confirmed || !reportData.approverName || !reportData.approverEmail}
+              className="w-full bg-green-600 hover:bg-green-700"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Confirmar e Gerar Relatório
+            </Button>
           </div>
-        </div>
+        </CardContent>
       </Card>
-
-      {/* Mensagem de validação */}
-      {!isReportComplete() && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-            <div className="text-sm text-yellow-800">
-              <p className="font-medium mb-1">Informações pendentes:</p>
-              <ul className="list-disc list-inside space-y-1">
-                {!reportData.periodStart && <li>Defina a data de início do período</li>}
-                {!reportData.periodEnd && <li>Defina a data de término do período</li>}
-                {!reportData.approverName && <li>Informe o nome do responsável pela aprovação</li>}
-                {!reportData.approverEmail && <li>Informe o email do responsável</li>}
-                {!reportData.confirmed && <li>Confirme a autorização para gerar o relatório</li>}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

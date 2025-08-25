@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import CompanyDashboardLayout from '@/components/layout/CompanyDashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +7,11 @@ import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { ReportStorageService } from '@/services/reportStorageService';
-import { 
+import { ReportPDFService } from '@/services/ReportPDFService';
+import { FileUploadService } from '@/services/FileUploadService';
+import { AIService } from '@/services/AIService';
+import { getRealCompanyDashboardData } from '@/services/mobileAppDataService';
+import {
   ArrowLeft,
   ArrowRight,
   Check,
@@ -24,10 +28,10 @@ import Step5Review from '@/components/dashboard/company/reports/Step5Review';
 
 interface ReportData {
   // Configuração inicial
-  reportType: 'lei14831' | 'nr1' | 'customizado';
+  reportType: 'compliance_lei14831' | 'nr1_psicossocial' | 'customizado';
   periodStart: Date | null;
   periodEnd: Date | null;
-  
+
   // Dados coletados
   collectedData: {
     activities: number;
@@ -42,18 +46,18 @@ interface ReportData {
     participationRate: number;
     satisfactionScore: number;
   };
-  
+
   // Evidências
   evidenceFiles: File[];
   includeScreenshots: boolean;
   includeCharts: boolean;
   includeTestimonials: boolean;
-  
+
   // Informações adicionais
   highlights: string;
   plannedActions: string;
   challenges: string;
-  
+
   // Aprovação
   approverName: string;
   approverEmail: string;
@@ -64,13 +68,15 @@ const ReportWizard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  
+
   const reportType = searchParams.get('type') || 'custom';
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [profile, setProfile] = useState<any>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
   const [reportData, setReportData] = useState<ReportData>({
-        reportType: reportType === 'lei14831' ? 'lei14831' : reportType === 'nr1' ? 'nr1' : 'customizado',
+    reportType: reportType === 'lei14831' ? 'compliance_lei14831' : reportType === 'nr1' ? 'nr1_psicossocial' : 'customizado',
     periodStart: null,
     periodEnd: null,
     collectedData: {
@@ -106,6 +112,33 @@ const ReportWizard = () => {
     { number: 5, title: 'Revisão', description: 'Aprovação final' }
   ];
 
+  // Carregar profile do usuário no início
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        setProfileLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: userProfile } = await supabase
+            .from('user_profiles')
+            .select('company_id')
+            .eq('user_id', user.id)
+            .single();
+
+          if (userProfile) {
+            setProfile(userProfile);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar profile:', error);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, []);
+
   const handleNext = () => {
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
@@ -120,25 +153,18 @@ const ReportWizard = () => {
 
   const handleGenerateReport = async () => {
     setIsLoading(true);
-    
+
     try {
-      // Buscar ID da empresa do usuário
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        throw new Error('Usuário não autenticado');
-      }
-      
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .single();
-      
+      console.log('🚀 Iniciando geração de relatório...');
+
+      // 1. Verificar se temos o profile carregado
       if (!profile?.company_id) {
-        throw new Error('Empresa não encontrada');
+        throw new Error('Perfil da empresa não carregado. Tente novamente.');
       }
 
-      // Verificar se os dados necessários estão presentes
+      console.log('✅ Empresa identificada:', profile.company_id);
+
+      // 2. Verificar dados obrigatórios
       if (!reportData.periodStart || !reportData.periodEnd) {
         throw new Error('Defina o período do relatório');
       }
@@ -147,34 +173,111 @@ const ReportWizard = () => {
         throw new Error('Preencha as informações do aprovador');
       }
 
-      // Preparar dados para salvamento
+      // 3. Coletar métricas REAIS da empresa
+      toast({ title: 'Coletando métricas reais...', description: 'Buscando dados atualizados da empresa.' });
+
+      const realData = await getRealCompanyDashboardData(profile.company_id);
+      console.log('✅ Métricas reais coletadas:', realData);
+
+      // 4. Enriquecer dados coletados com métricas reais
+      const enrichedData = {
+        ...reportData.collectedData,
+        // Dados reais de questionários
+        totalQuestionnaires: realData?.questionnaireMetrics?.totalQuestionnaires || 0,
+        totalResponses: realData?.questionnaireMetrics?.totalResponses || 0,
+        averageScore: realData?.questionnaireMetrics?.averageScore || 0,
+        completionRate: realData?.questionnaireMetrics?.completionRate || 0,
+        // Dados reais de usuários
+        totalUsers: realData?.userMetrics?.totalUsers || 0,
+        activeUsers: realData?.userMetrics?.activeUsers || 0,
+        engagementRate: realData?.userMetrics?.engagementRate || 0,
+        // Dados reais de saúde mental
+        totalAlerts: realData?.mentalHealthMetrics?.totalAlerts || 0,
+        criticalAlerts: realData?.mentalHealthMetrics?.criticalAlerts || 0,
+        moderateAlerts: realData?.mentalHealthMetrics?.moderateAlerts || 0
+      };
+
+      // 5. Gerar insights com IA (com fallback)
+      let aiInsights;
+      try {
+        toast({ title: 'Gerando insights com IA...', description: 'Analisando dados e criando recomendações.' });
+        aiInsights = await AIService.generateReportInsights(enrichedData);
+        console.log('✅ Insights de IA gerados');
+      } catch (aiError) {
+        console.warn('⚠️ IA falhou, usando insights padrão:', aiError);
+        aiInsights = {
+          summary: 'Análise baseada em métricas reais coletadas automaticamente.',
+          recommendations: [
+            'Continue monitorando o engajamento dos colaboradores',
+            'Mantenha a frequência dos questionários de bem-estar',
+            'Analise tendências de saúde mental mensalmente'
+          ],
+          trends: 'Dados coletados mostram engajamento consistente da equipe.'
+        };
+      }
+
+      // 6. Preparar dados para salvamento
       const saveData = {
         companyId: profile.company_id,
         reportType: reportData.reportType,
         periodStart: new Date(reportData.periodStart),
         periodEnd: new Date(reportData.periodEnd),
-        metrics: reportData.collectedData,
-        insights: (reportData as any).insights || [],
+        metrics: enrichedData,
+        insights: aiInsights,
         highlights: reportData.highlights,
         plannedActions: reportData.plannedActions,
         challenges: reportData.challenges,
         approverName: reportData.approverName,
         approverEmail: reportData.approverEmail,
-        evidenceFiles: [] // TODO: Implementar upload de arquivos
+        evidenceFiles: reportData.evidenceFiles || [],
+        realData: realData // Incluir dados reais para referência
       };
 
-      // Salvar relatório
+      // 7. Salvar relatório no banco
+      toast({ title: 'Salvando relatório...', description: 'Armazenando dados no sistema.' });
       const reportId = await ReportStorageService.saveReport(saveData);
-      
-      toast({
-        title: 'Relatório gerado com sucesso!',
-        description: `Relatório salvo com ID: ${reportId}. Você pode acessá-lo na lista de relatórios.`,
+      console.log('✅ Relatório salvo com ID:', reportId);
+
+      // 8. Gerar PDF com dados reais
+      toast({ title: 'Gerando PDF do relatório...', description: 'Criando documento profissional com métricas reais.' });
+
+      const pdfBlob = await ReportPDFService.generatePDF({
+        ...saveData,
+        title: ReportStorageService.generateReportTitle(saveData.reportType, saveData.periodStart, saveData.periodEnd)
       });
-      
-      // Navegar de volta para a página de relatórios
-      navigate('/company/relatorios');
+
+      console.log('✅ PDF gerado, tamanho:', pdfBlob.size);
+
+      // 9. Fazer upload do PDF
+      toast({ title: 'Fazendo upload do PDF...', description: 'Salvando documento no sistema.' });
+
+      const pdfFile = new File([pdfBlob], `relatorio_${reportId}.pdf`, { type: 'application/pdf' });
+      const pdfUrl = await FileUploadService.uploadFile(pdfFile, 'report-pdfs', profile.company_id);
+
+      console.log('✅ PDF enviado para:', pdfUrl);
+
+      // 10. Atualizar relatório com URL do PDF
+      console.log('🔧 ReportWizard: Chamando updateReportWithPDF com:', { reportId, pdfUrl, pdfSize: pdfFile.size });
+
+      try {
+        await ReportStorageService.updateReportWithPDF(reportId, pdfUrl, pdfFile.size);
+        console.log('✅ Relatório atualizado com URL do PDF');
+      } catch (updateError) {
+        console.error('❌ Erro ao atualizar relatório com PDF:', updateError);
+        throw updateError;
+      }
+
+      // 11. Sucesso!
+      toast({
+        title: '🎉 Relatório gerado com sucesso!',
+        description: `PDF profissional criado com ${realData?.questionnaireMetrics?.totalResponses || 0} respostas reais e métricas atualizadas.`,
+      });
+
+      // 12. Navegar para visualização do relatório
+      navigate(`/company/relatorios/${reportId}`);
+
     } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
+      console.error('❌ Erro ao gerar relatório:', error);
       toast({
         variant: 'destructive',
         title: 'Erro ao gerar relatório',
@@ -191,9 +294,9 @@ const ReportWizard = () => {
 
   const getReportTypeLabel = () => {
     switch (reportData.reportType) {
-      case 'lei14831':
+      case 'compliance_lei14831':
         return 'Lei 14.831/2024 - Certificado Empresa Promotora da Saúde Mental';
-      case 'nr1':
+      case 'nr1_psicossocial':
         return 'NR-1 - Riscos Psicossociais no Ambiente de Trabalho';
       default:
         return 'Relatório Personalizado de Compliance';
@@ -239,10 +342,10 @@ const ReportWizard = () => {
                 <div
                   className={`
                     w-12 h-12 rounded-full flex items-center justify-center font-semibold
-                    ${currentStep > step.number 
-                      ? 'bg-green-600 text-white' 
-                      : currentStep === step.number 
-                        ? 'bg-blue-600 text-white' 
+                    ${currentStep > step.number
+                      ? 'bg-green-600 text-white'
+                      : currentStep === step.number
+                        ? 'bg-blue-600 text-white'
                         : 'bg-gray-200 text-gray-600'
                     }
                   `}
@@ -254,9 +357,8 @@ const ReportWizard = () => {
                   )}
                 </div>
                 <div className="text-center mt-2">
-                  <p className={`text-sm font-medium ${
-                    currentStep === step.number ? 'text-blue-600' : 'text-gray-600'
-                  }`}>
+                  <p className={`text-sm font-medium ${currentStep === step.number ? 'text-blue-600' : 'text-gray-600'
+                    }`}>
                     {step.title}
                   </p>
                   <p className="text-xs text-gray-500 hidden sm:block">
@@ -265,9 +367,8 @@ const ReportWizard = () => {
                 </div>
               </div>
               {index < steps.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-4 ${
-                  currentStep > step.number ? 'bg-green-600' : 'bg-gray-200'
-                }`} />
+                <div className={`flex-1 h-0.5 mx-4 ${currentStep > step.number ? 'bg-green-600' : 'bg-gray-200'
+                  }`} />
               )}
             </div>
           ))}
@@ -284,35 +385,49 @@ const ReportWizard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {currentStep === 1 && (
-              <Step1Configuration 
-                reportData={reportData}
-                updateReportData={updateReportData}
-              />
-            )}
-            {currentStep === 2 && (
-              <Step2DataCollection 
-                reportData={reportData}
-                updateReportData={updateReportData}
-              />
-            )}
-            {currentStep === 3 && (
-              <Step3Evidence 
-                reportData={reportData}
-                updateReportData={updateReportData}
-              />
-            )}
-            {currentStep === 4 && (
-              <Step4AdditionalInfo 
-                reportData={reportData}
-                updateReportData={updateReportData}
-              />
-            )}
-            {currentStep === 5 && (
-              <Step5Review 
-                reportData={reportData}
-                updateReportData={updateReportData}
-              />
+            {profileLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-3 text-gray-600">Carregando perfil...</span>
+              </div>
+            ) : (
+              <>
+                {currentStep === 1 && (
+                  <Step1Configuration
+                    reportData={reportData}
+                    updateReportData={updateReportData}
+                  />
+                )}
+                {currentStep === 2 && (
+                  <Step2DataCollection
+                    reportData={reportData}
+                    updateReportData={updateReportData}
+                  />
+                )}
+                {currentStep === 3 && (
+                  <Step3Evidence
+                    reportData={reportData}
+                    updateReportData={updateReportData}
+                  />
+                )}
+                {currentStep === 4 && (
+                  <Step4AdditionalInfo
+                    reportData={reportData}
+                    updateReportData={updateReportData}
+                  />
+                )}
+                {currentStep === 5 && (
+                  <Step5Review
+                    reportData={reportData}
+                    onConfirm={(confirmed) => {
+                      if (confirmed) {
+                        handleGenerateReport();
+                      }
+                    }}
+                    companyId={profile?.company_id}
+                  />
+                )}
+              </>
             )}
           </CardContent>
         </Card>

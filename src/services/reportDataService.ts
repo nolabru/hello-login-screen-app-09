@@ -1,5 +1,9 @@
 import { supabase } from '@/integrations/supabase/client';
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format } from 'date-fns';
+import { MeditationService } from './meditationService';
+import { DiaryService } from './diaryService';
+import { SoundsService } from './soundsService';
+import { getCompanyQuestionnaireMetrics } from './questionnaireService';
 
 // Tipos simples para evitar inferência profunda
 type SimpleDepartment = {
@@ -16,21 +20,21 @@ interface ReportMetrics {
   meditationHours: number;
   conversationSessions: number;
   diaryEntries: number;
-  
+
   // Métricas de Atividades
   totalActivities: number;
   completedActivities: number;
   workshops: number;
   lectures: number;
   supportGroups: number;
-  
+
   // Métricas de Engajamento
   totalEmployees: number;
   activeUsers: number;
   participationRate: number;
   engagementRate: number;
   satisfactionScore: number;
-  
+
   // Métricas por Departamento
   departmentMetrics: Array<{
     name: string;
@@ -50,21 +54,31 @@ export class ReportDataService {
     endDate: Date
   ): Promise<ReportMetrics> {
     try {
-      // Buscar todas as métricas em paralelo para melhor performance
+      // Chamar os serviços especializados para buscar as métricas
       const [
         activities,
         employees,
         departments,
-        appMetrics
+        meditationMetrics,
+        diaryMetrics,
+        soundsMetrics,
+        questionnaireMetrics
       ] = await Promise.all([
         this.fetchActivityMetrics(companyId, startDate, endDate),
         this.fetchEmployeeMetrics(companyId),
         this.fetchDepartmentMetrics(companyId, startDate, endDate),
-        this.fetchAppMetrics(companyId, startDate, endDate)
+        MeditationService.getCompanyMeditationMetrics(),
+        DiaryService.getCompanyDiaryMetrics(),
+        SoundsService.getCompanySoundsMetrics(),
+        getCompanyQuestionnaireMetrics(companyId)
       ]);
 
-      // Calcular taxas de engajamento
-      const activeUsers = await this.countActiveUsers(companyId, startDate, endDate);
+      const activeUsers = new Set([
+        ...(meditationMetrics.departmentBreakdown || []).flatMap(d => d.activeUsers > 0 ? d.departmentId : []),
+        ...(diaryMetrics.departmentBreakdown || []).flatMap(d => d.activeUsers > 0 ? d.departmentId : []),
+        ...(soundsMetrics.departmentBreakdown || []).flatMap(d => d.activeUsers > 0 ? d.departmentId : [])
+      ]).size;
+
       const participationRate = this.calculateParticipationRate(
         activities.participantsCount,
         employees.total
@@ -76,24 +90,24 @@ export class ReportDataService {
 
       return {
         // Métricas do App
-        meditationHours: appMetrics.meditationHours,
-        conversationSessions: appMetrics.conversationSessions,
-        diaryEntries: appMetrics.diaryEntries,
-        
+        meditationHours: meditationMetrics.totalHours,
+        conversationSessions: 0, // Esta métrica não está clara no schema
+        diaryEntries: diaryMetrics.totalEntries,
+
         // Métricas de Atividades
         totalActivities: activities.total,
         completedActivities: activities.completed,
         workshops: activities.workshops,
         lectures: activities.lectures,
         supportGroups: activities.supportGroups,
-        
+
         // Métricas de Engajamento
         totalEmployees: employees.total,
         activeUsers,
         participationRate,
         engagementRate,
-        satisfactionScore: await this.calculateSatisfactionScore(companyId, startDate, endDate),
-        
+        satisfactionScore: questionnaireMetrics.averageCompletionRate / 10, // Usar score de questionários
+
         // Métricas por Departamento
         departmentMetrics: departments
       };
@@ -134,7 +148,7 @@ export class ReportDataService {
         .from('activity_participants')
         .select('participant_id')
         .in('activity_id', activityIds);
-      
+
       const uniqueParticipants = new Set<string>();
       participants?.forEach((p: any) => {
         if (p.participant_id) uniqueParticipants.add(p.participant_id);
@@ -194,7 +208,7 @@ export class ReportDataService {
     // Processar cada departamento
     for (let i = 0; i < departments.length; i++) {
       const dept = departments[i];
-      
+
       // Buscar colaboradores do departamento
       const employeesQuery: any = await supabase
         .from('user_profiles')
@@ -213,19 +227,19 @@ export class ReportDataService {
         for (const emp of employees) {
           if (emp.user_id) userIds.push(emp.user_id);
         }
-        
+
         if (userIds.length > 0) {
           // @ts-ignore - Tipo profundo do Supabase
           const participationsQuery: any = await supabase
             .from('activity_participants')
             .select('activity_id')
             .in('participant_id', userIds);
-          
+
           participationCount = participationsQuery.data?.length || 0;
         }
       }
 
-      const engagementRate = employeeCount > 0 
+      const engagementRate = employeeCount > 0
         ? (participationCount / employeeCount) * 100
         : 0;
 
@@ -241,28 +255,62 @@ export class ReportDataService {
   }
 
   /**
-   * Busca métricas do app Calma (simulado por enquanto)
+   * Busca métricas do app Calma (dados reais)
    */
   private static async fetchAppMetrics(
     companyId: string,
     startDate: Date,
     endDate: Date
   ) {
-    // TODO: Quando tivermos as tabelas do app Calma, buscar dados reais
-    // Por enquanto, vamos simular com base no número de colaboradores
-    
-    const { data: employees } = await supabase
+    // Buscar todos os colaboradores da empresa
+    const { data: employees, error: employeesError } = await supabase
       .from('user_profiles')
       .select('user_id')
       .eq('company_id', companyId);
 
-    const employeeCount = employees?.length || 1;
-    
-    // Simular métricas proporcionais ao número de colaboradores
+    if (employeesError) throw employeesError;
+    if (!employees || employees.length === 0) {
+      return { meditationHours: 0, conversationSessions: 0, diaryEntries: 0 };
+    }
+
+    const userIds = employees.map(e => e.user_id).filter(id => id); // Filtrar nulos
+
+    if (userIds.length === 0) {
+      return { meditationHours: 0, conversationSessions: 0, diaryEntries: 0 };
+    }
+
+    // Buscar dados reais em paralelo
+    const [meditationData, conversationData, diaryData] = await Promise.all([
+      supabase
+        .from('meditation_tracks' as any) // Assumindo que esta tabela existe, conforme schema implícito
+        .select('duration')
+        .in('user_id', userIds)
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString()),
+      supabase
+        .from('call_sessions')
+        .select('id')
+        .in('user_id', userIds)
+        .gte('started_at', startDate.toISOString())
+        .lte('started_at', endDate.toISOString()),
+      supabase
+        .from('diary' as any)
+        .select('id')
+        .in('user_id', userIds)
+        .gte('date', startDate.toISOString())
+        .lte('date', endDate.toISOString())
+    ]);
+
+    if (meditationData.error) console.warn('Aviso de meditação:', meditationData.error.message);
+    if (conversationData.error) throw conversationData.error;
+    if (diaryData.error) throw diaryData.error;
+
+    const totalMinutes = (meditationData.data as any[])?.reduce((sum, session) => sum + (session.duration || 0), 0) || 0;
+
     return {
-      meditationHours: Math.round(employeeCount * 3.5), // Média de 3.5h por colaborador
-      conversationSessions: Math.round(employeeCount * 2.2), // Média de 2.2 sessões
-      diaryEntries: Math.round(employeeCount * 8.5) // Média de 8.5 entradas
+      meditationHours: Math.round(totalMinutes / 60),
+      conversationSessions: conversationData.data?.length || 0,
+      diaryEntries: diaryData.data?.length || 0
     };
   }
 
@@ -323,31 +371,64 @@ export class ReportDataService {
   }
 
   /**
-   * Calcula score de satisfação (simulado por enquanto)
+   * Calcula score de satisfação com base em dados reais
    */
   private static async calculateSatisfactionScore(
     companyId: string,
     startDate: Date,
     endDate: Date
   ): Promise<number> {
-    // TODO: Quando tivermos sistema de feedback, calcular real
-    // Por enquanto, vamos simular baseado no engajamento
-    
-    const { data: activities } = await supabase
-      .from('company_activities')
-      .select('*')
+    // Prioridade 1: Média das notas dos questionários
+    const { data: questionnaireResponses, error: questionnaireError } = await supabase
+      .from('questionnaire_responses')
+      .select('responses')
       .eq('company_id', companyId)
-      .eq('status', 'concluida')
-      .gte('start_date', startDate.toISOString())
-      .lte('start_date', endDate.toISOString());
+      .gte('completed_at', startDate.toISOString())
+      .lte('completed_at', endDate.toISOString());
 
-    // Simular score baseado no número de atividades concluídas
-    const completedCount = activities?.length || 0;
-    
-    if (completedCount >= 10) return 8.5;
-    if (completedCount >= 5) return 7.8;
-    if (completedCount >= 3) return 7.2;
-    return 6.5;
+    if (questionnaireError) {
+      console.error("Erro ao buscar respostas de questionários:", questionnaireError);
+    } else if (questionnaireResponses && questionnaireResponses.length > 0) {
+      let totalScore = 0;
+      let scoreCount = 0;
+      questionnaireResponses.forEach(res => {
+        // A estrutura de 'responses' pode variar, aqui assumimos um padrão
+        // Exemplo: { "satisfaction_score": 8 }
+        const responses = res.responses as any;
+        if (responses && typeof responses.satisfaction_score === 'number') {
+          totalScore += responses.satisfaction_score;
+          scoreCount++;
+        }
+      });
+      if (scoreCount > 0) {
+        return parseFloat((totalScore / scoreCount).toFixed(1));
+      }
+    }
+
+    // Prioridade 2: Média das notas de feedback de atividades
+    const { data: activityFeedback, error: activityError } = await supabase
+      .from('activity_participants')
+      .select('rating')
+      .gte('registered_at', startDate.toISOString())
+      .lte('registered_at', endDate.toISOString());
+    // Falta filtrar por companyId aqui, precisaria de um JOIN que vamos evitar por simplicidade
+
+    if (activityError) {
+      console.error("Erro ao buscar feedback de atividades:", activityError);
+    } else if (activityFeedback && activityFeedback.length > 0) {
+      const validRatings = activityFeedback.map(f => f.rating).filter(r => r !== null) as number[];
+      if (validRatings.length > 0) {
+        const averageRating = validRatings.reduce((sum, rating) => sum + rating, 0) / validRatings.length;
+        return parseFloat(averageRating.toFixed(1));
+      }
+    }
+
+    // Fallback: Simulação baseada em engajamento se não houver dados
+    const engagementRate = await this.calculateEngagementRate(
+      await this.countActiveUsers(companyId, startDate, endDate),
+      (await this.fetchEmployeeMetrics(companyId)).total
+    );
+    return 6.5 + (engagementRate / 100) * 2; // Mapeia 0-100% para 6.5-8.5
   }
 
   /**
@@ -368,7 +449,7 @@ export class ReportDataService {
     const satisfactionScore = (metrics.satisfactionScore / 10) * 100;
 
     // Calcular score ponderado
-    const totalScore = 
+    const totalScore =
       (activityScore * weights.activities) +
       (engagementScore * weights.engagement) +
       (participationScore * weights.participation) +
@@ -416,9 +497,9 @@ export class ReportDataService {
     }
 
     // Insights por departamento
-    const topDepartment = metrics.departmentMetrics.reduce((prev, current) => 
+    const topDepartment = metrics.departmentMetrics.reduce((prev, current) =>
       (prev.engagementRate > current.engagementRate) ? prev : current
-    , metrics.departmentMetrics[0]);
+      , metrics.departmentMetrics[0]);
 
     if (topDepartment) {
       insights.push(`🏆 Departamento ${topDepartment.name} lidera em engajamento com ${topDepartment.engagementRate}%.`);

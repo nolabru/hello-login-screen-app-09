@@ -42,7 +42,7 @@ export interface MeditationEvolution {
 }
 
 export class MeditationService {
-  
+
   /**
    * Busca métricas gerais de meditação para uma empresa
    */
@@ -50,7 +50,7 @@ export class MeditationService {
     try {
       // Validar autenticação usando AuthService
       const companyId = await AuthService.getValidatedCompanyId();
-      
+
       if (!companyId) {
         console.error('❌ Company ID não encontrado ou usuário não autenticado');
         return this.getEmptyMetrics();
@@ -70,14 +70,41 @@ export class MeditationService {
       }
 
       const totalUsers = users?.length || 0;
-      
-      // Por enquanto, simular dados baseados no número de usuários
-      // Isso será substituído por dados reais quando as tabelas estiverem disponíveis
-      const activeUsers = Math.floor(totalUsers * 0.35); // 35% dos usuários ativos
-      const totalMinutes = activeUsers * 52; // 52 minutos por usuário ativo em média
+      const userIds = users.map(u => u.user_id).filter(id => id);
+
+      if (userIds.length === 0) {
+        return this.getEmptyMetrics();
+      }
+
+      // Buscar progresso real das fases
+      const { data: phaseProgress, error: progressError } = await supabase
+        .from('phase_progress' as any)
+        .select('user_id, is_completed, phases(duration)')
+        .in('user_id', userIds);
+
+      if (progressError) {
+        console.error('❌ Erro ao buscar progresso das fases:', progressError);
+        return this.getEmptyMetrics();
+      }
+
+      const safePhaseProgress = phaseProgress as any[];
+      const activeUsersSet = new Set(safePhaseProgress.map(p => p.user_id));
+      const activeUsers = activeUsersSet.size;
+
+      const totalMinutes = safePhaseProgress.reduce((sum, p) => {
+        return sum + (p.phases?.duration || 0);
+      }, 0);
+
       const totalHours = Math.round(totalMinutes / 60 * 10) / 10;
-      const completedPhases = activeUsers * 3; // 3 fases por usuário ativo
-      const completedTracks = Math.floor(activeUsers * 0.8); // 80% completam pelo menos 1 trilha
+      const completedPhases = safePhaseProgress.filter(p => p.is_completed).length;
+
+      // Lógica para trilhas completas (simplificada: 1 trilha = 8 fases)
+      const phasesByUser = safePhaseProgress.reduce((acc, p) => {
+        acc[p.user_id] = (acc[p.user_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const completedTracks = Object.values(phasesByUser).filter(count => typeof count === 'number' && count >= 8).length;
 
       // Buscar breakdown por departamento
       const departmentBreakdown = await this.getDepartmentBreakdown(companyId);
@@ -169,7 +196,7 @@ export class MeditationService {
       users?.forEach(user => {
         const deptId = user.department_id || 'sem_departamento';
         const dept = departmentMap.get(deptId);
-        
+
         if (dept) {
           dept.totalUsers++;
           // Simular dados de atividade baseados em distribuição realista
@@ -292,20 +319,20 @@ export class MeditationService {
   static generateRealisticEvolution(baseTotalMinutes: number, baseActiveUsers: number): MeditationEvolution[] {
     const now = new Date();
     const result: MeditationEvolution[] = [];
-    
+
     // Dados dos últimos 6 meses com crescimento realista
     const growthFactors = [0.4, 0.55, 0.68, 0.78, 0.89, 1.0]; // Crescimento gradual
-    
+
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthLabel = date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-      
+
       const growthFactor = growthFactors[5 - i];
       const monthlyActiveUsers = Math.round(baseActiveUsers * growthFactor);
       const monthlyMinutes = Math.round(baseTotalMinutes * growthFactor * 0.18); // 18% do total por mês
       const newUsers = i === 5 ? monthlyActiveUsers : Math.round(monthlyActiveUsers * 0.15); // 15% novos usuários
       const completedTracks = Math.round(monthlyActiveUsers * 0.6); // 60% completam trilhas
-      
+
       result.push({
         month: monthLabel,
         totalMinutes: monthlyMinutes,
@@ -314,7 +341,7 @@ export class MeditationService {
         completedTracks
       });
     }
-    
+
     return result;
   }
 

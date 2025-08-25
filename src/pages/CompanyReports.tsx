@@ -5,18 +5,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { MeditationService } from '@/services/meditationService';
 import { DiaryService } from '@/services/diaryService';
 import { getCompanyQuestionnaireMetrics } from '@/services/questionnaireService';
-import { 
-  FileText, 
-  Download, 
-  Plus, 
-  Clock, 
-  CheckCircle, 
+import { getRealCompanyDashboardData } from '@/services/mobileAppDataService';
+import {
+  FileText,
+  Download,
+  Plus,
+  Clock,
+  CheckCircle,
   AlertCircle,
   TrendingUp,
   Users,
@@ -48,6 +49,63 @@ const CompanyReports = () => {
   const [recentReports, setRecentReports] = useState<any[]>([]);
   const [companyId, setCompanyId] = useState<string>('');
 
+  // Estados para filtros e paginação
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [periodFilter, setPeriodFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage] = useState<number>(5);
+
+  // Funções de filtro e paginação
+  const filteredReports = recentReports.filter((report) => {
+    const matchesStatus = statusFilter === 'all' || report.status === statusFilter;
+    const matchesPeriod = periodFilter === 'all' ||
+      (periodFilter === 'recent' && isRecentReport(report)) ||
+      (periodFilter === 'month' && isThisMonth(report)) ||
+      (periodFilter === 'quarter' && isThisQuarter(report));
+    const matchesSearch = searchTerm === '' ||
+      report.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      report.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    return matchesStatus && matchesPeriod && matchesSearch;
+  });
+
+  const paginatedReports = filteredReports.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredReports.length / itemsPerPage);
+
+  // Funções auxiliares para filtros
+  const isRecentReport = (report: any) => {
+    const reportDate = new Date(report.generated_at);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return reportDate >= thirtyDaysAgo;
+  };
+
+  const isThisMonth = (report: any) => {
+    const reportDate = new Date(report.generated_at);
+    const now = new Date();
+    return reportDate.getMonth() === now.getMonth() &&
+      reportDate.getFullYear() === now.getFullYear();
+  };
+
+  const isThisQuarter = (report: any) => {
+    const reportDate = new Date(report.generated_at);
+    const now = new Date();
+    const currentQuarter = Math.floor(now.getMonth() / 3);
+    const reportQuarter = Math.floor(reportDate.getMonth() / 3);
+    return reportQuarter === currentQuarter &&
+      reportDate.getFullYear() === now.getFullYear();
+  };
+
+  // Reset da página quando filtros mudam
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, periodFilter, searchTerm]);
+
   // Buscar ID da empresa do usuário
   useEffect(() => {
     const fetchCompanyId = async () => {
@@ -59,7 +117,7 @@ const CompanyReports = () => {
             .select('company_id')
             .eq('user_id', user.id)
             .single();
-          
+
           if (profile?.company_id) {
             setCompanyId(profile.company_id);
             fetchMetrics(profile.company_id);
@@ -76,10 +134,101 @@ const CompanyReports = () => {
     fetchCompanyId();
   }, []);
 
-  // Buscar métricas automáticas com dados reais
+  // Buscar métricas automáticas com dados REAIS
   const fetchMetrics = async (companyId: string) => {
     try {
-      console.log('🚀 Buscando métricas reais para empresa:', companyId);
+      console.log('🚀 Buscando métricas REAIS para empresa:', companyId);
+
+      // Buscar dados reais consolidados
+      const realData = await getRealCompanyDashboardData(companyId);
+
+      if (realData) {
+        console.log('✅ Dados reais carregados:', realData);
+
+        // Extrair métricas dos questionários
+        const questionnaireMetrics = realData.questionnaireMetrics;
+        const userMetrics = realData.userMetrics;
+        const mentalHealthMetrics = realData.mentalHealthMetrics;
+
+        // Calcular métricas consolidadas
+        const totalUsers = userMetrics?.totalUsers || 0;
+        const activeUsers = userMetrics?.activeUsers || 0;
+        const engagementRate = userMetrics?.engagementRate || 0;
+
+        // Métricas de questionários
+        const totalResponses = questionnaireMetrics?.totalResponses || 0;
+        const averageScore = questionnaireMetrics?.averageScore || 0;
+        const completionRate = questionnaireMetrics?.completionRate || 0;
+
+        // Métricas de saúde mental
+        const totalAlerts = mentalHealthMetrics?.totalAlerts || 0;
+        const criticalAlerts = mentalHealthMetrics?.criticalAlerts || 0;
+
+        // Atividades completadas (dados reais)
+        const { data: activities } = await supabase
+          .from('company_activities')
+          .select('*')
+          .eq('company_id', companyId)
+          .eq('status', 'concluida');
+
+        // Sessões de conversa (dados reais)
+        const { data: callSessions } = await supabase
+          .from('call_sessions')
+          .select('id, user_id')
+          .eq('company_id', companyId);
+
+        // Métricas de meditação (simulação inteligente baseada em dados reais)
+        const meditationMetrics = await MeditationService.getCompanyMeditationMetrics();
+
+        // Métricas de diário (simulação inteligente baseada em dados reais)
+        const diaryMetrics = await DiaryService.getCompanyDiaryMetrics();
+
+        console.log('✅ Métricas REAIS calculadas:', {
+          totalUsers,
+          activeUsers,
+          engagementRate,
+          totalResponses,
+          averageScore,
+          completionRate,
+          totalAlerts,
+          criticalAlerts,
+          meditationHours: meditationMetrics.totalHours,
+          conversationSessions: callSessions?.length || 0,
+          completedActivities: activities?.length || 0,
+          diaryEntries: diaryMetrics.totalEntries
+        });
+
+        setMetrics({
+          meditationHours: meditationMetrics.totalHours,
+          conversationSessions: callSessions?.length || 0,
+          completedActivities: activities?.length || 0,
+          engagementRate: engagementRate,
+          activeUsers: totalUsers,
+          diaryEntries: diaryMetrics.totalEntries
+        });
+      } else {
+        console.warn('⚠️ Dados reais não disponíveis, usando fallback');
+        // Fallback para dados simulados se necessário
+        await fetchMetricsFallback(companyId);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao buscar métricas REAIS:', error);
+      // Fallback para métricas vazias em caso de erro
+      setMetrics({
+        meditationHours: 0,
+        conversationSessions: 0,
+        completedActivities: 0,
+        engagementRate: 0,
+        activeUsers: 0,
+        diaryEntries: 0
+      });
+    }
+  };
+
+  // Função de fallback para métricas simuladas
+  const fetchMetricsFallback = async (companyId: string) => {
+    try {
+      console.log('🔄 Usando fallback para métricas simuladas');
 
       // Buscar atividades completadas (dados reais)
       const { data: activities } = await supabase
@@ -101,32 +250,29 @@ const CompanyReports = () => {
         .select('id, user_id')
         .in('user_id', employees?.map(e => e.user_id) || []);
 
-      // Buscar métricas de meditação via service (simulação inteligente)
+      // Métricas de meditação via service (simulação inteligente)
       const meditationMetrics = await MeditationService.getCompanyMeditationMetrics();
 
-      // Buscar métricas de diário via service (simulação inteligente)  
+      // Métricas de diário via service (simulação inteligente)  
       const diaryMetrics = await DiaryService.getCompanyDiaryMetrics();
 
-      // Buscar métricas de questionários via service (dados reais se existirem)
-      const questionnaireMetrics = await getCompanyQuestionnaireMetrics(companyId);
+      // Métricas de questionários via service (dados reais se existirem)
+      let questionnaireResponses = 0;
+      try {
+        const questionnaireMetrics = await getCompanyQuestionnaireMetrics(companyId);
+        questionnaireResponses = questionnaireMetrics?.totalResponses || 0;
+      } catch (error) {
+        console.warn('⚠️ Erro ao buscar métricas de questionários:', error);
+      }
 
       // Calcular taxa de engajamento baseada em dados reais
       const totalUsers = employees?.length || 0;
       const activeUsersCount = Math.max(
         meditationMetrics.activeUsers,
         diaryMetrics.activeUsers,
-        Math.round(questionnaireMetrics.totalResponses * 0.7) // Estimar usuários ativos baseado em respostas
+        Math.round(questionnaireResponses * 0.7)
       );
       const realEngagementRate = totalUsers > 0 ? Math.round((activeUsersCount / totalUsers) * 100) : 0;
-
-      console.log('✅ Métricas calculadas:', {
-        meditationHours: meditationMetrics.totalHours,
-        conversationSessions: callSessions?.length || 0,
-        completedActivities: activities?.length || 0,
-        engagementRate: realEngagementRate,
-        activeUsers: totalUsers,
-        diaryEntries: diaryMetrics.totalEntries
-      });
 
       setMetrics({
         meditationHours: meditationMetrics.totalHours,
@@ -137,8 +283,7 @@ const CompanyReports = () => {
         diaryEntries: diaryMetrics.totalEntries
       });
     } catch (error) {
-      console.error('❌ Erro ao buscar métricas:', error);
-      // Fallback para métricas vazias em caso de erro
+      console.error('❌ Erro no fallback de métricas:', error);
       setMetrics({
         meditationHours: 0,
         conversationSessions: 0,
@@ -209,8 +354,15 @@ const CompanyReports = () => {
   if (loading) {
     return (
       <CompanyDashboardLayout>
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="p-6">
+          <div className="animate-pulse space-y-6">
+            <div className="h-20 bg-gradient-to-r from-orange-100 to-amber-100 rounded-xl"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-48 bg-gray-100 rounded-xl"></div>
+              ))}
+            </div>
+          </div>
         </div>
       </CompanyDashboardLayout>
     );
@@ -218,346 +370,401 @@ const CompanyReports = () => {
 
   return (
     <CompanyDashboardLayout>
-      <div className="space-y-6">
-        {/* Header Integrado com Sidebar */}
-        <div className="flex items-center justify-between p-6 bg-white border-b border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <FileText className="h-4 w-4 text-orange-600" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-800">
-                Central de Relatórios de Compliance
-              </h1>
-              <p className="text-xs text-gray-500">
-                Gere relatórios automatizados para Lei 14.831/2024 e NR-1
-              </p>
-            </div>
-          </div>
-          
-          <Button 
-            size="sm"
-            className="bg-orange-600 hover:bg-orange-700 text-white rounded-lg"
-            onClick={() => handleGenerateReport('personalizado')}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Relatório
-          </Button>
-        </div>
+      <div className="p-4 space-y-6 bg-gray-50 min-h-screen">
+        {/* NOVA ESTRUTURA LIMPA E INTUITIVA */}
+        <div className="w-full space-y-8">
 
-        {/* Métricas Automáticas - Header Padronizado */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-purple-100 rounded-lg">
-            <Sparkles className="h-4 w-4 text-purple-600" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800">
-              Métricas em Tempo Real
-            </h2>
-            <p className="text-xs text-gray-500">
-              Dados coletados automaticamente do app Calma e atividades corporativas
-            </p>
-          </div>
-        </div>
-        
-        <Card className="border-0 shadow-lg bg-white animate-in fade-in-50 duration-500 mb-6">
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          {/* SEÇÃO 1: MÉTRICAS UNIFICADAS + COMPLIANCE */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl">
+                <Sparkles className="h-6 w-6 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Central de Relatórios de Compliance</h2>
+                <p className="text-gray-600">Métricas em tempo real e status de conformidade para Lei 14.831/2024 e NR-1</p>
+              </div>
+            </div>
+
+            {/* Grid de Métricas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
               {/* Horas de Meditação */}
-              <div className="group relative overflow-hidden bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl p-4 text-white shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 animate-in slide-in-from-bottom-4 delay-100">
-                <div className="absolute -top-3 -right-3 w-16 h-16 bg-white/10 rounded-full"></div>
-                <div className="relative z-10">
-                  <Brain className="h-8 w-8 mb-3 opacity-90 group-hover:scale-110 transition-transform duration-300" />
-                  <div className="text-2xl font-bold mb-1">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-blue-600 mb-1">
                     {metrics.meditationHours.toLocaleString()}h
                   </div>
-                  <p className="text-xs opacity-80 font-medium">Horas de Meditação</p>
-                </div>
-              </div>
+                  <div className="text-sm text-gray-600">Horas de Meditação</div>
+                </CardContent>
+              </Card>
 
               {/* Sessões de Conversa */}
-              <div className="group relative overflow-hidden bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl p-4 text-white shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 animate-in slide-in-from-bottom-4 delay-200">
-                <div className="absolute -top-3 -right-3 w-16 h-16 bg-white/10 rounded-full"></div>
-                <div className="relative z-10">
-                  <Activity className="h-8 w-8 mb-3 opacity-90 group-hover:scale-110 transition-transform duration-300" />
-                  <div className="text-2xl font-bold mb-1">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-emerald-600 mb-1">
                     {metrics.conversationSessions.toLocaleString()}
                   </div>
-                  <p className="text-xs opacity-80 font-medium">Sessões de Conversa</p>
-                </div>
-              </div>
+                  <div className="text-sm text-gray-600">Sessões de Conversa</div>
+                </CardContent>
+              </Card>
 
               {/* Atividades Realizadas */}
-              <div className="group relative overflow-hidden bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl p-4 text-white shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 animate-in slide-in-from-bottom-4 delay-300">
-                <div className="absolute -top-3 -right-3 w-16 h-16 bg-white/10 rounded-full"></div>
-                <div className="relative z-10">
-                  <Target className="h-8 w-8 mb-3 opacity-90 group-hover:scale-110 transition-transform duration-300" />
-                  <div className="text-2xl font-bold mb-1">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-purple-600 mb-1">
                     {metrics.completedActivities}
                   </div>
-                  <p className="text-xs opacity-80 font-medium">Atividades Realizadas</p>
-                </div>
-              </div>
+                  <div className="text-sm text-gray-600">Atividades Realizadas</div>
+                </CardContent>
+              </Card>
 
               {/* Taxa de Engajamento */}
-              <div className="group relative overflow-hidden bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl p-4 text-white shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 animate-in slide-in-from-bottom-4 delay-400">
-                <div className="absolute -top-3 -right-3 w-16 h-16 bg-white/10 rounded-full"></div>
-                <div className="relative z-10">
-                  <TrendingUp className="h-8 w-8 mb-3 opacity-90 group-hover:scale-110 transition-transform duration-300" />
-                  <div className="text-2xl font-bold mb-1">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-amber-600 mb-1">
                     {metrics.engagementRate}%
                   </div>
-                  <p className="text-xs opacity-80 font-medium">Taxa de Engajamento</p>
-                </div>
-              </div>
+                  <div className="text-sm text-gray-600">Taxa de Engajamento</div>
+                </CardContent>
+              </Card>
 
               {/* Usuários Ativos */}
-              <div className="group relative overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl p-4 text-white shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 animate-in slide-in-from-bottom-4 delay-500">
-                <div className="absolute -top-3 -right-3 w-16 h-16 bg-white/10 rounded-full"></div>
-                <div className="relative z-10">
-                  <Users className="h-8 w-8 mb-3 opacity-90 group-hover:scale-110 transition-transform duration-300" />
-                  <div className="text-2xl font-bold mb-1">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-indigo-600 mb-1">
                     {metrics.activeUsers}
                   </div>
-                  <p className="text-xs opacity-80 font-medium">Usuários Ativos</p>
-                </div>
-              </div>
+                  <div className="text-sm text-gray-600">Usuários Ativos</div>
+                </CardContent>
+              </Card>
 
               {/* Registros de Diário */}
-              <div className="group relative overflow-hidden bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl p-4 text-white shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 animate-in slide-in-from-bottom-4 delay-600">
-                <div className="absolute -top-3 -right-3 w-16 h-16 bg-white/10 rounded-full"></div>
-                <div className="relative z-10">
-                  <FileText className="h-8 w-8 mb-3 opacity-90 group-hover:scale-110 transition-transform duration-300" />
-                  <div className="text-2xl font-bold mb-1">
+              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                <CardContent className="p-4 text-center">
+                  <div className="text-2xl font-bold text-pink-600 mb-1">
                     {metrics.diaryEntries.toLocaleString()}
                   </div>
-                  <p className="text-xs opacity-80 font-medium">Registros de Diário</p>
+                  <div className="text-sm text-gray-600">Registros de Diário</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Botão de Ação Principal */}
+            <div className="flex justify-center">
+              <Button
+                onClick={() => handleGenerateReport('personalizado')}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg px-8 py-3 rounded-xl font-medium text-lg"
+              >
+                <Plus className="h-6 w-6 mr-3" />
+                Gerar Novo Relatório
+              </Button>
+            </div>
+          </div>
+
+          {/* SEÇÃO 2: STATUS DE CONFORMIDADE */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 rounded-t-xl">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-xl">
+                  <Award className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Status de Conformidade</h2>
+                  <p className="text-sm text-gray-600">Monitore o cumprimento das regulamentações e gere relatórios automatizados</p>
                 </div>
               </div>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Status de Conformidade - Header Padronizado */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Award className="h-4 w-4 text-blue-600" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800">
-              Status de Conformidade
-            </h2>
-            <p className="text-xs text-gray-500">
-              Monitore o cumprimento das regulamentações e gere relatórios automatizados
-            </p>
-          </div>
-        </div>
-        
-        <Card className="border-0 shadow-lg bg-white animate-in fade-in-50 duration-700 delay-300 mb-6">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Lei 14.831/2024 */}
-              <Card className="relative overflow-hidden group hover:shadow-2xl transition-all duration-500 border-0 shadow-lg animate-in slide-in-from-left-4 delay-500">
-                <div className="absolute inset-0 bg-gradient-to-br from-green-50 via-emerald-50 to-green-100 opacity-50"></div>
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-200/30 to-emerald-300/30 rounded-full -translate-y-16 translate-x-16"></div>
-                
-                <CardHeader className="relative z-10 pb-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-start gap-3">
-                      <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                        <Award className="h-6 w-6 text-white" />
+            <div className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Lei 14.831/2024 */}
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 pb-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-3">
+                        <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-lg">
+                          <Award className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-xl font-bold text-gray-900">
+                            Lei 14.831/2024
+                          </CardTitle>
+                          <CardDescription className="text-gray-600 mt-1">
+                            Certificado Empresa Promotora da Saúde Mental
+                          </CardDescription>
+                        </div>
                       </div>
-                      <div>
-                        <CardTitle className="text-xl font-bold text-gray-900">
-                          Lei 14.831/2024
-                        </CardTitle>
-                        <CardDescription className="text-gray-600 mt-1">
-                          Certificado Empresa Promotora da Saúde Mental
-                        </CardDescription>
+                      <div className="text-right">
+                        <div className="text-3xl font-bold text-green-600">
+                          {getComplianceScore('lei14831')}%
+                        </div>
+                        <p className="text-xs text-gray-500 font-medium">Conformidade</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                        {getComplianceScore('lei14831')}%
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium text-gray-700">Progresso</span>
+                        <span className="text-green-600 font-semibold">{getComplianceScore('lei14831')}%</span>
                       </div>
-                      <p className="text-xs text-gray-500 font-medium">Conformidade</p>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="relative z-10 space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="font-medium text-gray-700">Progresso</span>
-                      <span className="text-green-600 font-semibold">{getComplianceScore('lei14831')}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: `${getComplianceScore('lei14831')}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 p-2 bg-green-50/50 rounded-lg group-hover:bg-green-50 transition-colors duration-300">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span className="text-xs text-gray-700">{metrics.completedActivities} atividades realizadas</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 bg-green-50/50 rounded-lg group-hover:bg-green-50 transition-colors duration-300">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span className="text-xs text-gray-700">{metrics.engagementRate}% de engajamento dos colaboradores</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 bg-yellow-50/50 rounded-lg group-hover:bg-yellow-50 transition-colors duration-300">
-                      <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
-                      <span className="text-xs text-gray-700">Próxima auditoria em 15 dias</span>
-                    </div>
-                  </div>
-
-                  <Button 
-                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-2 rounded-lg"
-                    onClick={() => handleGenerateReport('lei14831')}
-                  >
-                    Gerar Relatório
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
-
-              {/* NR-1 */}
-              <Card className="relative overflow-hidden group hover:shadow-2xl transition-all duration-500 border-0 shadow-lg animate-in slide-in-from-right-4 delay-700">
-                <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-100 opacity-50"></div>
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-200/30 to-yellow-300/30 rounded-full -translate-y-16 translate-x-16"></div>
-                
-                <CardHeader className="relative z-10 pb-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-start gap-3">
-                      <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-300">
-                        <FileCheck className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-xl font-bold text-gray-900">
-                          NR-1
-                        </CardTitle>
-                        <CardDescription className="text-gray-600 mt-1">
-                          Riscos Psicossociais no Ambiente de Trabalho
-                        </CardDescription>
+                      <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-1000 ease-out"
+                          style={{ width: `${getComplianceScore('lei14831')}%` }}
+                        ></div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-                        {getComplianceScore('nr1')}%
+
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+                        <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <span className="text-xs text-gray-700">{metrics.completedActivities} atividades realizadas</span>
                       </div>
-                      <p className="text-xs text-gray-500 font-medium">Conformidade</p>
+                      <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+                        <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <span className="text-xs text-gray-700">{metrics.engagementRate}% de engajamento dos colaboradores</span>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg">
+                        <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+                        <span className="text-xs text-gray-700">Próxima auditoria em 15 dias</span>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
 
-                <CardContent className="relative z-10 space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="font-medium text-gray-700">Progresso</span>
-                      <span className="text-orange-600 font-semibold">{getComplianceScore('nr1')}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                      <div 
-                        className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-1000 ease-out"
-                        style={{ width: `${getComplianceScore('nr1')}%` }}
-                      ></div>
-                    </div>
-                  </div>
+                    <Button
+                      className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-2 rounded-lg"
+                      onClick={() => handleGenerateReport('compliance_lei14831')}
+                    >
+                      Gerar Relatório
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </CardContent>
+                </Card>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 p-2 bg-green-50/50 rounded-lg group-hover:bg-green-50 transition-colors duration-300">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span className="text-xs text-gray-700">Avaliação de riscos atualizada</span>
+                {/* NR-1 */}
+                <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 pb-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-start gap-3">
+                        <div className="p-3 bg-gradient-to-br from-orange-500 to-amber-600 rounded-xl shadow-lg">
+                          <FileCheck className="h-6 w-6 text-white" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-xl font-bold text-gray-900">
+                            NR-1
+                          </CardTitle>
+                          <CardDescription className="text-gray-600 mt-1">
+                            Riscos Psicossociais no Ambiente de Trabalho
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-3xl font-bold text-amber-600">
+                          {getComplianceScore('nr1')}%
+                        </div>
+                        <p className="text-xs text-gray-500 font-medium">Conformidade</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 p-2 bg-yellow-50/50 rounded-lg group-hover:bg-yellow-50 transition-colors duration-300">
-                      <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
-                      <span className="text-xs text-gray-700">3 ações preventivas pendentes</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-2 bg-blue-50/50 rounded-lg group-hover:bg-blue-50 transition-colors duration-300">
-                      <Clock className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                      <span className="text-xs text-gray-700">Relatório trimestral em 30 dias</span>
-                    </div>
-                  </div>
+                  </CardHeader>
 
-                  <Button 
-                    className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-2 rounded-lg"
-                    onClick={() => handleGenerateReport('nr1')}
-                  >
-                    Gerar Relatório
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium text-gray-700">Progresso</span>
+                        <span className="text-amber-600 font-semibold">{getComplianceScore('nr1')}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-1000 ease-out"
+                          style={{ width: `${getComplianceScore('nr1')}%` }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 p-2 bg-green-50 rounded-lg">
+                        <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <span className="text-xs text-gray-700">Avaliação de riscos atualizada</span>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg">
+                        <AlertCircle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+                        <span className="text-xs text-gray-700">3 ações preventivas pendentes</span>
+                      </div>
+                      <div className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg">
+                        <Clock className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                        <span className="text-xs text-gray-700">Relatório trimestral em 30 dias</span>
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 py-2 rounded-lg"
+                      onClick={() => handleGenerateReport('nr1_psicossocial')}
+                    >
+                      Gerar Relatório
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Histórico de Relatórios - Header Padronizado */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gray-100 rounded-lg">
-            <BarChart3 className="h-4 w-4 text-gray-600" />
           </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-800">
-              Histórico de Relatórios
-            </h2>
-            <p className="text-xs text-gray-500">
-              Acompanhe o status e histórico dos seus relatórios de compliance
-            </p>
-          </div>
-        </div>
-        
-        <Card className="border-0 shadow-lg bg-white">
-          <CardContent className="p-6">
-            <Tabs defaultValue="recent" className="space-y-6">
-              <TabsList className="grid w-full max-w-md grid-cols-2 p-1 bg-gray-100 rounded-xl">
-                <TabsTrigger value="recent" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                  Relatórios Recentes
-                </TabsTrigger>
-                <TabsTrigger value="scheduled" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                  Agendados
-                </TabsTrigger>
-              </TabsList>
 
-              <TabsContent value="recent" className="space-y-4">
-                {recentReports.length > 0 ? (
-                  <div className="grid gap-4">
-                    {recentReports.map((report) => (
-                      <Card key={report.id} className="border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-r from-white to-gray-50">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
-                                <FileText className="h-5 w-5 text-white" />
+          {/* SEÇÃO 3: HISTÓRICO DE RELATÓRIOS + AÇÕES */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+            <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 rounded-t-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-xl">
+                    <BarChart3 className="h-5 w-5 text-gray-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Histórico de Relatórios</h2>
+                    <p className="text-sm text-gray-600">Acompanhe o status e histórico dos seus relatórios de compliance</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => handleGenerateReport('personalizado')}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg px-6 py-2 rounded-xl font-medium"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Novo Relatório
+                </Button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {/* Relatórios Recentes */}
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-semibold text-gray-800">Relatórios Recentes</h3>
+                    {filteredReports.length !== recentReports.length && (
+                      <Badge variant="secondary" className="text-xs">
+                        {filteredReports.length} de {recentReports.length} relatórios
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Filtros e Busca */}
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {/* Busca */}
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Buscar relatórios..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      />
+                      <FileText className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                    </div>
+
+                    {/* Filtro de Status */}
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                    >
+                      <option value="all">Todos os Status</option>
+                      <option value="gerando">Gerando</option>
+                      <option value="pronto">Pronto</option>
+                      <option value="enviado">Enviado</option>
+                      <option value="arquivado">Arquivado</option>
+                    </select>
+
+                    {/* Filtro de Período */}
+                    <select
+                      value={periodFilter}
+                      onChange={(e) => setPeriodFilter(e.target.value)}
+                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+                    >
+                      <option value="all">Todos os Períodos</option>
+                      <option value="recent">Últimos 30 dias</option>
+                      <option value="month">Este mês</option>
+                      <option value="quarter">Este trimestre</option>
+                    </select>
+                  </div>
+                </div>
+
+                {filteredReports.length > 0 ? (
+                  <div className="space-y-4">
+                    {/* Lista de Relatórios */}
+                    <div className="grid gap-4">
+                      {paginatedReports.map((report) => (
+                        <Card
+                          key={report.id}
+                          className="border-0 shadow-md hover:shadow-lg transition-all duration-300 bg-gradient-to-r from-white to-gray-50 cursor-pointer"
+                          onClick={() => navigate(`/company/relatorios/${report.id}`)}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                                  <FileText className="h-5 w-5 text-white" />
+                                </div>
+                                <div className="space-y-1">
+                                  <h3 className="font-bold text-gray-900 text-base">{report.title}</h3>
+                                  <p className="text-xs text-gray-600">
+                                    <span className="font-medium">Período:</span> {format(new Date(report.report_period_start), 'dd/MM/yyyy', { locale: ptBR })}
+                                    {' - '}
+                                    {format(new Date(report.report_period_end), 'dd/MM/yyyy', { locale: ptBR })}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    <span className="font-medium">Gerado em:</span> {format(new Date(report.generated_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                                  </p>
+                                </div>
                               </div>
-                              <div className="space-y-1">
-                                <h3 className="font-bold text-gray-900 text-base">{report.title}</h3>
-                                <p className="text-xs text-gray-600">
-                                  <span className="font-medium">Período:</span> {format(new Date(report.report_period_start), 'dd/MM/yyyy', { locale: ptBR })} 
-                                  {' - '}
-                                  {format(new Date(report.report_period_end), 'dd/MM/yyyy', { locale: ptBR })}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  <span className="font-medium">Gerado em:</span> {format(new Date(report.generated_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              {getStatusBadge(report.status)}
-                              {report.pdf_url && (
-                                <Button size="sm" className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg rounded-lg">
-                                  <Download className="h-3 w-3 mr-1" />
-                                  Baixar
+                              <div className="flex items-center gap-3">
+                                {getStatusBadge(report.status)}
+                                <Button size="sm" variant="outline">
+                                  Ver Detalhes
                                 </Button>
-                              )}
+                              </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+
+                    {/* Paginação */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-center gap-2 mt-6">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1"
+                        >
+                          Anterior
+                        </Button>
+
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <Button
+                              key={page}
+                              variant={currentPage === page ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setCurrentPage(page)}
+                              className="px-3 py-1 min-w-[40px]"
+                            >
+                              {page}
+                            </Button>
+                          ))}
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-1"
+                        >
+                          Próxima
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-dashed border-gray-300">
@@ -565,24 +772,31 @@ const CompanyReports = () => {
                       <FileText className="h-12 w-12 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 mb-3">
-                      Nenhum relatório gerado ainda
+                      Nenhum relatório encontrado
                     </h3>
                     <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                      Comece gerando seu primeiro relatório de compliance para Lei 14.831/2024 ou NR-1
+                      {searchTerm || statusFilter !== 'all' || periodFilter !== 'all'
+                        ? 'Tente ajustar os filtros ou termos de busca'
+                        : 'Comece gerando seu primeiro relatório de compliance para Lei 14.831/2024 ou NR-1'
+                      }
                     </p>
-                    <Button 
-                      onClick={() => handleGenerateReport('personalizado')}
-                      size="lg"
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 rounded-xl px-8 py-4"
-                    >
-                      <Plus className="h-5 w-5 mr-2" />
-                      Criar Primeiro Relatório
-                    </Button>
+                    {!searchTerm && statusFilter === 'all' && periodFilter === 'all' && (
+                      <Button
+                        onClick={() => handleGenerateReport('personalizado')}
+                        size="lg"
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 rounded-xl px-8 py-4"
+                      >
+                        <Plus className="h-5 w-5 mr-2" />
+                        Criar Primeiro Relatório
+                      </Button>
+                    )}
                   </div>
                 )}
-              </TabsContent>
+              </div>
 
-              <TabsContent value="scheduled" className="space-y-4">
+              {/* Relatórios Agendados */}
+              <div className="mt-8 pt-8 border-t border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Relatórios Agendados</h3>
                 <div className="text-center py-16 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border-2 border-dashed border-indigo-200">
                   <div className="p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl w-24 h-24 mx-auto mb-6 flex items-center justify-center">
                     <Calendar className="h-12 w-12 text-white" />
@@ -594,10 +808,10 @@ const CompanyReports = () => {
                     Configure relatórios automáticos mensais ou trimestrais para manter sua conformidade sempre em dia
                   </p>
                 </div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </CompanyDashboardLayout>
   );

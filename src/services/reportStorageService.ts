@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { AuthService } from './authService';
 
 interface ReportSaveData {
   companyId: string;
@@ -6,7 +7,7 @@ interface ReportSaveData {
   periodStart: Date;
   periodEnd: Date;
   metrics: any;
-  insights: string[];
+  insights: any; // Aceita tanto string[] quanto AIInsights
   highlights?: string;
   plannedActions?: string;
   challenges?: string;
@@ -25,14 +26,32 @@ export class ReportStorageService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
+      // ESTRATÉGIA HÍBRIDA: Usar a mesma lógica dos questionários
+      let effectiveCompanyId: string;
+
+      try {
+        // Estratégia 1: Usar AuthService para obter company_id válido
+        effectiveCompanyId = await AuthService.getValidatedCompanyId();
+        if (!effectiveCompanyId) {
+          throw new Error('Não foi possível obter company_id válido');
+        }
+        console.log('✅ ReportStorageService: Usando company_id do AuthService:', effectiveCompanyId);
+      } catch (authError) {
+        console.warn('⚠️ ReportStorageService: AuthService falhou, usando fallback');
+
+        // Estratégia 2: Fallback para user.id (como questionários)
+        effectiveCompanyId = user.id;
+        console.log('🔄 ReportStorageService: Usando user.id como fallback:', effectiveCompanyId);
+      }
+
       // Preparar dados para salvar conforme estrutura da tabela
       const reportData = {
-        company_id: data.companyId,
+        company_id: effectiveCompanyId, // Usar company_id efetivo
         report_type: data.reportType,
         title: this.generateReportTitle(data.reportType, data.periodStart, data.periodEnd),
         report_period_start: data.periodStart.toISOString(),
         report_period_end: data.periodEnd.toISOString(),
-        
+
         // Todos os dados do relatório em JSON
         report_data: {
           metrics: {
@@ -60,12 +79,12 @@ export class ReportStorageService {
           },
           evidenceFiles: data.evidenceFiles || []
         },
-        
+
         template_version: '1.0',
         status: 'pronto',
         generated_at: new Date().toISOString(),
         generated_by: user.id,
-        
+
         // Aprovação - approved_by deve ser UUID ou null
         approved_by: null, // Por enquanto null, pois não temos o UUID do aprovador
         approval_notes: data.approverName ? `Aprovado por: ${data.approverName}${data.approverEmail ? ` (${data.approverEmail})` : ''}` : null
@@ -110,12 +129,37 @@ export class ReportStorageService {
   /**
    * Lista relatórios da empresa
    */
-  static async listCompanyReports(companyId: string): Promise<any[]> {
+  static async listCompanyReports(companyId?: string): Promise<any[]> {
     try {
+      // ESTRATÉGIA HÍBRIDA: Usar a mesma lógica dos questionários
+      let effectiveCompanyId: string;
+
+      if (companyId) {
+        effectiveCompanyId = companyId;
+      } else {
+        try {
+          // Estratégia 1: Usar AuthService para obter company_id válido
+          effectiveCompanyId = await AuthService.getValidatedCompanyId();
+          if (!effectiveCompanyId) {
+            throw new Error('Não foi possível obter company_id válido');
+          }
+          console.log('✅ ReportStorageService: Usando company_id do AuthService:', effectiveCompanyId);
+        } catch (authError) {
+          console.warn('⚠️ ReportStorageService: AuthService falhou, usando fallback');
+
+          // Estratégia 2: Fallback para user.id (como questionários)
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error('Usuário não autenticado');
+
+          effectiveCompanyId = user.id;
+          console.log('🔄 ReportStorageService: Usando user.id como fallback:', effectiveCompanyId);
+        }
+      }
+
       const { data, error } = await supabase
         .from('compliance_reports')
         .select('*')
-        .eq('company_id', companyId)
+        .eq('company_id', effectiveCompanyId)
         .order('generated_at', { ascending: false });
 
       if (error) throw error;
@@ -145,13 +189,38 @@ export class ReportStorageService {
   }
 
   /**
+   * Atualiza um relatório com a URL do PDF
+   */
+  static async updateReportWithPDF(reportId: string, pdfUrl: string, pdfSize: number): Promise<void> {
+    try {
+      console.log('🔧 ReportStorageService: Atualizando relatório com PDF:', { reportId, pdfUrl, pdfSize });
+
+      const { data, error } = await supabase
+        .from('compliance_reports')
+        .update({ pdf_url: pdfUrl, pdf_size_bytes: pdfSize })
+        .eq('id', reportId)
+        .select();
+
+      if (error) {
+        console.error('❌ Erro ao atualizar relatório com PDF:', error);
+        throw error;
+      }
+
+      console.log('✅ Relatório atualizado com sucesso:', data);
+    } catch (error) {
+      console.error('❌ Erro ao atualizar relatório com PDF:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Gera título do relatório baseado no tipo e período
    */
-  private static generateReportTitle(type: string, startDate: Date, endDate: Date): string {
+  static generateReportTitle(type: string, startDate: Date, endDate: Date): string {
     const formatDate = (date: Date) => {
-      return new Intl.DateTimeFormat('pt-BR', { 
-        month: 'long', 
-        year: 'numeric' 
+      return new Intl.DateTimeFormat('pt-BR', {
+        month: 'long',
+        year: 'numeric'
       }).format(date);
     };
 
@@ -162,9 +231,9 @@ export class ReportStorageService {
     };
 
     const label = typeLabels[type] || 'Relatório';
-    
-    if (startDate.getMonth() === endDate.getMonth() && 
-        startDate.getFullYear() === endDate.getFullYear()) {
+
+    if (startDate.getMonth() === endDate.getMonth() &&
+      startDate.getFullYear() === endDate.getFullYear()) {
       return `${label} - ${formatDate(startDate)}`;
     } else {
       return `${label} - ${formatDate(startDate)} a ${formatDate(endDate)}`;
@@ -305,9 +374,9 @@ export class ReportStorageService {
           <h2>Score de Compliance</h2>
           <div class="compliance-score">${data.metrics.complianceScore}%</div>
           <p style="text-align: center; color: #666;">
-            ${data.metrics.complianceScore >= 80 ? 'Excelente! Empresa em conformidade' : 
-              data.metrics.complianceScore >= 60 ? 'Bom progresso, continue melhorando' : 
-              'Atenção necessária para atingir conformidade'}
+            ${data.metrics.complianceScore >= 80 ? 'Excelente! Empresa em conformidade' :
+        data.metrics.complianceScore >= 60 ? 'Bom progresso, continue melhorando' :
+          'Atenção necessária para atingir conformidade'}
           </p>
         </div>
 
@@ -333,14 +402,37 @@ export class ReportStorageService {
           </div>
         </div>
 
-        ${data.insights && data.insights.length > 0 ? `
+        ${data.insights?.executiveSummary ? `
           <div class="section">
-            <h2>Insights Identificados</h2>
-            ${data.insights.map((insight: string) => `
-              <div class="insights">
-                ${insight}
-              </div>
-            `).join('')}
+            <h2>Resumo Executivo</h2>
+            <p>${data.insights.executiveSummary.replace(/\n/g, '<br>')}</p>
+          </div>
+        ` : ''}
+
+        ${data.insights?.strengths && data.insights.strengths.length > 0 ? `
+          <div class="section">
+            <h2>Pontos Fortes</h2>
+            <ul>
+              ${data.insights.strengths.map((item: string) => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+
+        ${data.insights?.improvementPoints && data.insights.improvementPoints.length > 0 ? `
+          <div class="section">
+            <h2>Pontos de Melhoria</h2>
+            <ul>
+              ${data.insights.improvementPoints.map((item: string) => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+
+        ${data.insights?.actionPlan && data.insights.actionPlan.length > 0 ? `
+          <div class="section">
+            <h2>Plano de Ação Sugerido</h2>
+            <ul>
+              ${data.insights.actionPlan.map((item: string) => `<li>${item}</li>`).join('')}
+            </ul>
           </div>
         ` : ''}
 

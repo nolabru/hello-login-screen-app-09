@@ -5,11 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+// Tabs removed - using unified page structure
 import { AuthService } from '@/services/authService';
-import { 
-  getCompanyQuestionnaireMetrics, 
-  getQuestionnaireResponses, 
+import {
+  getCompanyQuestionnaireMetrics,
+  getQuestionnaireResponses,
   getDefaultQuestionnaire,
   triggerQuestionnaire,
   getRealTimeStats,
@@ -18,7 +18,10 @@ import {
   createCustomQuestionnaire,
   getAllCompanyQuestionnaires,
   updateQuestionnaireStatus,
+  updateQuestionnaire,
   deleteQuestionnaire,
+  getCompanyDepartments,
+  getQuestionnaireDetailedResponses,
   type QuestionnaireMetrics,
   type QuestionnaireResponse,
   type DepartmentResponseData,
@@ -27,13 +30,13 @@ import {
   type CustomQuestionnaireTemplate,
   type QuestionOption
 } from '../services/questionnaireService';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   LineChart,
   Line,
@@ -41,18 +44,18 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { 
-  ClipboardList, 
-  Users, 
-  TrendingUp, 
-  Clock, 
-  AlertCircle, 
-  CheckCircle2, 
-  Send, 
-  Eye, 
-  Calendar, 
-  Activity, 
-  Target, 
+import {
+  ClipboardList,
+  Users,
+  TrendingUp,
+  Clock,
+  AlertCircle,
+  CheckCircle2,
+  Send,
+  Eye,
+  Calendar,
+  Activity,
+  Target,
   RefreshCw,
   Play,
   Pause,
@@ -68,9 +71,12 @@ import {
   PieChart as PieChartIcon,
   Sparkles,
   Award,
-  X
+  X,
+  CalendarX
 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import QuestionEditor from '@/components/QuestionEditor';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -83,7 +89,7 @@ const Questionnaires: React.FC = () => {
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<string>('30d');
   const [companyId, setCompanyId] = useState<string | null>(null);
-  
+
   // Enhanced functionality state
   const [defaultQuestionnaire, setDefaultQuestionnaire] = useState<Questionnaire | null>(null);
   const [realTimeStats, setRealTimeStats] = useState<RealTimeStats | null>(null);
@@ -99,15 +105,66 @@ const Questionnaires: React.FC = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<CustomQuestionnaireTemplate | null>(null);
   const [customTitle, setCustomTitle] = useState('');
   const [customDescription, setCustomDescription] = useState('');
-  const [customTargetDepartment, setCustomTargetDepartment] = useState<string>('');
+  const [customTargetDepartment, setCustomTargetDepartment] = useState<string>('all');
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [creatingCustom, setCreatingCustom] = useState(false);
   const [showTemplatePreview, setShowTemplatePreview] = useState<string | null>(null);
-  
+
   // New states for debugging and improved UX
   const [templatesLoading, setTemplatesLoading] = useState(false);
   const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [createMode, setCreateMode] = useState<'template' | 'manual'>('template');
   const [manualQuestions, setManualQuestions] = useState<QuestionOption[]>([]);
+
+  // Edit questionnaire states
+  const [editingQuestionnaire, setEditingQuestionnaire] = useState<Questionnaire | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  // Responses modal states
+  const [showResponsesModal, setShowResponsesModal] = useState(false);
+  const [selectedQuestionnaireForResponses, setSelectedQuestionnaireForResponses] = useState<Questionnaire | null>(null);
+  const [questionnaireResponses, setQuestionnaireResponses] = useState<Array<{
+    question: string;
+    responses: number[];
+    averageScore: number;
+    medianScore: number;
+    modeScore: number;
+    standardDeviation: number;
+    scoreDistribution: { [key: number]: number };
+  }>>([]);
+  const [responsesLoading, setResponsesLoading] = useState(false);
+  const [detailedStats, setDetailedStats] = useState<{
+    totalResponses: number;
+    averageScore: number;
+    departmentBreakdown: Array<{ department: string; totalResponses: number; averageScore: number }>;
+    responseTimeline: Array<{ date: string; responses: number }>;
+  } | null>(null);
+
+  // Company departments state
+  const [companyDepartments, setCompanyDepartments] = useState<{ id: string; name: string; }[]>([]);
+
+  // Filtros e paginação
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Filtrar questionários por status
+  const filteredQuestionnaires = companyQuestionnaires.filter(questionnaire => {
+    if (statusFilter === 'all') return true;
+    return questionnaire.status === statusFilter;
+  });
+
+  // Paginação
+  const totalPages = Math.ceil(filteredQuestionnaires.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedQuestionnaires = filteredQuestionnaires.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset página quando filtro muda
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
 
   useEffect(() => {
     const initializeComponent = async () => {
@@ -139,8 +196,8 @@ const Questionnaires: React.FC = () => {
       const [metricsData, responsesData] = await Promise.all([
         getCompanyQuestionnaireMetrics(),
         getQuestionnaireResponses(
-          companyIdStr, 
-          undefined, 
+          companyIdStr,
+          undefined,
           selectedDepartment === 'all' ? undefined : selectedDepartment
         )
       ]);
@@ -157,12 +214,12 @@ const Questionnaires: React.FC = () => {
   const fetchEnhancedData = async (companyIdStr: string) => {
     try {
       console.log('🔄 fetchEnhancedData - Starting data fetch for company:', companyIdStr);
-      
+
       // Set loading for templates specifically
       setTemplatesLoading(true);
       setTemplatesError(null);
 
-      const [defaultQuest, scheduleData, templates, companyQuests] = await Promise.all([
+      const [defaultQuest, scheduleData, templates, companyQuests, departments] = await Promise.all([
         getDefaultQuestionnaire(companyIdStr),
         getQuestionnaireSchedule(companyIdStr),
         getCustomQuestionnaireTemplates().then(result => {
@@ -170,17 +227,22 @@ const Questionnaires: React.FC = () => {
           console.log('📝 Template names:', result?.map(t => t.name) || []);
           return result;
         }),
-        getAllCompanyQuestionnaires(companyIdStr)
+        getAllCompanyQuestionnaires(companyIdStr),
+        getCompanyDepartments(companyIdStr).then(result => {
+          console.log('🏢 Departments loaded:', result?.length || 0, 'departments');
+          return result;
+        })
       ]);
 
       console.log('✅ All enhanced data fetched successfully');
-      
+
       setDefaultQuestionnaire(defaultQuest);
       setSchedule(scheduleData);
       setCustomTemplates(templates || []);
       setCompanyQuestionnaires(companyQuests);
+      setCompanyDepartments(departments || []);
       setTemplatesLoading(false);
-      
+
       await fetchRealTimeStats(companyIdStr);
     } catch (error) {
       console.error('❌ Error fetching enhanced data:', error);
@@ -206,7 +268,6 @@ const Questionnaires: React.FC = () => {
     try {
       const success = await triggerQuestionnaire(
         defaultQuestionnaire.id,
-        companyId,
         selectedTargetDepartments.length > 0 ? selectedTargetDepartments : undefined
       );
 
@@ -227,16 +288,31 @@ const Questionnaires: React.FC = () => {
   };
 
   const handleCreateCustomQuestionnaire = async () => {
-    if (!selectedTemplate || !companyId) return;
+    if (!companyId) return;
+    if (createMode === 'template' && !selectedTemplate) return;
+    if (createMode === 'manual' && (manualQuestions.length === 0 || !customTitle)) return;
+
 
     setCreatingCustom(true);
     try {
+      const templateForCreation = createMode === 'template'
+        ? selectedTemplate!
+        : {
+          name: customTitle,
+          description: customDescription,
+          category: 'Personalizado',
+          questions: manualQuestions,
+        };
+
       const success = await createCustomQuestionnaire(
         companyId,
-        selectedTemplate,
+        templateForCreation,
         customTitle || undefined,
         customDescription || undefined,
-        customTargetDepartment || undefined
+        customTargetDepartment === 'all' ? undefined : customTargetDepartment || undefined,
+        isAnonymous,
+        startDate || undefined,
+        endDate || undefined
       );
 
       if (success) {
@@ -245,7 +321,7 @@ const Questionnaires: React.FC = () => {
         setSelectedTemplate(null);
         setCustomTitle('');
         setCustomDescription('');
-        setCustomTargetDepartment('');
+        setCustomTargetDepartment('all');
         await fetchEnhancedData(companyId);
         await fetchQuestionnaireData(companyId);
       } else {
@@ -254,6 +330,55 @@ const Questionnaires: React.FC = () => {
     } catch (error) {
       console.error('Error creating custom questionnaire:', error);
       alert('Erro ao criar questionário. Tente novamente.');
+    } finally {
+      setCreatingCustom(false);
+    }
+  };
+
+  const handleEditQuestionnaire = (questionnaire: Questionnaire) => {
+    setEditingQuestionnaire(questionnaire);
+    setCustomTitle(questionnaire.title);
+    setCustomDescription(questionnaire.description || '');
+    setCustomTargetDepartment(questionnaire.target_department || 'all');
+    setIsAnonymous(questionnaire.is_anonymous);
+    setManualQuestions(questionnaire.questions);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateQuestionnaire = async () => {
+    if (!editingQuestionnaire) return;
+
+    setCreatingCustom(true);
+    try {
+      const success = await updateQuestionnaire(editingQuestionnaire.id, {
+        title: customTitle,
+        description: customDescription,
+        target_department: customTargetDepartment === 'all' ? null : customTargetDepartment || null,
+        is_anonymous: isAnonymous,
+        questions: manualQuestions,
+      });
+
+      if (success) {
+        alert('Questionário atualizado com sucesso!');
+        setShowEditModal(false);
+        setEditingQuestionnaire(null);
+        setCustomTitle('');
+        setCustomDescription('');
+        setCustomTargetDepartment('all');
+        setIsAnonymous(false);
+        setStartDate('');
+        setEndDate('');
+        setManualQuestions([]);
+        if (companyId) {
+          await fetchEnhancedData(companyId);
+          await fetchQuestionnaireData(companyId);
+        }
+      } else {
+        alert('Erro ao atualizar questionário. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Error updating questionnaire:', error);
+      alert('Erro ao atualizar questionário. Tente novamente.');
     } finally {
       setCreatingCustom(false);
     }
@@ -299,6 +424,49 @@ const Questionnaires: React.FC = () => {
     }
   };
 
+  const handleViewResponses = async (questionnaire: Questionnaire) => {
+    try {
+      setSelectedQuestionnaireForResponses(questionnaire);
+      setShowResponsesModal(true);
+      setResponsesLoading(true);
+
+      // Buscar dados reais do banco de dados
+      const detailedResponses = await getQuestionnaireDetailedResponses(questionnaire.id);
+
+      if (detailedResponses.totalResponses > 0) {
+        // Converter dados para o formato esperado pela UI
+        const formattedResponses = detailedResponses.responsesByQuestion.map(q => ({
+          question: q.questionText,
+          responses: q.responses,
+          averageScore: q.averageScore,
+          medianScore: q.medianScore,
+          modeScore: q.modeScore,
+          standardDeviation: q.standardDeviation,
+          scoreDistribution: q.scoreDistribution
+        }));
+
+        setQuestionnaireResponses(formattedResponses);
+        setDetailedStats({
+          totalResponses: detailedResponses.totalResponses,
+          averageScore: detailedResponses.averageScore,
+          departmentBreakdown: detailedResponses.departmentBreakdown,
+          responseTimeline: detailedResponses.responseTimeline
+        });
+      } else {
+        // Se não há respostas, mostrar mensagem informativa
+        setQuestionnaireResponses([]);
+        setDetailedStats(null);
+      }
+
+      setResponsesLoading(false);
+    } catch (error) {
+      console.error('Error loading responses:', error);
+      setResponsesLoading(false);
+      // Em caso de erro, mostrar mensagem amigável
+      setQuestionnaireResponses([]);
+    }
+  };
+
   const getCategoryIcon = (category: string) => {
     switch (category.toLowerCase()) {
       case 'satisfação':
@@ -325,11 +493,7 @@ const Questionnaires: React.FC = () => {
     }
   };
 
-  const getCompletionRateColor = (rate: number) => {
-    if (rate >= 80) return 'text-green-600';
-    if (rate >= 60) return 'text-yellow-600';
-    return 'text-red-600';
-  };
+
 
   if (loading) {
     return (
@@ -356,7 +520,7 @@ const Questionnaires: React.FC = () => {
             <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Erro ao carregar dados</h2>
             <p className="text-gray-600">Não foi possível carregar os dados dos questionários.</p>
-            <Button 
+            <Button
               onClick={() => companyId && fetchQuestionnaireData(companyId)}
               className="mt-4 bg-amber-600 hover:bg-amber-700"
             >
@@ -376,282 +540,196 @@ const Questionnaires: React.FC = () => {
       </Helmet>
       <CompanyDashboardLayout>
         <div className="p-4 space-y-6 bg-gray-50 min-h-screen">
-          {/* Header padronizado com o portal */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between">
+          {/* NOVA ESTRUTURA LIMPA E INTUITIVA */}
+          <div className="w-full space-y-8">
+
+            {/* SEÇÃO 1: MÉTRICAS UNIFICADAS + ANALYTICS */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-xl">
+                  <BarChart3 className="h-6 w-6 text-blue-600" />
+                </div>
               <div>
-                <h1 className="text-2xl font-semibold text-gray-900 mb-1 flex items-center gap-3">
-                  <div className="p-2 bg-amber-100 rounded-lg">
-                    <ClipboardList className="h-5 w-5 text-amber-600" />
-                  </div>
-                  Questionários de Bem-Estar
-                </h1>
-                <p className="text-sm text-gray-500">
-                  Gerencie e acompanhe questionários, cronogramas e respostas em tempo real
-                </p>
-              </div>
-              <div className="text-right">
-                {realTimeStats && (
-                  <div className="text-sm text-gray-500 flex items-center">
-                    <RefreshCw className="h-4 w-4 mr-1" />
-                    Atualizado: {new Date(realTimeStats.lastUpdated).toLocaleTimeString('pt-BR')}
-                  </div>
-                )}
-              </div>
+                  <h2 className="text-2xl font-bold text-gray-900">Dashboard de Questionários</h2>
+                  <p className="text-gray-600">Métricas em tempo real e analytics completos</p>
             </div>
           </div>
 
-          {/* KPIs Principais - Design padronizado */}
+              {/* Grid de Métricas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-amber-50 rounded-lg">
-                    <ClipboardList className="h-4 w-4 text-amber-600" />
+                {/* Métricas principais */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-blue-600 mb-1">
+                      {realTimeStats ? realTimeStats.totalActive : '0'}
                   </div>
-                  <span className="text-sm font-medium text-gray-600">Questionários Ativos</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900">{metrics.activeQuestionnaires}</div>
-                <div className="text-xs text-gray-500">de {metrics.totalQuestionnaires} criados</div>
+                    <div className="text-sm text-gray-600">Questionários Ativos</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-blue-50 rounded-lg">
-                    <Users className="h-4 w-4 text-blue-600" />
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-green-600 mb-1">
+                      {realTimeStats ? realTimeStats.totalResponses : '0'}
                   </div>
-                  <span className="text-sm font-medium text-gray-600">Total de Respostas</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900">{metrics.totalResponses}</div>
-                <div className="text-xs text-blue-600">↗ +{Math.round(Math.random() * 20)} esta semana</div>
+                    <div className="text-sm text-gray-600">Total de Respostas</div>
               </CardContent>
             </Card>
 
-            <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-green-50 rounded-lg">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-amber-600 mb-1">
+                      {realTimeStats ? realTimeStats.responseRate.toFixed(1) : '0'}%
                   </div>
-                  <span className="text-sm font-medium text-gray-600">Taxa de Conclusão</span>
-                </div>
-                <div className={`text-2xl font-bold ${getCompletionRateColor(metrics.averageCompletionRate)}`}>
-                  {metrics.averageCompletionRate.toFixed(1)}%
-                </div>
-                <div className="text-xs text-green-600">↗ +2.1% vs mês anterior</div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 bg-orange-50 rounded-lg">
-                    <Clock className="h-4 w-4 text-orange-600" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-600">Última Resposta</span>
-                </div>
-                <div className="text-2xl font-bold text-gray-900">
-                  {responses.length > 0 
-                    ? new Date(responses[0].created_at).toLocaleDateString('pt-BR')
-                    : 'N/A'
-                  }
-                </div>
-                <div className="text-xs text-gray-500">
-                  {responses.length > 0 ? `${responses.length} respostas hoje` : 'Nenhuma resposta'}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Abas para organizar melhor o conteúdo */}
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="overview" className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Visão Geral
-              </TabsTrigger>
-              <TabsTrigger value="questionnaires" className="flex items-center gap-2">
-                <ClipboardList className="h-4 w-4" />
-                Gerenciar
-              </TabsTrigger>
-              <TabsTrigger value="analytics" className="flex items-center gap-2">
-                <PieChartIcon className="h-4 w-4" />
-                Analytics
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Tab: Visão Geral */}
-            <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Real-Time Stats */}
-                <Card className="bg-white shadow-sm border border-gray-200">
-                  <CardHeader className="border-b border-gray-100 pb-4">
-                    <CardTitle className="flex items-center gap-3 text-lg">
-                      <div className="p-2 bg-green-50 rounded-lg">
-                        <Activity className="h-4 w-4 text-green-600" />
-                      </div>
-                      Status em Tempo Real
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6">
-                    {realTimeStats ? (
-                      <div className="space-y-4">
-                        <div className="text-center p-4 bg-blue-50 rounded-lg">
-                          <div className="text-2xl font-bold text-blue-600">{realTimeStats.totalActive}</div>
-                          <div className="text-sm text-gray-600">Questionários Ativos</div>
-                        </div>
-                        
-                        <div className="text-center p-4 bg-green-50 rounded-lg">
-                          <div className="text-2xl font-bold text-green-600">{realTimeStats.totalResponses}</div>
-                          <div className="text-sm text-gray-600">Respostas Recebidas</div>
-                        </div>
-                        
-                        <div className="text-center p-4 bg-amber-50 rounded-lg">
-                          <div className="text-2xl font-bold text-amber-600">{realTimeStats.pendingResponses}</div>
-                          <div className="text-sm text-gray-600">Respostas Pendentes</div>
-                        </div>
-                        
-                        <div className="text-center p-4 bg-purple-50 rounded-lg">
-                          <div className="text-2xl font-bold text-purple-600">{realTimeStats.responseRate.toFixed(1)}%</div>
-                          <div className="text-sm text-gray-600">Taxa de Resposta</div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <RefreshCw className="h-8 w-8 text-gray-400 mx-auto animate-spin mb-2" />
-                        <p className="text-gray-500">Carregando estatísticas...</p>
-                      </div>
-                    )}
+                    <div className="text-sm text-gray-600">Taxa de Resposta</div>
                   </CardContent>
                 </Card>
 
-                {/* Questionário Padrão */}
-                <div className="lg:col-span-2">
-                  <Card className="bg-white shadow-sm border border-gray-200">
-                    <CardHeader className="border-b border-gray-100 pb-4">
-                      <CardTitle className="flex items-center gap-3 text-lg">
-                        <div className="p-2 bg-blue-50 rounded-lg">
-                          <Eye className="h-4 w-4 text-blue-600" />
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-purple-600 mb-1">
+                  {metrics.averageCompletionRate.toFixed(1)}%
+                </div>
+                    <div className="text-sm text-gray-600">Taxa de Conclusão</div>
+              </CardContent>
+            </Card>
+                  </div>
+
+              {/* Analytics Rápidos */}
+              <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-green-600" />
+                      Performance dos Questionários
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Última resposta</span>
+                        <span className="text-sm font-medium">
+                  {responses.length > 0
+                    ? new Date(responses[0].created_at).toLocaleDateString('pt-BR')
+                    : 'N/A'
+                  }
+                        </span>
+                </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Respostas hoje</span>
+                        <span className="text-sm font-medium">{responses.length}</span>
+                      </div>
+                </div>
+              </CardContent>
+            </Card>
+
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <PieChartIcon className="h-5 w-5 text-purple-600" />
+                      Status dos Questionários
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Ativos</span>
+                        <Badge variant="default" className="bg-green-100 text-green-700">
+                          {companyQuestionnaires.filter(q => q.status === 'active').length}
+                        </Badge>
                         </div>
-                        Questionário Padrão
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                      {defaultQuestionnaire ? (
-                        <div className="mb-4">
-                          <h4 className="font-medium text-gray-800 mb-2">{defaultQuestionnaire.title}</h4>
-                          <p className="text-sm text-gray-600 mb-3">{defaultQuestionnaire.description}</p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                            <span className="flex items-center">
-                              <Target className="h-4 w-4 mr-1" />
-                              {defaultQuestionnaire.questions.length} perguntas
-                            </span>
-                            <span className="flex items-center">
-                              <Activity className="h-4 w-4 mr-1" />
-                              Status: {defaultQuestionnaire.status === 'active' ? 'Ativo' : 'Inativo'}
-                            </span>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Inativos</span>
+                        <Badge variant="secondary">
+                          {companyQuestionnaires.filter(q => q.status === 'inactive').length}
+                        </Badge>
+                        </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+                        </div>
+
+            {/* SEÇÃO 2: TABELA DE QUESTIONÁRIOS + CRIAR NOVO */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+              {/* Header com título e botão de criar */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl">
+                    <ClipboardList className="h-5 w-5 text-amber-600" />
+                        </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Questionários da Empresa</h2>
+                    <p className="text-sm text-gray-600">Gerencie e monitore todos os questionários</p>
+                      </div>
+                      </div>
+
+                {/* Botão de criar em destaque */}
+                <Button
+                  onClick={() => setShowCustomQuestionnaireModal(true)}
+                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg px-6 py-3 rounded-xl font-medium"
+                  size="default"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  Criar Questionário
+                </Button>
+                        </div>
+
+              {/* Filtros e paginação */}
+              <div className="px-6 py-4 bg-gray-50 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm font-medium text-gray-700">Status:</label>
+                      <select
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
+                        className="text-sm border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                      >
+                        <option value="all">Todos</option>
+                        <option value="active">Ativos</option>
+                        <option value="inactive">Inativos</option>
+                      </select>
                           </div>
 
-                          <div className="flex items-center gap-3">
+                    <div className="text-sm text-gray-600 bg-white px-3 py-1 rounded-lg border">
+                      {filteredQuestionnaires.length} de {companyQuestionnaires.length} questionários
+                    </div>
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className="flex items-center gap-2">
                             <Button
-                              onClick={() => setShowQuestionnairePreview(!showQuestionnairePreview)}
                               variant="outline"
                               size="sm"
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="rounded-lg"
                             >
-                              <Eye className="h-4 w-4 mr-2" />
-                              {showQuestionnairePreview ? 'Ocultar' : 'Visualizar'}
+                        Anterior
                             </Button>
-
+                      <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-lg border">
+                        Página {currentPage} de {totalPages}
+                      </span>
                             <Button
-                              onClick={handleTriggerQuestionnaire}
-                              disabled={!defaultQuestionnaire || triggering}
-                              className="bg-amber-600 hover:bg-amber-700"
+                        variant="outline"
                               size="sm"
-                            >
-                              {triggering ? (
-                                <>
-                                  <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                                  Enviando...
-                                </>
-                              ) : (
-                                <>
-                                  <Send className="h-4 w-4 mr-2" />
-                                  Disparar Agora
-                                </>
-                              )}
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="rounded-lg"
+                      >
+                        Próximo
                             </Button>
                           </div>
-
-                          {showQuestionnairePreview && (
-                            <div className="mt-4 pt-4 border-t max-h-60 overflow-y-auto">
-                              <h5 className="font-medium text-gray-700 mb-3">Preview das Perguntas:</h5>
-                              <div className="space-y-3">
-                                {defaultQuestionnaire.questions.slice(0, 5).map((question, index) => (
-                                  <div key={index} className="bg-gray-50 p-3 rounded-lg">
-                                    <p className="text-sm font-medium text-gray-800">
-                                      {index + 1}. {question.question}
-                                    </p>
-                                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
-                                      <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
-                                        {question.type === 'scale' ? 'Escala' : 
-                                         question.type === 'text' ? 'Texto' : 'Múltipla Escolha'}
-                                      </span>
-                                      {question.required && (
-                                        <span className="bg-red-100 text-red-700 px-2 py-1 rounded">
-                                          Obrigatória
-                                        </span>
                                       )}
                                     </div>
                                   </div>
-                                ))}
-                                {defaultQuestionnaire.questions.length > 5 && (
-                                  <p className="text-sm text-gray-500 text-center">
-                                    +{defaultQuestionnaire.questions.length - 5} perguntas adicionais...
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="text-center py-8">
-                          <ClipboardList className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                          <p className="text-gray-500">Nenhum questionário padrão configurado</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </TabsContent>
 
-            {/* Tab: Gerenciar Questionários */}
-            <TabsContent value="questionnaires" className="space-y-6">
-              <Card className="bg-white shadow-sm border border-gray-200">
-                <CardHeader className="border-b border-gray-100 pb-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-3 text-lg">
-                      <div className="p-2 bg-blue-50 rounded-lg">
-                        <ClipboardList className="h-4 w-4 text-blue-600" />
-                      </div>
-                      Questionários da Empresa
-                    </CardTitle>
-                    <Button
-                      onClick={() => setShowCustomQuestionnaireModal(true)}
-                      className="bg-amber-600 hover:bg-amber-700"
-                      size="sm"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Novo Questionário
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {companyQuestionnaires.length > 0 ? (
+              {/* Conteúdo da tabela */}
+              <div className="p-6">
+                {filteredQuestionnaires.length > 0 ? (
                     <div className="space-y-4">
-                      {companyQuestionnaires.map((questionnaire) => (
+                    {paginatedQuestionnaires.map((questionnaire) => (
                         <div key={questionnaire.id} className="border border-gray-200 rounded-lg p-4">
                           <div className="flex items-center justify-between mb-3">
                             <div>
@@ -665,10 +743,32 @@ const Questionnaires: React.FC = () => {
                               >
                                 {questionnaire.status === 'active' ? 'Ativo' : 'Inativo'}
                               </Badge>
+                            {questionnaire.is_anonymous && (
+                              <Badge variant="outline" className="bg-gray-100 text-gray-700">
+                                Anônimo
+                              </Badge>
+                            )}
                               <div className="flex gap-1">
+                              <Button
+                                onClick={() => handleViewResponses(questionnaire)}
+                                variant="outline"
+                                size="sm"
+                                className="text-emerald-600 hover:bg-emerald-50 border-emerald-200"
+                              >
+                                <BarChart3 className="h-4 w-4" />
+                                Respostas
+                              </Button>
+                              <Button
+                                onClick={() => handleEditQuestionnaire(questionnaire)}
+                                variant="outline"
+                                size="sm"
+                                className="text-blue-600 hover:bg-blue-50"
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
                                 <Button
                                   onClick={() => handleUpdateQuestionnaireStatus(
-                                    questionnaire.id, 
+                                    questionnaire.id,
                                     questionnaire.status === 'active' ? 'inactive' : 'active'
                                   )}
                                   variant="outline"
@@ -687,9 +787,23 @@ const Questionnaires: React.FC = () => {
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="flex items-center justify-between text-sm text-gray-500">
+                          <div className="flex items-center gap-4">
                             <span>{questionnaire.questions.length} perguntas</span>
+                            {questionnaire.start_date && (
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                Início: {new Date(questionnaire.start_date).toLocaleDateString('pt-BR')}
+                              </span>
+                            )}
+                            {questionnaire.end_date && (
+                              <span className="flex items-center gap-1">
+                                <CalendarX className="h-3 w-3" />
+                                Fim: {new Date(questionnaire.end_date).toLocaleDateString('pt-BR')}
+                              </span>
+                            )}
+                          </div>
                             <span>Criado em {new Date(questionnaire.created_at).toLocaleDateString('pt-BR')}</span>
                           </div>
                         </div>
@@ -709,129 +823,26 @@ const Questionnaires: React.FC = () => {
                       </Button>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Tab: Analytics */}
-            <TabsContent value="analytics" className="space-y-6">
-              <Card className="bg-white shadow-sm border border-gray-200">
-                <CardHeader className="border-b border-gray-100 pb-4">
-                  <CardTitle className="flex items-center gap-3 text-lg">
-                    <div className="p-2 bg-purple-50 rounded-lg">
-                      <PieChartIcon className="h-4 w-4 text-purple-600" />
                     </div>
-                    Analytics de Questionários
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Taxa de Resposta por Departamento */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-800 mb-4">Taxa de Resposta por Departamento</h4>
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={metrics.responsesByDepartment.map(dept => ({
-                            name: dept.department,
-                            responseRate: dept.completionRate
-                          }))}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis 
-                              dataKey="name" 
-                              fontSize={12}
-                              angle={-45}
-                              textAnchor="end"
-                              height={60}
-                            />
-                            <YAxis />
-                            <Tooltip />
-                            <Bar dataKey="responseRate" fill="#8884d8" />
-                          </BarChart>
-                        </ResponsiveContainer>
                       </div>
                     </div>
-
-                    {/* Score de Bem-estar */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-800 mb-4">Score de Bem-estar Médio</h4>
-                      <div className="h-64">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <LineChart data={metrics.departmentSatisfaction.map(dept => ({
-                            name: dept.department,
-                            wellbeingScore: dept.wellbeingScore
-                          }))}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis 
-                              dataKey="name" 
-                              fontSize={12}
-                              angle={-45}
-                              textAnchor="end"
-                              height={60}
-                            />
-                            <YAxis domain={[0, 5]} />
-                            <Tooltip />
-                            <Line type="monotone" dataKey="wellbeingScore" stroke="#82ca9d" strokeWidth={2} />
-                          </LineChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Resumo Executivo */}
-                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-medium text-gray-800 mb-3 flex items-center">
-                      <Award className="h-4 w-4 mr-2 text-blue-600" />
-                      Resumo Executivo
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium text-gray-700">Melhor Departamento:</span>
-                        <p className="text-gray-600">
-                          {metrics.responsesByDepartment.length > 0
-                            ? metrics.responsesByDepartment.reduce((best, dept) => 
-                                dept.completionRate > best.completionRate ? dept : best
-                              ).department
-                            : 'N/A'}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-700">Maior Bem-estar:</span>
-                        <p className="text-gray-600">
-                          {metrics.departmentSatisfaction.length > 0
-                            ? metrics.departmentSatisfaction.reduce((best, dept) => 
-                                dept.wellbeingScore > best.wellbeingScore ? dept : best
-                              ).department
-                            : 'N/A'}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-700">Atenção Necessária:</span>
-                        <p className="text-gray-600">
-                          {metrics.responsesByDepartment.filter(dept => dept.completionRate < 50).length > 0 
-                            ? `${metrics.responsesByDepartment.filter(dept => dept.completionRate < 50).length} departamento(s)`
-                            : 'Todos em dia'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
         </div>
 
         {/* Modal para Criar Questionário Personalizado */}
         <Dialog open={showCustomQuestionnaireModal} onOpenChange={setShowCustomQuestionnaireModal}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-3 text-xl">
-                <div className="p-2 bg-amber-100 rounded-lg">
-                  <Plus className="h-5 w-5 text-amber-600" />
+          <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto bg-gradient-to-br from-gray-50 to-white border-0 shadow-2xl">
+            <DialogHeader className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-t-xl p-6 -m-6 mb-6 border-b border-amber-100">
+              <DialogTitle className="flex items-center gap-3 text-2xl text-gray-800">
+                <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl shadow-lg">
+                  <Plus className="h-6 w-6 text-white" />
                 </div>
                 Criar Novo Questionário
               </DialogTitle>
+              <DialogDescription className="text-gray-600 text-base mt-2">
+                Escolha entre usar um template pré-definido ou criar um questionário personalizado do zero.
+              </DialogDescription>
             </DialogHeader>
-            
+
             <div className="space-y-6 py-4">
               {/* DEBUG: Estado de Loading e Erro */}
               {(templatesLoading || templatesError) && (
@@ -869,9 +880,8 @@ const Questionnaires: React.FC = () => {
                   <Button
                     onClick={() => setCreateMode('template')}
                     variant={createMode === 'template' ? 'default' : 'outline'}
-                    className={`h-auto p-4 flex flex-col items-center gap-2 ${
-                      createMode === 'template' ? 'bg-amber-600 hover:bg-amber-700' : ''
-                    }`}
+                    className={`h-auto p-4 flex flex-col items-center gap-2 ${createMode === 'template' ? 'bg-amber-600 hover:bg-amber-700' : ''
+                      }`}
                   >
                     <FileText className="h-8 w-8" />
                     <div className="text-center">
@@ -882,9 +892,8 @@ const Questionnaires: React.FC = () => {
                   <Button
                     onClick={() => setCreateMode('manual')}
                     variant={createMode === 'manual' ? 'default' : 'outline'}
-                    className={`h-auto p-4 flex flex-col items-center gap-2 ${
-                      createMode === 'manual' ? 'bg-amber-600 hover:bg-amber-700' : ''
-                    }`}
+                    className={`h-auto p-4 flex flex-col items-center gap-2 ${createMode === 'manual' ? 'bg-amber-600 hover:bg-amber-700' : ''
+                      }`}
                   >
                     <Edit3 className="h-8 w-8" />
                     <div className="text-center">
@@ -923,11 +932,10 @@ const Questionnaires: React.FC = () => {
                           <div
                             key={index}
                             onClick={() => setSelectedTemplate(template)}
-                            className={`cursor-pointer border-2 rounded-lg p-4 transition-all hover:shadow-md ${
-                              selectedTemplate?.name === template.name
-                                ? 'border-amber-500 bg-amber-50'
-                                : 'border-gray-200 hover:border-gray-300'
-                            }`}
+                            className={`cursor-pointer border-2 rounded-lg p-4 transition-all hover:shadow-md ${selectedTemplate?.name === template.name
+                              ? 'border-amber-500 bg-amber-50'
+                              : 'border-gray-200 hover:border-gray-300'
+                              }`}
                           >
                             <div className="flex items-center gap-3 mb-2">
                               <div className={`p-2 rounded-lg ${getCategoryColor(template.category)}`}>
@@ -935,8 +943,8 @@ const Questionnaires: React.FC = () => {
                               </div>
                               <div>
                                 <h4 className="font-medium text-gray-800">{template.name}</h4>
-                                <Badge 
-                                  variant="outline" 
+                                <Badge
+                                  variant="outline"
                                   className={`text-xs ${getCategoryColor(template.category)}`}
                                 >
                                   {template.category}
@@ -960,7 +968,7 @@ const Questionnaires: React.FC = () => {
                                 {showTemplatePreview === template.name ? 'Ocultar' : 'Preview'}
                               </Button>
                             </div>
-                            
+
                             {/* Preview do Template */}
                             {showTemplatePreview === template.name && (
                               <div className="mt-4 pt-4 border-t border-gray-200 max-h-48 overflow-y-auto">
@@ -973,8 +981,8 @@ const Questionnaires: React.FC = () => {
                                       </p>
                                       <div className="flex gap-1 mt-1">
                                         <span className="bg-blue-100 text-blue-700 px-1 py-0.5 rounded text-xs">
-                                          {question.type === 'scale' ? 'Escala' : 
-                                           question.type === 'text' ? 'Texto' : 'Múltipla Escolha'}
+                                          {question.type === 'scale' ? 'Escala' :
+                                            question.type === 'text' ? 'Texto' : 'Múltipla Escolha'}
                                         </span>
                                         {question.required && (
                                           <span className="bg-red-100 text-red-700 px-1 py-0.5 rounded text-xs">
@@ -1002,7 +1010,7 @@ const Questionnaires: React.FC = () => {
                     <Edit3 className="h-4 w-4" />
                     Criar Questionário Personalizado
                   </h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="manualTitle" className="text-sm font-medium text-gray-700">
@@ -1026,13 +1034,17 @@ const Questionnaires: React.FC = () => {
                           <SelectValue placeholder="Todos os departamentos" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Todos os departamentos</SelectItem>
-                          <SelectItem value="RH">Recursos Humanos</SelectItem>
-                          <SelectItem value="TI">Tecnologia da Informação</SelectItem>
-                          <SelectItem value="Financeiro">Financeiro</SelectItem>
-                          <SelectItem value="Vendas">Vendas</SelectItem>
-                          <SelectItem value="Marketing">Marketing</SelectItem>
-                          <SelectItem value="Operações">Operações</SelectItem>
+                          <SelectItem value="ALL">Todos os departamentos</SelectItem>
+                          {[
+                            { value: "RH", label: "Recursos Humanos" },
+                            { value: "TI", label: "Tecnologia da Informação" },
+                            { value: "Financeiro", label: "Financeiro" },
+                            { value: "Vendas", label: "Vendas" },
+                            { value: "Marketing", label: "Marketing" },
+                            { value: "Operações", label: "Operações" },
+                          ].map((dep) => (
+                            <SelectItem key={dep.value} value={dep.value}>{dep.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -1052,19 +1064,61 @@ const Questionnaires: React.FC = () => {
                     />
                   </div>
 
-                  <div className="text-center py-8 bg-white rounded-lg border border-gray-200">
-                    <Plus className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium">Editor de perguntas em desenvolvimento</p>
-                    <p className="text-sm text-gray-400">Em breve você poderá adicionar perguntas personalizadas</p>
-                    <Button
-                      onClick={() => setCreateMode('template')}
-                      variant="outline"
-                      size="sm"
-                      className="mt-3"
-                    >
-                      Usar Templates por enquanto
-                    </Button>
+                  {/* Checkbox Anônimo para Modo Manual */}
+                  <div className="pt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="isAnonymousManual"
+                        checked={isAnonymous}
+                        onCheckedChange={(checked) => setIsAnonymous(Boolean(checked))}
+                      />
+                      <label htmlFor="isAnonymousManual" className="text-sm font-medium">
+                        Tornar este questionário anônimo
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 pl-6">
+                      Respostas anônimas não registrarão a identidade do colaborador.
+                    </p>
                   </div>
+
+                  {/* Campos de Data */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="startDateManual" className="block text-sm font-medium text-gray-700 mb-1">
+                        Data de Início
+                      </label>
+                      <input
+                        type="date"
+                        id="startDateManual"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Data a partir da qual o questionário estará disponível
+                      </p>
+                    </div>
+
+                    <div>
+                      <label htmlFor="endDateManual" className="block text-sm font-medium text-gray-700 mb-1">
+                        Data de Fim
+                      </label>
+                      <input
+                        type="date"
+                        id="endDateManual"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        min={startDate || new Date().toISOString().split('T')[0]}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Data limite para respostas (opcional)
+                      </p>
+                    </div>
+                  </div>
+
+                  <QuestionEditor questions={manualQuestions} onChange={setManualQuestions} />
                 </div>
               )}
 
@@ -1075,7 +1129,7 @@ const Questionnaires: React.FC = () => {
                     <Settings className="h-4 w-4" />
                     Personalizar Questionário
                   </h3>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="customTitle" className="text-sm font-medium text-gray-700">
@@ -1099,13 +1153,12 @@ const Questionnaires: React.FC = () => {
                           <SelectValue placeholder="Todos os departamentos" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Todos os departamentos</SelectItem>
-                          <SelectItem value="RH">Recursos Humanos</SelectItem>
-                          <SelectItem value="TI">Tecnologia da Informação</SelectItem>
-                          <SelectItem value="Financeiro">Financeiro</SelectItem>
-                          <SelectItem value="Vendas">Vendas</SelectItem>
-                          <SelectItem value="Marketing">Marketing</SelectItem>
-                          <SelectItem value="Operações">Operações</SelectItem>
+                          <SelectItem value="all">Todos os departamentos</SelectItem>
+                          {companyDepartments.map((dept) => (
+                            <SelectItem key={dept.id} value={dept.name}>
+                              {dept.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -1123,6 +1176,63 @@ const Questionnaires: React.FC = () => {
                       rows={3}
                       className="mt-1"
                     />
+                  </div>
+
+                  {/* Anonymous Checkbox */}
+                  <div className="pt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="isAnonymous"
+                        checked={isAnonymous}
+                        onCheckedChange={(checked) => setIsAnonymous(Boolean(checked))}
+                      />
+                      <label
+                        htmlFor="isAnonymous"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Tornar este questionário anônimo
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 pl-6">
+                      Respostas anônimas não registrarão a identidade do colaborador.
+                    </p>
+                  </div>
+
+                  {/* Campos de Data */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="startDateTemplate" className="block text-sm font-medium text-gray-700 mb-1">
+                        Data de Início
+                      </label>
+                      <input
+                        type="date"
+                        id="startDateTemplate"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        min={new Date().toISOString().split('T')[0]}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Data a partir da qual o questionário estará disponível
+                      </p>
+                    </div>
+
+                    <div>
+                      <label htmlFor="endDateTemplate" className="block text-sm font-medium text-gray-700 mb-1">
+                        Data de Fim
+                      </label>
+                      <input
+                        type="date"
+                        id="endDateTemplate"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        min={startDate || new Date().toISOString().split('T')[0]}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Data limite para respostas (opcional)
+                      </p>
+                    </div>
                   </div>
 
                   {/* Resumo do Template Selecionado */}
@@ -1145,11 +1255,11 @@ const Questionnaires: React.FC = () => {
 
             <DialogFooter className="flex items-center justify-between pt-4 border-t">
               <div className="text-sm text-gray-500">
-                {createMode === 'template' && selectedTemplate ? 
-                  `${selectedTemplate.questions.length} perguntas serão criadas` : 
+                {createMode === 'template' && selectedTemplate ?
+                  `${selectedTemplate.questions.length} perguntas serão criadas` :
                   createMode === 'manual' && customTitle ?
-                  'Editor de perguntas em desenvolvimento' :
-                  'Configure os campos para continuar'
+                    'Editor de perguntas em desenvolvimento' :
+                    'Configure os campos para continuar'
                 }
               </div>
               <div className="flex gap-3">
@@ -1159,7 +1269,7 @@ const Questionnaires: React.FC = () => {
                     setSelectedTemplate(null);
                     setCustomTitle('');
                     setCustomDescription('');
-                    setCustomTargetDepartment('');
+                    setCustomTargetDepartment('all');
                     setShowTemplatePreview(null);
                     setCreateMode('template');
                   }}
@@ -1170,7 +1280,11 @@ const Questionnaires: React.FC = () => {
                 </Button>
                 <Button
                   onClick={handleCreateCustomQuestionnaire}
-                  disabled={createMode === 'template' ? (!selectedTemplate || creatingCustom) : createMode === 'manual' ? true : false}
+                  disabled={
+                    creatingCustom ||
+                    (createMode === 'template' && !selectedTemplate) ||
+                    (createMode === 'manual' && (manualQuestions.length === 0 || !customTitle))
+                  }
                   className="bg-amber-600 hover:bg-amber-700"
                 >
                   {creatingCustom ? (
@@ -1181,7 +1295,7 @@ const Questionnaires: React.FC = () => {
                   ) : (
                     <>
                       <Plus className="h-4 w-4 mr-2" />
-                      {createMode === 'manual' ? 'Em Desenvolvimento' : 'Criar Questionário'}
+                      {createMode === 'manual' ? 'Criar Questionário Personalizado' : 'Criar Questionário'}
                     </>
                   )}
                 </Button>
@@ -1189,7 +1303,406 @@ const Questionnaires: React.FC = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </CompanyDashboardLayout>
+
+        {/* Modal de Edição de Questionário */}
+        <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+          <DialogContent className="max-w-5xl max-h-[95vh] overflow-y-auto bg-gradient-to-br from-gray-50 to-white border-0 shadow-2xl">
+            <DialogHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl p-6 -m-6 mb-6 border-b border-blue-100">
+              <DialogTitle className="flex items-center gap-3 text-2xl text-gray-800">
+                <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl shadow-lg">
+                  <Edit3 className="h-6 w-6 text-white" />
+                </div>
+                Editar Questionário
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 text-base mt-2">
+                Modifique o título, descrição, perguntas e configurações do questionário selecionado.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 py-4">
+              {editingQuestionnaire && (
+                <div className="space-y-4 p-4 bg-gray-50 rounded-lg border">
+                  <h3 className="font-medium text-gray-800 flex items-center gap-2">
+                    <Edit3 className="h-4 w-4" />
+                    Editar Questionário
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="editTitle" className="text-sm font-medium text-gray-700">
+                        Título do Questionário
+                      </Label>
+                      <Input
+                        id="editTitle"
+                        value={customTitle}
+                        onChange={(e) => setCustomTitle(e.target.value)}
+                        placeholder="Ex: Avaliação de Bem-estar Agosto 2024"
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="editTargetDepartment" className="text-sm font-medium text-gray-700">
+                        Departamento Alvo (Opcional)
+                      </Label>
+                      <Select value={customTargetDepartment} onValueChange={setCustomTargetDepartment}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="Todos os departamentos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos os departamentos</SelectItem>
+                          {companyDepartments.map((dept) => (
+                            <SelectItem key={dept.id} value={dept.name}>
+                              {dept.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="editDescription" className="text-sm font-medium text-gray-700">
+                      Descrição (Opcional)
+                    </Label>
+                    <Textarea
+                      id="editDescription"
+                      value={customDescription}
+                      onChange={(e) => setCustomDescription(e.target.value)}
+                      placeholder="Descreva o objetivo e contexto deste questionário..."
+                      rows={3}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  {/* Checkbox Anônimo */}
+                  <div className="pt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="isAnonymousEdit"
+                        checked={isAnonymous}
+                        onCheckedChange={(checked) => setIsAnonymous(Boolean(checked))}
+                      />
+                      <label htmlFor="isAnonymousEdit" className="text-sm font-medium">
+                        Tornar este questionário anônimo
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 pl-6">
+                      Respostas anônimas não registrarão a identidade do colaborador.
+                    </p>
+                  </div>
+
+                  <QuestionEditor questions={manualQuestions} onChange={setManualQuestions} />
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="flex items-center justify-between pt-4 border-t">
+              <div className="text-sm text-gray-500">
+                {manualQuestions.length} perguntas configuradas
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingQuestionnaire(null);
+                    setCustomTitle('');
+                    setCustomDescription('');
+                    setCustomTargetDepartment('all');
+                    setIsAnonymous(false);
+                    setManualQuestions([]);
+                  }}
+                  variant="outline"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleUpdateQuestionnaire}
+                  disabled={creatingCustom || manualQuestions.length === 0 || !customTitle}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {creatingCustom ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Salvar Alterações
+                    </>
+                  )}
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Acompanhamento de Respostas */}
+        <Dialog open={showResponsesModal} onOpenChange={setShowResponsesModal}>
+          <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto bg-gradient-to-br from-gray-50 to-white border-0 shadow-2xl">
+            <DialogHeader className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-t-xl p-6 -m-6 mb-6 border-b border-emerald-100">
+              <DialogTitle className="flex items-center gap-3 text-2xl text-gray-800">
+                <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-500 rounded-xl shadow-lg">
+                  <BarChart3 className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <div>Acompanhamento de Respostas</div>
+                  {selectedQuestionnaireForResponses && (
+                    <div className="text-sm font-normal text-gray-600 mt-1">
+                      {selectedQuestionnaireForResponses.title}
+                    </div>
+                  )}
+                </div>
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 text-base mt-2">
+                Visualize e analise as respostas dos colaboradores de forma intuitiva e detalhada.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6 py-4">
+              {responsesLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <RefreshCw className="h-8 w-8 animate-spin text-emerald-600 mr-3" />
+                  <span className="text-lg text-gray-600">Carregando respostas...</span>
+                </div>
+              ) : (
+                <>
+                  {/* Resumo Geral */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-0 shadow-lg">
+                      <CardContent className="p-4 text-center">
+                        <div className="text-2xl font-bold text-blue-600 mb-1">
+                          {detailedStats?.totalResponses || 0}
+                        </div>
+                        <div className="text-sm text-blue-700">Total de Respostas</div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-green-50 to-green-100 border-0 shadow-lg">
+                      <CardContent className="p-4 text-center">
+                        <div className="text-2xl font-bold text-green-600 mb-1">
+                          {detailedStats?.averageScore.toFixed(1) || '0'}
+                        </div>
+                        <div className="text-sm text-green-700">Média Geral</div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-amber-50 to-amber-100 border-0 shadow-lg">
+                      <CardContent className="p-4 text-center">
+                        <div className="text-2xl font-bold text-amber-600 mb-1">
+                          {questionnaireResponses.length > 0 ?
+                            Math.max(...questionnaireResponses.flatMap(q => q.responses)) : '0'
+                          }
+                        </div>
+                        <div className="text-sm text-amber-700">Maior Avaliação</div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-0 shadow-lg">
+                      <CardContent className="p-4 text-center">
+                        <div className="text-2xl font-bold text-purple-600 mb-1">
+                          {questionnaireResponses.length > 0 ?
+                            Math.min(...questionnaireResponses.flatMap(q => q.responses)) : '0'
+                          }
+                        </div>
+                        <div className="text-sm text-purple-700">Menor Avaliação</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Gráficos por Pergunta */}
+                  <div className="space-y-6">
+                    <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5 text-emerald-600" />
+                      Análise por Pergunta
+                    </h3>
+
+                    {questionnaireResponses.map((questionData, index) => (
+                      <Card key={index} className="border-0 shadow-lg">
+                        <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100">
+                          <CardTitle className="text-lg text-gray-800">
+                            {index + 1}. {questionData.question}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Gráfico de Barras */}
+                            <div className="space-y-4">
+                              <h4 className="font-medium text-gray-700">Distribuição das Respostas</h4>
+                              <div className="h-48">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart data={questionData.responses.map((value, i) => ({
+                                    resposta: `Resposta ${i + 1}`,
+                                    valor: value
+                                  }))}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="resposta" />
+                                    <YAxis domain={[1, 5]} />
+                                    <Tooltip />
+                                    <Bar dataKey="valor" fill="#10b981" radius={[4, 4, 0, 0]} />
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </div>
+
+                            {/* Estatísticas */}
+                            <div className="space-y-4">
+                              <h4 className="font-medium text-gray-700">Estatísticas</h4>
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                  <span className="text-gray-600">Média:</span>
+                                  <span className="font-semibold text-gray-800">
+                                    {questionData.averageScore}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                  <span className="text-gray-600">Mediana:</span>
+                                  <span className="font-semibold text-gray-800">
+                                    {questionData.medianScore}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                  <span className="text-gray-600">Moda:</span>
+                                  <span className="font-semibold text-gray-800">
+                                    {questionData.modeScore}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                  <span className="text-gray-600">Desvio Padrão:</span>
+                                  <span className="font-semibold text-gray-800">
+                                    {questionData.standardDeviation}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {/* Breakdown por Departamento */}
+                  {detailedStats?.departmentBreakdown && detailedStats.departmentBreakdown.length > 0 && (
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                        <Users className="h-5 w-5 text-blue-600" />
+                        Análise por Departamento
+                      </h3>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {detailedStats.departmentBreakdown.map((dept, index) => (
+                          <Card key={index} className="border-0 shadow-lg">
+                            <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100">
+                              <CardTitle className="text-lg text-blue-800">
+                                {dept.department}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4">
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-600">Total de Respostas:</span>
+                                  <span className="font-semibold text-gray-800">{dept.totalResponses}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-gray-600">Média de Satisfação:</span>
+                                  <span className="font-semibold text-gray-800">{dept.averageScore}</span>
+                                </div>
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                    style={{ width: `${(dept.averageScore / 5) * 100}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Timeline de Respostas */}
+                  {detailedStats?.responseTimeline && detailedStats.responseTimeline.length > 0 && (
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-semibold text-gray-800 flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-green-600" />
+                        Evolução das Respostas
+                      </h3>
+
+                      <Card className="border-0 shadow-lg">
+                        <CardContent className="p-6">
+                          <div className="h-64">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart data={detailedStats.responseTimeline}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="date" />
+                                <YAxis />
+                                <Tooltip />
+                                <Line
+                                  type="monotone"
+                                  dataKey="responses"
+                                  stroke="#10b981"
+                                  strokeWidth={3}
+                                  dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            <DialogFooter className="flex items-center justify-between pt-4 border-t">
+              <div className="text-sm text-gray-500">
+                {detailedStats ? (
+                  <>
+                    <span className="font-medium">{detailedStats.totalResponses} respostas</span>
+                    {detailedStats.departmentBreakdown.length > 0 && (
+                      <span className="ml-2 text-gray-400">
+                        • {detailedStats.departmentBreakdown.length} departamentos
+                      </span>
+                    )}
+                    {detailedStats.responseTimeline.length > 0 && (
+                      <span className="ml-2 text-gray-400">
+                        • {detailedStats.responseTimeline.length} dias de atividade
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  'Nenhuma resposta disponível'
+                )}
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => {
+                    setShowResponsesModal(false);
+                    setSelectedQuestionnaireForResponses(null);
+                    setQuestionnaireResponses([]);
+                  }}
+                  variant="outline"
+                >
+                  Fechar
+                </Button>
+                <Button
+                  onClick={() => {
+                    // Aqui você pode implementar exportação de dados
+                    console.log('Exportar dados');
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700"
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Exportar Relatório
+                </Button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CompanyDashboardLayout >
     </>
   );
 };

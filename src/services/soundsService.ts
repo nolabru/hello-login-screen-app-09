@@ -49,7 +49,7 @@ export interface PeakHourData {
 }
 
 export class SoundsService {
-  
+
   /**
    * Busca métricas gerais de sons para uma empresa
    */
@@ -57,7 +57,7 @@ export class SoundsService {
     try {
       // Validar autenticação usando AuthService
       const companyId = await AuthService.getValidatedCompanyId();
-      
+
       if (!companyId) {
         console.error('❌ Company ID não encontrado ou usuário não autenticado');
         return this.getEmptyMetrics();
@@ -77,13 +77,29 @@ export class SoundsService {
       }
 
       const totalUsers = users?.length || 0;
-      
-      // Simular dados baseados no número de usuários
-      // Isso será substituído por dados reais quando as tabelas estiverem disponíveis
-      const activeUsers = Math.floor(totalUsers * 0.42); // 42% dos usuários escutam sons
-      const totalMinutes = activeUsers * 78; // 78 minutos por usuário ativo em média
+      const userIds = users.map(u => u.user_id).filter(id => id);
+
+      if (userIds.length === 0) {
+        return this.getEmptyMetrics();
+      }
+
+      // Buscar progresso real de sons
+      const { data: soundProgress, error: progressError } = await supabase
+        .from('sound_progress' as any)
+        .select('user_id, listened_minutes')
+        .in('user_id', userIds);
+
+      if (progressError) {
+        console.error('❌ Erro ao buscar progresso de sons:', progressError);
+        return this.getEmptyMetrics();
+      }
+
+      const safeSoundProgress = soundProgress as any[];
+      const activeUsersSet = new Set(safeSoundProgress.map(p => p.user_id));
+      const activeUsers = activeUsersSet.size;
+      const totalMinutes = safeSoundProgress.reduce((sum, p) => sum + (p.listened_minutes || 0), 0);
       const totalHours = Math.round(totalMinutes / 60 * 10) / 10;
-      const totalSessions = activeUsers * 12; // 12 sessões por usuário ativo
+      const totalSessions = soundProgress.length; // Cada registro é uma sessão
 
       // Buscar breakdown por departamento
       const departmentBreakdown = await this.getDepartmentBreakdown(companyId);
@@ -182,7 +198,7 @@ export class SoundsService {
       users?.forEach(user => {
         const deptId = user.department_id || 'sem_departamento';
         const dept = departmentMap.get(deptId);
-        
+
         if (dept) {
           dept.totalUsers++;
           // Simular dados de atividade baseados em distribuição realista
@@ -304,20 +320,20 @@ export class SoundsService {
   static generateRealisticEvolution(baseTotalMinutes: number, baseActiveUsers: number): SoundsEvolution[] {
     const now = new Date();
     const result: SoundsEvolution[] = [];
-    
+
     // Dados dos últimos 6 meses com crescimento realista
     const growthFactors = [0.3, 0.45, 0.62, 0.75, 0.88, 1.0]; // Crescimento gradual
-    
+
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthLabel = date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-      
+
       const growthFactor = growthFactors[5 - i];
       const monthlyActiveUsers = Math.round(baseActiveUsers * growthFactor);
       const monthlyMinutes = Math.round(baseTotalMinutes * growthFactor * 0.16); // 16% do total por mês
       const sessions = Math.round(monthlyActiveUsers * 8); // 8 sessões por usuário
       const avgDuration = sessions > 0 ? Math.round(monthlyMinutes / sessions) : 0;
-      
+
       result.push({
         month: monthLabel,
         totalMinutes: monthlyMinutes,
@@ -326,7 +342,7 @@ export class SoundsService {
         averageSessionDuration: avgDuration
       });
     }
-    
+
     return result;
   }
 

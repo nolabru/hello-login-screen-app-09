@@ -27,6 +27,7 @@ import CompanyActivities from "./pages/CompanyActivities";
 import CompanyComplianceReport from "./pages/CompanyComplianceReport";
 import CompanyReports from "./pages/CompanyReports";
 import ReportWizard from "./pages/ReportWizard";
+import ReportDetails from "./pages/ReportDetails";
 import Questionnaires from "./pages/Questionnaires";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminPsychologists from "./pages/admin/AdminPsychologists";
@@ -62,14 +63,14 @@ const App = () => {
               <Route path="/register/company" element={<CompanyRegistration />} />
               <Route path="/redirect-invite" element={<RedirectInvite />} />
               <Route path="/psychologist/enter-code" element={<PsychologistInviteHandler />} />
-              
+
               {/* Psychologist Routes */}
               <Route path="/dashboard" element={<PsychologistDashboard />} />
               <Route path="/pacientes" element={<PsychologistPatients />} />
               <Route path="/patients/:id" element={<PatientDetails />} />
               <Route path="/configuracoes" element={<PsychologistSettings />} />
               <Route path="/empresas" element={<PsychologistCompanies />} />
-              
+
               {/* Company Routes */}
               <Route path="/company/dashboard" element={<CompanyDashboard />} />
               <Route path="/company/organizacao" element={<CompanyOrganization />} />
@@ -81,8 +82,9 @@ const App = () => {
               <Route path="/company/relatorio-conformidade" element={<CompanyComplianceReport />} />
               <Route path="/company/relatorios" element={<CompanyReports />} />
               <Route path="/company/relatorios/wizard" element={<ReportWizard />} />
+              <Route path="/company/relatorios/:id" element={<CompanyComplianceReport />} />
               <Route path="/company/questionarios" element={<Questionnaires />} />
-              
+
               {/* Admin Routes */}
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/admin/psychologists" element={<AdminPsychologists />} />
@@ -92,16 +94,16 @@ const App = () => {
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/admin/ai-reports" element={<AdminAIReports />} />
               <Route path="/admin/prompts" element={<AdminPrompts />} />
-              
+
               {/* Página de Política de Privacidade */}
               <Route path="/politica-privacidade" element={<PrivacyPolicy />} />
-              
+
               {/* Página de Suporte */}
               <Route path="/suporte" element={<SupportPage />} />
-              
+
               {/* Página de Perfil do Usuário */}
               <Route path="/user/profile" element={<UserProfile />} />
-              
+
               {/* Catch-all route for 404 */}
               <Route path="*" element={<NotFound />} />
             </Routes>

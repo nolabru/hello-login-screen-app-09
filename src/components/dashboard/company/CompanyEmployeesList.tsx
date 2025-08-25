@@ -36,14 +36,14 @@ const CompanyEmployeesList: React.FC = () => {
   const [employeeToRemove, setEmployeeToRemove] = useState<number | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [employeeToEdit, setEmployeeToEdit] = useState<Employee | null>(null);
-  
+
   useEffect(() => {
     const initializeAuth = async () => {
       console.log('🚀 CompanyEmployeesList: Inicializando autenticação...');
-      
+
       // Usar o AuthService padronizado
       const validatedId = await AuthService.getValidatedCompanyId();
-      
+
       if (validatedId) {
         console.log('✅ CompanyEmployeesList: Company ID validado:', validatedId);
         setCompanyId(validatedId);
@@ -59,44 +59,44 @@ const CompanyEmployeesList: React.FC = () => {
 
     initializeAuth();
   }, [toast]);
-  
+
   useEffect(() => {
     if (companyId) {
       console.log('📋 CompanyEmployeesList: Carregando funcionários para empresa:', companyId);
       fetchEmployees();
     }
   }, [companyId]);
-  
+
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredEmployees(employees);
     } else {
       const query = searchQuery.toLowerCase();
-      setFilteredEmployees(employees.filter(employee => 
-        employee.nome?.toLowerCase().includes(query) || 
+      setFilteredEmployees(employees.filter(employee =>
+        employee.nome?.toLowerCase().includes(query) ||
         employee.email?.toLowerCase().includes(query)
       ));
     }
   }, [searchQuery, employees]);
-  
+
   const fetchEmployees = async () => {
     if (!companyId) return;
     setIsLoading(true);
     try {
       console.log('Buscando funcionários para a empresa ID:', companyId);
       console.log('Tipo do companyId:', typeof companyId);
-      
+
       // Tentar converter para número para ver se isso resolve o problema
       const companyIdNum = parseInt(companyId, 10);
       console.log('companyId convertido para número:', companyIdNum);
-      
+
       // Primeiro, vamos tentar com o ID como string - SEM join por enquanto
       let { data, error } = await supabase.from('user_profiles')
         .select('*')
         .eq('company_id', companyId);
-        
+
       console.log('Resultado da consulta com ID como string:', { data, error });
-      
+
       // Se não funcionou com string, tentar com número convertido para string
       if (!data || data.length === 0) {
         console.log('Tentando consulta com ID como número convertido para string...');
@@ -104,14 +104,14 @@ const CompanyEmployeesList: React.FC = () => {
         const result = await supabase.from('user_profiles')
           .select('*')
           .eq('company_id', companyIdNumStr);
-          
+
         data = result.data;
         error = result.error;
         console.log('Resultado da consulta com ID como número:', { data, error });
       }
-      
+
       if (error) throw error;
-      
+
       console.log('Dados retornados pela consulta:', data);
       console.log('Número de funcionários encontrados:', data?.length || 0);
 
@@ -121,13 +121,13 @@ const CompanyEmployeesList: React.FC = () => {
         const departmentIds = data
           .map(e => e.department_id)
           .filter(Boolean);
-        
+
         if (departmentIds.length > 0) {
           const { data: departments } = await supabase
             .from('company_departments')
             .select('id, name')
             .in('id', departmentIds);
-          
+
           if (departments) {
             departmentsMap = departments.reduce((acc, dept) => {
               acc[dept.id] = dept.name;
@@ -140,10 +140,10 @@ const CompanyEmployeesList: React.FC = () => {
       // Map the data to include only necessary fields and map correct fields from database
       const mappedEmployees = data?.map(employee => {
         console.log('Mapeando funcionário:', employee);
-        
+
         // Usar uma abordagem segura para acessar os campos, já que a estrutura pode variar
         const employeeData = employee as any; // Usar any para evitar erros de tipo
-        
+
         return {
           id: employeeData.id,
           nome: employeeData.full_name || employeeData.preferred_name || employeeData.name || 'Nome não disponível',
@@ -161,9 +161,9 @@ const CompanyEmployeesList: React.FC = () => {
           department_name: employeeData.department_id ? departmentsMap[employeeData.department_id] || 'Não atribuído' : 'Não atribuído'
         };
       }) || [];
-      
+
       console.log('Funcionários mapeados:', mappedEmployees);
-      
+
       setEmployees(mappedEmployees);
       setFilteredEmployees(mappedEmployees);
     } catch (error) {
@@ -177,17 +177,17 @@ const CompanyEmployeesList: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
-  
+
   const handleRemoveEmployee = async (employeeId: number) => {
     // Abrir o diálogo de confirmação
     setEmployeeToRemove(employeeId);
     setIsConfirmDialogOpen(true);
   };
-  
+
   const handleEditEmployee = (employee: Employee) => {
     setEmployeeToEdit(employee);
     setIsEditDialogOpen(true);
@@ -195,11 +195,11 @@ const CompanyEmployeesList: React.FC = () => {
 
   const confirmRemoveEmployee = async () => {
     if (!employeeToRemove) return;
-    
+
     try {
       // Atualizar o status do funcionário para 'inactive' e decrementar o contador de licenças
       await updateEmployeeLicenseStatus(employeeToRemove, 'inactive');
-      
+
       toast({
         title: 'Funcionário desvinculado',
         description: 'O funcionário foi desvinculado da empresa com sucesso e a licença foi liberada.'
@@ -218,25 +218,25 @@ const CompanyEmployeesList: React.FC = () => {
       setEmployeeToRemove(null);
     }
   };
-  
+
   const renderContent = () => {
     if (isLoading) {
       return (
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-gray-500">Carregando funcionários...</p>
-          </CardContent>
-        </Card>
+        <div className="animate-pulse space-y-6">
+          <div className="h-64 bg-gray-100 rounded-xl"></div>
+          <div className="h-64 bg-gray-100 rounded-xl"></div>
+          <div className="h-64 bg-gray-100 rounded-xl"></div>
+        </div>
       );
     }
-    
+
     if (filteredEmployees.length === 0) {
       return <EmployeesEmptyState onAddEmployee={() => setIsAddDialogOpen(true)} />;
     }
-    
+
     return <EmployeesTableView employees={filteredEmployees} onRemoveEmployee={handleRemoveEmployee} onEditEmployee={handleEditEmployee} />;
   };
-  
+
   return (
     <div className="space-y-6">
       {/* Controles de Ação */}
@@ -247,8 +247,8 @@ const CompanyEmployeesList: React.FC = () => {
               <Users className="h-5 w-5" />
               Funcionários da Empresa
             </CardTitle>
-            <Button 
-              onClick={() => setIsAddDialogOpen(true)} 
+            <Button
+              onClick={() => setIsAddDialogOpen(true)}
               className="bg-calma hover:bg-calma-dark"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -278,16 +278,16 @@ const CompanyEmployeesList: React.FC = () => {
           {renderContent()}
         </CardContent>
       </Card>
-      
+
       {companyId && (
         <>
-          <AddEmployeeDialog 
-            open={isAddDialogOpen} 
-            onOpenChange={setIsAddDialogOpen} 
-            onEmployeeAdded={fetchEmployees} 
-            companyId={companyId} 
+          <AddEmployeeDialog
+            open={isAddDialogOpen}
+            onOpenChange={setIsAddDialogOpen}
+            onEmployeeAdded={fetchEmployees}
+            companyId={companyId}
           />
-          
+
           <EditEmployeeDialog
             open={isEditDialogOpen}
             onOpenChange={setIsEditDialogOpen}
@@ -297,7 +297,7 @@ const CompanyEmployeesList: React.FC = () => {
           />
         </>
       )}
-      
+
       {/* Diálogo de confirmação para desvincular funcionário */}
       <AlertDialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
         <AlertDialogContent className="bg-white">
@@ -317,7 +317,7 @@ const CompanyEmployeesList: React.FC = () => {
             <AlertDialogCancel className="border-gray-300 text-gray-700 hover:bg-gray-50">
               Cancelar
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={confirmRemoveEmployee}
               className="bg-red-600 text-white hover:bg-red-700"
             >

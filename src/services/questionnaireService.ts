@@ -1,17 +1,15 @@
 import { supabase } from '../integrations/supabase/client';
 import { AuthService } from './authService';
 
-// Types for questionnaire system
+// Types for questionnaire system - ONLY SCALE QUESTIONS
 export interface QuestionOption {
   id: number;
   question: string;
-  type: 'scale' | 'text' | 'multiple_choice';
-  scale_min?: number;
-  scale_max?: number;
-  scale_labels?: string[];
+  type: 'scale'; // RESTRICTED TO SCALE ONLY
+  scale_min: number; // Required for scale questions
+  scale_max: number; // Required for scale questions
+  scale_labels: string[]; // Required for scale questions
   required: boolean;
-  placeholder?: string;
-  options?: string[];
 }
 
 export interface Questionnaire {
@@ -28,6 +26,7 @@ export interface Questionnaire {
   start_date: string | null;
   end_date: string | null;
   notification_sent: boolean;
+  is_anonymous: boolean;
 }
 
 export interface QuestionnaireResponse {
@@ -151,7 +150,8 @@ export async function getCompanyQuestionnaireMetrics(companyId?: string): Promis
     // Type conversion for questionnaires to match our interface  
     const typedQuestionnaires: Questionnaire[] = (questionnaires || []).map(q => ({
       ...q,
-      questions: Array.isArray(q.questions) ? q.questions as unknown as QuestionOption[] : []
+      questions: Array.isArray(q.questions) ? q.questions as unknown as QuestionOption[] : [],
+      is_anonymous: (q as any).is_anonymous ?? false,
     }));
 
     // Group responses by department
@@ -197,10 +197,10 @@ function calculateDepartmentMetrics(responses: QuestionnaireResponse[]): Departm
 
     const deptData = departmentMap.get(dept)!;
     deptData.totalSent += 1;
-    
+
     if (response.completion_status === 'completed') {
       deptData.totalCompleted += 1;
-      
+
       // Calculate average score from responses (scale questions only)
       const scaleResponses = response.responses.filter(r => typeof r.answer === 'number');
       if (scaleResponses.length > 0) {
@@ -227,12 +227,12 @@ function generateEvolutionData(responses: QuestionnaireResponse[]): ResponseEvol
   });
 
   return last30Days.map(date => {
-    const dayResponses = responses.filter(r => 
+    const dayResponses = responses.filter(r =>
       r.created_at.split('T')[0] === date
     );
-    
+
     const completedResponses = dayResponses.filter(r => r.completion_status === 'completed');
-    
+
     return {
       date,
       responses: dayResponses.length,
@@ -242,13 +242,13 @@ function generateEvolutionData(responses: QuestionnaireResponse[]): ResponseEvol
 }
 
 function calculateQuestionnairePerformance(
-  questionnaires: Questionnaire[], 
+  questionnaires: Questionnaire[],
   responses: QuestionnaireResponse[]
 ): QuestionnairePerformanceData[] {
   return questionnaires.map(questionnaire => {
     const questionnaireResponses = responses.filter(r => r.questionnaire_id === questionnaire.id);
     const completedResponses = questionnaireResponses.filter(r => r.completion_status === 'completed');
-    
+
     // Calculate average score
     const allScores: number[] = [];
     completedResponses.forEach(response => {
@@ -260,9 +260,9 @@ function calculateQuestionnairePerformance(
     });
 
     const averageScore = allScores.length > 0 ? allScores.reduce((sum, score) => sum + score, 0) / allScores.length : 0;
-    
+
     // Find last response date
-    const lastResponse = questionnaireResponses.length > 0 
+    const lastResponse = questionnaireResponses.length > 0
       ? questionnaireResponses.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at
       : '';
 
@@ -296,7 +296,7 @@ function calculateDepartmentSatisfaction(responses: QuestionnaireResponse[]): De
     }
 
     const deptData = departmentMap.get(dept)!;
-    
+
     // Map responses to specific categories (based on question IDs from our schema)
     response.responses.forEach(answer => {
       if (typeof answer.answer === 'number') {
@@ -320,17 +320,17 @@ function calculateDepartmentSatisfaction(responses: QuestionnaireResponse[]): De
 
   return Array.from(departmentMap.entries()).map(([department, data]) => ({
     department,
-    wellbeingScore: data.wellbeingScores.length > 0 
-      ? data.wellbeingScores.reduce((sum, score) => sum + score, 0) / data.wellbeingScores.length 
+    wellbeingScore: data.wellbeingScores.length > 0
+      ? data.wellbeingScores.reduce((sum, score) => sum + score, 0) / data.wellbeingScores.length
       : 0,
-    stressLevel: data.stressLevels.length > 0 
-      ? data.stressLevels.reduce((sum, score) => sum + score, 0) / data.stressLevels.length 
+    stressLevel: data.stressLevels.length > 0
+      ? data.stressLevels.reduce((sum, score) => sum + score, 0) / data.stressLevels.length
       : 0,
-    workSatisfaction: data.workSatisfactionScores.length > 0 
-      ? data.workSatisfactionScores.reduce((sum, score) => sum + score, 0) / data.workSatisfactionScores.length 
+    workSatisfaction: data.workSatisfactionScores.length > 0
+      ? data.workSatisfactionScores.reduce((sum, score) => sum + score, 0) / data.workSatisfactionScores.length
       : 0,
-    workLifeBalance: data.workLifeBalanceScores.length > 0 
-      ? data.workLifeBalanceScores.reduce((sum, score) => sum + score, 0) / data.workLifeBalanceScores.length 
+    workLifeBalance: data.workLifeBalanceScores.length > 0
+      ? data.workLifeBalanceScores.reduce((sum, score) => sum + score, 0) / data.workLifeBalanceScores.length
       : 0,
   }));
 }
@@ -353,11 +353,11 @@ export async function createQuestionnaire(questionnaire: Omit<Questionnaire, 'id
   try {
     // Enhanced debug logging with session details
     console.log('=== DEBUG: Creating questionnaire ===');
-    
+
     // Get detailed auth information
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     const { data: session } = await supabase.auth.getSession();
-    
+
     console.log('🔐 Auth Details:');
     console.log('User:', user);
     console.log('User ID:', user?.id);
@@ -365,53 +365,55 @@ export async function createQuestionnaire(questionnaire: Omit<Questionnaire, 'id
     console.log('Session:', session?.session);
     console.log('Access Token:', session?.session?.access_token ? 'Present' : 'Missing');
     console.log('Token Expires At:', session?.session?.expires_at);
-    
+
     // Test database auth context
     const { data: authTest, error: authTestError } = await supabase
       .from('questionnaires')
-      .select('COUNT(*)')
+      .select('count')
       .limit(1);
-    
+
     console.log('🗄️ Database Auth Test:');
     console.log('Query Result:', authTest);
     console.log('Query Error:', authTestError);
-    
+
     console.log('📝 Input questionnaire data:', {
       ...questionnaire,
       questions: `[${questionnaire.questions.length} questions]` // Don't log full questions to keep clean
     });
 
-    // Use authenticated user ID if company_id doesn't exist in users table
+    // Use user.id for questionnaires table (follows FK constraint to auth.users)
     const actualCompanyId = user?.id || questionnaire.company_id;
-    console.log('🔄 Company ID Correction:');
-    console.log('Original company_id:', questionnaire.company_id);
-    console.log('User ID (authenticated):', user?.id);
-    console.log('Using company_id:', actualCompanyId);
+    console.log('🔄 Company ID Correction for FK:');
+    console.log('Original company_id (from empresa):', questionnaire.company_id);
+    console.log('User ID (for FK to auth.users):', user?.id);
+    console.log('Using company_id for insert:', actualCompanyId);
 
     // Prepare the data for insertion
     const insertData = {
       company_id: actualCompanyId,
       title: questionnaire.title,
       description: questionnaire.description,
-      questions: questionnaire.questions,
+      // Garante que questions é sempre um array JSON válido
+      questions: Array.isArray(questionnaire.questions) ? questionnaire.questions : [],
       target_department: questionnaire.target_department,
       status: questionnaire.status || 'inactive',
       created_by: user?.id || questionnaire.created_by,
       start_date: questionnaire.start_date,
       end_date: questionnaire.end_date,
-      notification_sent: questionnaire.notification_sent || false
+      notification_sent: questionnaire.notification_sent || false,
+      is_anonymous: questionnaire.is_anonymous || false,
     };
 
     console.log('Data being inserted:', {
       ...insertData,
-      questions: `[${insertData.questions.length} questions]`
+      questions: `[${Array.isArray(insertData.questions) ? insertData.questions.length : 0} questions]`
     });
 
     const { data, error } = await supabase
       .from('questionnaires')
       .insert([{
         ...insertData,
-        questions: insertData.questions as any // Cast to Json type for Supabase
+        questions: JSON.parse(JSON.stringify(insertData.questions)) // Garante JSON puro
       }])
       .select()
       .single();
@@ -432,10 +434,11 @@ export async function createQuestionnaire(questionnaire: Omit<Questionnaire, 'id
     }
 
     console.log('✅ Questionnaire created successfully:', data.id);
-    
+
     return {
       ...data,
-      questions: Array.isArray(data.questions) ? data.questions as unknown as QuestionOption[] : []
+      questions: Array.isArray(data.questions) ? data.questions as unknown as QuestionOption[] : [],
+      is_anonymous: (data as any).is_anonymous ?? false,
     };
   } catch (error) {
     console.error('=== JAVASCRIPT ERROR ===');
@@ -464,7 +467,8 @@ export async function getQuestionnaireById(id: string): Promise<Questionnaire | 
 
     return {
       ...data,
-      questions: Array.isArray(data.questions) ? data.questions as unknown as QuestionOption[] : []
+      questions: Array.isArray(data.questions) ? data.questions as unknown as QuestionOption[] : [],
+      is_anonymous: (data as any).is_anonymous ?? false,
     };
   } catch (error) {
     console.error('Error fetching questionnaire:', error);
@@ -560,29 +564,30 @@ export async function getQuestionnaireResponses(
 
 export async function getDefaultQuestionnaire(companyId?: string): Promise<Questionnaire | null> {
   try {
-    // Get the correct company_id using AuthService
-    const validCompanyId = await AuthService.getValidatedCompanyId();
-    if (!validCompanyId) {
-      console.error('No valid company_id found for getDefaultQuestionnaire');
+    // Get authenticated user ID (questionnaires.company_id references auth.users.id)
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('No authenticated user found for getDefaultQuestionnaire');
       return null;
     }
 
-    console.log('📝 getDefaultQuestionnaire - Using company_id:', validCompanyId);
+    console.log('📝 getDefaultQuestionnaire - Using user.id as company_id:', user.id);
 
     // First, try to get an existing default questionnaire
     const { data: existingQuestionnaire, error: existingError } = await supabase
       .from('questionnaires')
       .select('*')
-      .eq('company_id', validCompanyId)
+      .eq('company_id', user.id)
       .eq('title', 'Questionário de Bem-Estar Padrão')
       .single();
 
     if (existingQuestionnaire && !existingError) {
       return {
         ...existingQuestionnaire,
-        questions: Array.isArray(existingQuestionnaire.questions) 
-          ? existingQuestionnaire.questions as unknown as QuestionOption[] 
-          : []
+        questions: Array.isArray(existingQuestionnaire.questions)
+          ? existingQuestionnaire.questions as unknown as QuestionOption[]
+          : [],
+        is_anonymous: (existingQuestionnaire as any).is_anonymous ?? false,
       };
     }
 
@@ -617,20 +622,15 @@ export async function getDefaultQuestionnaire(companyId?: string): Promise<Quest
       },
       {
         id: 4,
-        question: "Você tem alguma sugestão para melhorar o bem-estar no trabalho?",
-        type: "text",
-        required: false,
-        placeholder: "Compartilhe suas ideias..."
-      },
-      {
-        id: 5,
         question: "Com que frequência você sente sobrecarga de trabalho?",
-        type: "multiple_choice",
-        options: ["Nunca", "Raramente", "Às vezes", "Frequentemente", "Sempre"],
+        type: "scale",
+        scale_min: 1,
+        scale_max: 5,
+        scale_labels: ["Nunca", "Raramente", "Às vezes", "Frequentemente", "Sempre"],
         required: true
       },
       {
-        id: 6,
+        id: 5,
         question: "Você sente que tem autonomia suficiente em suas tarefas?",
         type: "scale",
         scale_min: 1,
@@ -639,7 +639,7 @@ export async function getDefaultQuestionnaire(companyId?: string): Promise<Quest
         required: true
       },
       {
-        id: 7,
+        id: 6,
         question: "Como você avalia o equilíbrio entre vida pessoal e trabalho?",
         type: "scale",
         scale_min: 1,
@@ -648,7 +648,7 @@ export async function getDefaultQuestionnaire(companyId?: string): Promise<Quest
         required: true
       },
       {
-        id: 8,
+        id: 7,
         question: "Você se sente reconhecido pelo seu trabalho?",
         type: "scale",
         scale_min: 1,
@@ -657,7 +657,7 @@ export async function getDefaultQuestionnaire(companyId?: string): Promise<Quest
         required: true
       },
       {
-        id: 9,
+        id: 8,
         question: "Como está seu bem-estar geral no momento?",
         type: "scale",
         scale_min: 1,
@@ -666,32 +666,28 @@ export async function getDefaultQuestionnaire(companyId?: string): Promise<Quest
         required: true
       },
       {
-        id: 10,
-        question: "O que mais impacta negativamente seu bem-estar no trabalho?",
-        type: "multiple_choice",
-        options: [
-          "Excesso de trabalho",
-          "Falta de reconhecimento", 
-          "Ambiente de trabalho",
-          "Relacionamentos interpessoais",
-          "Falta de crescimento profissional",
-          "Outros"
-        ],
-        required: false
+        id: 9,
+        question: "Como você avalia a clareza das metas e objetivos do seu trabalho?",
+        type: "scale",
+        scale_min: 1,
+        scale_max: 5,
+        scale_labels: ["Muito confusas", "Confusas", "Regulares", "Claras", "Muito claras"],
+        required: true
       }
     ];
 
     const newQuestionnaire: Omit<Questionnaire, 'id' | 'created_at' | 'updated_at'> = {
-      company_id: companyId,
+      company_id: user.id, // Use user.id for FK constraint
       title: 'Questionário de Bem-Estar Padrão',
       description: 'Questionário padrão para avaliar o bem-estar e satisfação dos colaboradores',
       questions: defaultQuestions,
       target_department: null,
       status: 'active',
-      created_by: companyId,
+      created_by: user.id,
       start_date: null,
       end_date: null,
-      notification_sent: false
+      notification_sent: false,
+      is_anonymous: false,
     };
 
     const createdQuestionnaire = await createQuestionnaire(newQuestionnaire);
@@ -703,35 +699,25 @@ export async function getDefaultQuestionnaire(companyId?: string): Promise<Quest
 }
 
 export async function triggerQuestionnaire(
-  questionnaireId: string, 
-  companyId: string,
+  questionnaireId: string,
   targetDepartments?: string[]
 ): Promise<boolean> {
   try {
-    // Update questionnaire status to indicate it has been triggered
-    const { error: updateError } = await supabase
-      .from('questionnaires')
-      .update({ 
-        notification_sent: true,
-        updated_at: new Date().toISOString(),
-        status: 'active'
-      })
-      .eq('id', questionnaireId);
+    console.log(`🚀 Triggering questionnaire ${questionnaireId} for departments:`, targetDepartments);
 
-    if (updateError) {
-      console.error('Error updating questionnaire:', updateError);
+    const { data, error } = await supabase.functions.invoke('trigger-questionnaire', {
+      body: { questionnaireId, targetDepartments },
+    });
+
+    if (error) {
+      console.error('Error invoking trigger-questionnaire function:', error);
       return false;
     }
 
-    // Log the trigger action (for now, we'll use a simple console log)
-    console.log(`Questionnaire ${questionnaireId} triggered for company ${companyId}`, {
-      targetDepartments,
-      timestamp: new Date().toISOString()
-    });
-
+    console.log('✅ Function invoked successfully:', data);
     return true;
   } catch (error) {
-    console.error('Error triggering questionnaire:', error);
+    console.error('Error in triggerQuestionnaire service:', error);
     return false;
   }
 }
@@ -761,7 +747,8 @@ export async function getActiveQuestionnaires(companyId?: string): Promise<Quest
 
     return (data || []).map(q => ({
       ...q,
-      questions: Array.isArray(q.questions) ? q.questions as unknown as QuestionOption[] : []
+      questions: Array.isArray(q.questions) ? q.questions as unknown as QuestionOption[] : [],
+      is_anonymous: (q as any).is_anonymous ?? false,
     }));
   } catch (error) {
     console.error('Error fetching active questionnaires:', error);
@@ -808,7 +795,7 @@ export async function getRealTimeStats(companyId?: string): Promise<RealTimeStat
 
     const totalActive = questionnaires.data?.length || 0;
     const totalResponses = responses.data?.length || 0;
-    
+
     // Estimate pending responses based on active questionnaires
     // For now, we'll assume each active questionnaire should have responses from all departments
     const estimatedTotalExpected = totalActive * 5; // Assuming 5 departments on average
@@ -817,7 +804,7 @@ export async function getRealTimeStats(companyId?: string): Promise<RealTimeStat
 
     // Calculate department stats from actual responses
     const departmentMap = new Map<string, { sent: number; responded: number }>();
-    
+
     responses.data?.forEach(response => {
       const dept = response.department || 'Geral';
       if (!departmentMap.has(dept)) {
@@ -966,24 +953,21 @@ export const questionnaireTemplates: CustomQuestionnaireTemplate[] = [
       },
       {
         id: 3,
-        question: "Qual aspecto do trabalho mais contribui para sua satisfação?",
-        type: "multiple_choice",
-        options: [
-          "Reconhecimento e feedback",
-          "Oportunidades de crescimento",
-          "Ambiente de trabalho",
-          "Flexibilidade e autonomia",
-          "Remuneração e benefícios",
-          "Relacionamentos interpessoais"
-        ],
+        question: "Como você avalia o reconhecimento que recebe pelo seu trabalho?",
+        type: "scale",
+        scale_min: 1,
+        scale_max: 10,
+        scale_labels: ["1 - Muito ruim", "2", "3", "4", "5", "6", "7", "8", "9", "10 - Excelente"],
         required: true
       },
       {
         id: 4,
-        question: "O que você mudaria para melhorar sua satisfação no trabalho?",
-        type: "text",
-        placeholder: "Descreva suas sugestões...",
-        required: false
+        question: "Como você avalia as oportunidades de crescimento na empresa?",
+        type: "scale",
+        scale_min: 1,
+        scale_max: 10,
+        scale_labels: ["1 - Muito limitadas", "2", "3", "4", "5", "6", "7", "8", "9", "10 - Excelentes"],
+        required: true
       }
     ]
   },
@@ -1013,8 +997,10 @@ export const questionnaireTemplates: CustomQuestionnaireTemplate[] = [
       {
         id: 3,
         question: "Como é a comunicação entre as equipes?",
-        type: "multiple_choice",
-        options: ["Excelente", "Boa", "Regular", "Ruim", "Muito ruim"],
+        type: "scale",
+        scale_min: 1,
+        scale_max: 5,
+        scale_labels: ["Muito ruim", "Ruim", "Regular", "Boa", "Excelente"],
         required: true
       },
       {
@@ -1025,13 +1011,6 @@ export const questionnaireTemplates: CustomQuestionnaireTemplate[] = [
         scale_max: 10,
         scale_labels: ["1 - Não confio", "2", "3", "4", "5", "6", "7", "8", "9", "10 - Confio plenamente"],
         required: true
-      },
-      {
-        id: 5,
-        question: "Que mudanças você sugere para melhorar o clima organizacional?",
-        type: "text",
-        placeholder: "Compartilhe suas ideias...",
-        required: false
       }
     ]
   },
@@ -1051,24 +1030,20 @@ export const questionnaireTemplates: CustomQuestionnaireTemplate[] = [
       },
       {
         id: 2,
-        question: "Qual é a principal fonte de estresse no trabalho?",
-        type: "multiple_choice",
-        options: [
-          "Excesso de trabalho",
-          "Prazos apertados",
-          "Pressão da liderança",
-          "Conflitos interpessoais",
-          "Falta de recursos",
-          "Incerteza sobre o futuro",
-          "Outros"
-        ],
+        question: "Como você avalia o nível de pressão no seu trabalho?",
+        type: "scale",
+        scale_min: 1,
+        scale_max: 10,
+        scale_labels: ["1 - Sem pressão", "2", "3", "4", "5", "6", "7", "8", "9", "10 - Pressão excessiva"],
         required: true
       },
       {
         id: 3,
-        question: "Você tem acesso a recursos de apoio à saúde mental?",
-        type: "multiple_choice",
-        options: ["Sim, e os uso regularmente", "Sim, mas não uso", "Não sei que existem", "Não existem na empresa"],
+        question: "Como você avalia o equilíbrio entre vida pessoal e trabalho?",
+        type: "scale",
+        scale_min: 1,
+        scale_max: 5,
+        scale_labels: ["Muito ruim", "Ruim", "Regular", "Bom", "Excelente"],
         required: true
       },
       {
@@ -1079,13 +1054,6 @@ export const questionnaireTemplates: CustomQuestionnaireTemplate[] = [
         scale_max: 5,
         scale_labels: ["Muito ruim", "Ruim", "Regular", "Boa", "Excelente"],
         required: true
-      },
-      {
-        id: 5,
-        question: "Que recursos de saúde mental você gostaria que a empresa oferecesse?",
-        type: "text",
-        placeholder: "Descreva os recursos que considera importantes...",
-        required: false
       }
     ]
   }
@@ -1100,7 +1068,10 @@ export async function createCustomQuestionnaire(
   template: CustomQuestionnaireTemplate,
   customTitle?: string,
   customDescription?: string,
-  targetDepartment?: string
+  targetDepartment?: string,
+  isAnonymous?: boolean,
+  startDate?: string,
+  endDate?: string
 ): Promise<Questionnaire | null> {
   try {
     console.log('=== DEBUG: Creating CUSTOM questionnaire ===');
@@ -1109,6 +1080,7 @@ export async function createCustomQuestionnaire(
     console.log('Custom Title:', customTitle);
     console.log('Custom Description:', customDescription);
     console.log('Target Department:', targetDepartment);
+    console.log('Is Anonymous:', isAnonymous);
 
     const questionnaire: Omit<Questionnaire, 'id' | 'created_at' | 'updated_at'> = {
       company_id: companyId,
@@ -1118,9 +1090,10 @@ export async function createCustomQuestionnaire(
       target_department: targetDepartment || null,
       status: 'inactive',
       created_by: companyId,
-      start_date: null,
-      end_date: null,
-      notification_sent: false
+      start_date: startDate || null,
+      end_date: endDate || null,
+      notification_sent: false,
+      is_anonymous: isAnonymous || false,
     };
 
     console.log('Built questionnaire object:', {
@@ -1129,7 +1102,7 @@ export async function createCustomQuestionnaire(
     });
 
     const result = await createQuestionnaire(questionnaire);
-    
+
     if (result) {
       console.log('✅ Custom questionnaire created successfully:', result.id);
     } else {
@@ -1146,19 +1119,19 @@ export async function createCustomQuestionnaire(
 
 export async function getAllCompanyQuestionnaires(companyId?: string): Promise<Questionnaire[]> {
   try {
-    // Get the correct company_id using AuthService
-    const validCompanyId = await AuthService.getValidatedCompanyId();
-    if (!validCompanyId) {
-      console.error('No valid company_id found for getAllCompanyQuestionnaires');
+    // Get authenticated user ID (questionnaires.company_id references auth.users.id)
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('No authenticated user found for getAllCompanyQuestionnaires');
       return [];
     }
 
-    console.log('📋 getAllCompanyQuestionnaires - Using company_id:', validCompanyId);
+    console.log('📋 getAllCompanyQuestionnaires - Using user.id as company_id:', user.id);
 
     const { data, error } = await supabase
       .from('questionnaires')
       .select('*')
-      .eq('company_id', validCompanyId)
+      .eq('company_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -1170,7 +1143,8 @@ export async function getAllCompanyQuestionnaires(companyId?: string): Promise<Q
 
     return (data || []).map(q => ({
       ...q,
-      questions: Array.isArray(q.questions) ? q.questions as unknown as QuestionOption[] : []
+      questions: Array.isArray(q.questions) ? q.questions as unknown as QuestionOption[] : [],
+      is_anonymous: (q as any).is_anonymous ?? false,
     }));
   } catch (error) {
     console.error('Error fetching company questionnaires:', error);
@@ -1185,7 +1159,7 @@ export async function updateQuestionnaireStatus(
   try {
     const { error } = await supabase
       .from('questionnaires')
-      .update({ 
+      .update({
         status,
         updated_at: new Date().toISOString()
       })
@@ -1200,6 +1174,283 @@ export async function updateQuestionnaireStatus(
   } catch (error) {
     console.error('Error updating questionnaire status:', error);
     return false;
+  }
+}
+
+export async function updateQuestionnaire(
+  questionnaireId: string,
+  patch: Partial<Pick<Questionnaire, 'title' | 'description' | 'questions' | 'target_department' | 'status' | 'start_date' | 'end_date' | 'is_anonymous'>>
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('questionnaires')
+      .update({
+        ...patch,
+        questions: patch.questions ? JSON.parse(JSON.stringify(patch.questions)) : undefined,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', questionnaireId);
+
+    if (error) {
+      console.error('Error updating questionnaire:', error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Error updating questionnaire:', error);
+    return false;
+  }
+}
+
+export async function getCompanyDepartments(companyId: string): Promise<{ id: string; name: string; }[]> {
+  try {
+    // Get the real company_id from user_profiles (company_departments uses companies.id)
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      console.error('No authenticated user found for getCompanyDepartments');
+      return [];
+    }
+
+    // Get company_id from user_profiles
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('company_id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profileError || !profile?.company_id) {
+      console.error('No company_id found in user_profiles for departments');
+      return [];
+    }
+
+    console.log('🏢 getCompanyDepartments - Using company_id from user_profiles:', profile.company_id);
+
+    const { data, error } = await supabase
+      .from('company_departments')
+      .select('id, name')
+      .eq('company_id', profile.company_id)
+      .eq('status', 'active')
+      .order('name');
+
+    if (error) {
+      console.error('Error fetching company departments:', error);
+      return [];
+    }
+
+    console.log('🏢 Found', data?.length || 0, 'departments');
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching company departments:', error);
+    return [];
+  }
+}
+
+// NEW FUNCTION: Get detailed responses for a specific questionnaire
+export async function getQuestionnaireDetailedResponses(questionnaireId: string): Promise<{
+  totalResponses: number;
+  averageScore: number;
+  responsesByQuestion: Array<{
+    questionId: number;
+    questionText: string;
+    responses: number[];
+    averageScore: number;
+    medianScore: number;
+    modeScore: number;
+    standardDeviation: number;
+    scoreDistribution: { [key: number]: number };
+  }>;
+  departmentBreakdown: Array<{
+    department: string;
+    totalResponses: number;
+    averageScore: number;
+  }>;
+  responseTimeline: Array<{
+    date: string;
+    responses: number;
+  }>;
+}> {
+  try {
+    // Get the correct company_id using AuthService
+    const validCompanyId = await AuthService.getValidatedCompanyId();
+    if (!validCompanyId) {
+      console.error('No valid company_id found for getQuestionnaireDetailedResponses');
+      return {
+        totalResponses: 0,
+        averageScore: 0,
+        responsesByQuestion: [],
+        departmentBreakdown: [],
+        responseTimeline: []
+      };
+    }
+
+    console.log('📊 getQuestionnaireDetailedResponses - Questionnaire ID:', questionnaireId);
+
+    // Fetch all responses for this questionnaire
+    const { data: responses, error } = await supabase
+      .from('questionnaire_responses')
+      .select('*')
+      .eq('company_id', validCompanyId)
+      .eq('questionnaire_id', questionnaireId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching detailed responses:', error);
+      return {
+        totalResponses: 0,
+        averageScore: 0,
+        responsesByQuestion: [],
+        departmentBreakdown: [],
+        responseTimeline: []
+      };
+    }
+
+    if (!responses || responses.length === 0) {
+      console.log('No responses found for questionnaire:', questionnaireId);
+      return {
+        totalResponses: 0,
+        averageScore: 0,
+        responsesByQuestion: [],
+        departmentBreakdown: [],
+        responseTimeline: []
+      };
+    }
+
+    console.log(`✅ Found ${responses.length} responses for questionnaire`);
+
+    // Process responses by question
+    const questionMap = new Map<number, {
+      questionText: string;
+      responses: number[];
+    }>();
+
+    // Process department breakdown
+    const departmentMap = new Map<string, { total: number; scores: number[] }>();
+
+    // Process timeline
+    const timelineMap = new Map<string, number>();
+
+    let totalScore = 0;
+    let totalResponses = 0;
+
+    responses.forEach(response => {
+      // Process each answer in the response
+      if (Array.isArray(response.responses)) {
+        response.responses.forEach((answer: any) => {
+          const questionId = answer.question_id;
+          const questionText = answer.question_text;
+          const answerValue = Number(answer.answer);
+
+          if (!isNaN(answerValue)) {
+            // Add to question map
+            if (!questionMap.has(questionId)) {
+              questionMap.set(questionId, { questionText, responses: [] });
+            }
+            questionMap.get(questionId)!.responses.push(answerValue);
+
+            // Add to total score
+            totalScore += answerValue;
+            totalResponses++;
+          }
+        });
+      }
+
+      // Process department
+      if (response.department) {
+        if (!departmentMap.has(response.department)) {
+          departmentMap.set(response.department, { total: 0, scores: [] });
+        }
+        departmentMap.get(response.department)!.total++;
+
+        // Calculate average score for this response
+        if (Array.isArray(response.responses)) {
+          const responseScore = response.responses.reduce((sum: number, ans: any) => {
+            return sum + Number(ans.answer || 0);
+          }, 0) / response.responses.length;
+          departmentMap.get(response.department)!.scores.push(responseScore);
+        }
+      }
+
+      // Process timeline
+      const date = new Date(response.created_at).toLocaleDateString('pt-BR');
+      timelineMap.set(date, (timelineMap.get(date) || 0) + 1);
+    });
+
+    // Calculate statistics for each question
+    const responsesByQuestion = Array.from(questionMap.entries()).map(([questionId, data]) => {
+      const responses = data.responses;
+      const averageScore = responses.reduce((a, b) => a + b, 0) / responses.length;
+      const sortedResponses = [...responses].sort((a, b) => a - b);
+      const medianScore = sortedResponses[Math.floor(responses.length / 2)];
+
+      // Calculate mode
+      const scoreCounts: { [key: number]: number } = {};
+      responses.forEach(score => {
+        scoreCounts[score] = (scoreCounts[score] || 0) + 1;
+      });
+      let modeScore = 0;
+      let maxCount = 0;
+      Object.entries(scoreCounts).forEach(([score, count]) => {
+        if (count > maxCount) {
+          maxCount = count;
+          modeScore = Number(score);
+        }
+      });
+
+      // Calculate standard deviation
+      const variance = responses.reduce((sum, score) =>
+        sum + Math.pow(score - averageScore, 2), 0
+      ) / responses.length;
+      const standardDeviation = Math.sqrt(variance);
+
+      // Calculate score distribution
+      const scoreDistribution: { [key: number]: number } = {};
+      responses.forEach(score => {
+        scoreDistribution[score] = (scoreDistribution[score] || 0) + 1;
+      });
+
+      return {
+        questionId,
+        questionText: data.questionText,
+        responses,
+        averageScore: Number(averageScore.toFixed(2)),
+        medianScore,
+        modeScore: Number(modeScore),
+        standardDeviation: Number(standardDeviation.toFixed(2)),
+        scoreDistribution
+      };
+    });
+
+    // Calculate department breakdown
+    const departmentBreakdown = Array.from(departmentMap.entries()).map(([department, data]) => ({
+      department,
+      totalResponses: data.total,
+      averageScore: Number((data.scores.reduce((a, b) => a + b, 0) / data.scores.length).toFixed(2))
+    }));
+
+    // Calculate response timeline
+    const responseTimeline = Array.from(timelineMap.entries())
+      .map(([date, count]) => ({ date, responses: count }))
+      .sort((a, b) => new Date(a.date.split('/').reverse().join('-')).getTime() - new Date(b.date.split('/').reverse().join('-')).getTime());
+
+    const overallAverageScore = totalResponses > 0 ? Number((totalScore / totalResponses).toFixed(2)) : 0;
+
+    return {
+      totalResponses: responses.length,
+      averageScore: overallAverageScore,
+      responsesByQuestion,
+      departmentBreakdown,
+      responseTimeline
+    };
+
+  } catch (error) {
+    console.error('Error in getQuestionnaireDetailedResponses:', error);
+    return {
+      totalResponses: 0,
+      averageScore: 0,
+      responsesByQuestion: [],
+      departmentBreakdown: [],
+      responseTimeline: []
+    };
   }
 }
 

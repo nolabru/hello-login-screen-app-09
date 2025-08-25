@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { FileUploadService } from '@/services/FileUploadService';
+import { useToast } from '@/components/ui/use-toast';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
   Upload,
   FileText,
   Image,
@@ -15,8 +18,15 @@ import {
   MessageSquare,
   Paperclip,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from 'lucide-react';
+
+interface UploadedFile {
+  name: string;
+  size: number;
+  url: string;
+}
 
 interface Step3EvidenceProps {
   reportData: any;
@@ -28,6 +38,8 @@ const Step3Evidence: React.FC<Step3EvidenceProps> = ({
   updateReportData
 }) => {
   const [dragActive, setDragActive] = useState(false);
+  const [uploadingStatus, setUploadingStatus] = useState<Record<string, 'uploading' | 'completed' | 'error'>>({});
+  const { toast } = useToast();
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
@@ -43,7 +55,7 @@ const Step3Evidence: React.FC<Step3EvidenceProps> = ({
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFiles(e.dataTransfer.files);
     }
@@ -56,16 +68,53 @@ const Step3Evidence: React.FC<Step3EvidenceProps> = ({
     }
   };
 
-  const handleFiles = (files: FileList) => {
+  const handleFiles = async (files: FileList) => {
     const newFiles = Array.from(files);
-    const currentFiles = reportData.evidenceFiles || [];
-    updateReportData({ 
-      evidenceFiles: [...currentFiles, ...newFiles] 
+
+    // Obter company_id
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({ variant: 'destructive', title: 'Erro de autenticação' });
+      return;
+    }
+    const { data: profile } = await supabase.from('user_profiles').select('company_id').eq('user_id', user.id).single();
+    if (!profile?.company_id) {
+      toast({ variant: 'destructive', title: 'Empresa não encontrada' });
+      return;
+    }
+
+    newFiles.forEach(async (file) => {
+      const fileName = file.name;
+      setUploadingStatus(prev => ({ ...prev, [fileName]: 'uploading' }));
+
+      try {
+        const publicUrl = await FileUploadService.uploadFile(file, 'report-evidences', profile.company_id);
+
+        const uploadedFile: UploadedFile = {
+          name: file.name,
+          size: file.size,
+          url: publicUrl,
+        };
+
+        const currentFiles = reportData.evidenceFiles || [];
+        updateReportData({
+          evidenceFiles: [...currentFiles, uploadedFile]
+        });
+        setUploadingStatus(prev => ({ ...prev, [fileName]: 'completed' }));
+
+      } catch (error) {
+        setUploadingStatus(prev => ({ ...prev, [fileName]: 'error' }));
+        toast({
+          variant: 'destructive',
+          title: `Erro ao enviar ${fileName}`,
+          description: error instanceof Error ? error.message : 'Tente novamente.',
+        });
+      }
     });
   };
 
   const removeFile = (index: number) => {
-    const newFiles = [...reportData.evidenceFiles];
+    const newFiles = [...(reportData.evidenceFiles || [])];
     newFiles.splice(index, 1);
     updateReportData({ evidenceFiles: newFiles });
   };
@@ -126,8 +175,8 @@ const Step3Evidence: React.FC<Step3EvidenceProps> = ({
         <div
           className={`
             border-2 border-dashed rounded-lg p-8 text-center transition-colors
-            ${dragActive 
-              ? 'border-blue-400 bg-blue-50' 
+            ${dragActive
+              ? 'border-blue-400 bg-blue-50'
               : 'border-gray-300 hover:border-gray-400'
             }
           `}
@@ -144,7 +193,7 @@ const Step3Evidence: React.FC<Step3EvidenceProps> = ({
             className="hidden"
             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
           />
-          
+
           <label
             htmlFor="file-upload"
             className="cursor-pointer"
@@ -171,13 +220,13 @@ const Step3Evidence: React.FC<Step3EvidenceProps> = ({
       </div>
 
       {/* Arquivos Anexados */}
-      {reportData.evidenceFiles && reportData.evidenceFiles.length > 0 && (
+      {(reportData.evidenceFiles?.length > 0 || Object.keys(uploadingStatus).length > 0) && (
         <div className="space-y-3">
           <Label className="text-base font-semibold">
-            Documentos Anexados ({reportData.evidenceFiles.length})
+            Documentos Anexados
           </Label>
           <div className="space-y-2">
-            {reportData.evidenceFiles.map((file: File, index: number) => (
+            {reportData.evidenceFiles.map((file: UploadedFile, index: number) => (
               <Card key={index} className="p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -185,19 +234,14 @@ const Step3Evidence: React.FC<Step3EvidenceProps> = ({
                       {getFileIcon(file.name)}
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {file.name}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {formatFileSize(file.size)}
-                      </p>
+                      <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                      <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
                     </div>
+                    {uploadingStatus[file.name] === 'uploading' && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
+                    {uploadingStatus[file.name] === 'completed' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                    {uploadingStatus[file.name] === 'error' && <AlertCircle className="h-4 w-4 text-red-500" />}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeFile(index)}
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => removeFile(index)}>
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
@@ -222,11 +266,10 @@ const Step3Evidence: React.FC<Step3EvidenceProps> = ({
           {automaticEvidenceOptions.map((option) => {
             const IconComponent = option.icon;
             return (
-              <Card 
+              <Card
                 key={option.id}
-                className={`p-4 cursor-pointer transition-all ${
-                  option.checked ? 'bg-blue-50 border-blue-300' : 'hover:shadow-sm'
-                }`}
+                className={`p-4 cursor-pointer transition-all ${option.checked ? 'bg-blue-50 border-blue-300' : 'hover:shadow-sm'
+                  }`}
                 onClick={() => {
                   const key = `include${option.id.charAt(0).toUpperCase() + option.id.slice(1)}`;
                   updateReportData({ [key]: !option.checked });
@@ -240,12 +283,10 @@ const Step3Evidence: React.FC<Step3EvidenceProps> = ({
                       updateReportData({ [key]: checked });
                     }}
                   />
-                  <div className={`p-2 rounded-lg ${
-                    option.checked ? 'bg-blue-100' : 'bg-gray-100'
-                  }`}>
-                    <IconComponent className={`h-4 w-4 ${
-                      option.checked ? 'text-blue-600' : 'text-gray-600'
-                    }`} />
+                  <div className={`p-2 rounded-lg ${option.checked ? 'bg-blue-100' : 'bg-gray-100'
+                    }`}>
+                    <IconComponent className={`h-4 w-4 ${option.checked ? 'text-blue-600' : 'text-gray-600'
+                      }`} />
                   </div>
                   <div className="flex-1">
                     <Label className="text-sm font-medium cursor-pointer">
@@ -315,7 +356,7 @@ const Step3Evidence: React.FC<Step3EvidenceProps> = ({
           <div className="text-sm text-blue-800">
             <p className="font-medium mb-1">Importante sobre evidências</p>
             <p>
-              As evidências são fundamentais para comprovar o cumprimento dos requisitos de compliance. 
+              As evidências são fundamentais para comprovar o cumprimento dos requisitos de compliance.
               Quanto mais documentação você fornecer, mais completo e convincente será o relatório final.
             </p>
           </div>

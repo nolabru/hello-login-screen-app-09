@@ -50,7 +50,7 @@ export interface MoodTrendData {
 }
 
 export class DiaryService {
-  
+
   // Mapeamento das 13 emoções do app
   static readonly EMOTIONS_MAP = {
     'feliz': { category: 'positive' as const, color: '#10B981', score: 9 },
@@ -94,11 +94,27 @@ export class DiaryService {
       }
 
       const totalUsers = users?.length || 0;
-      
-      // Simular dados baseados no número de usuários
-      // Isso será substituído por dados reais quando as tabelas estiverem disponíveis
-      const activeUsers = Math.floor(totalUsers * 0.28); // 28% dos usuários escrevem diário
-      const totalEntries = activeUsers * 15; // 15 entradas por usuário ativo em média
+      const userIds = users.map(u => u.user_id).filter(id => id);
+
+      if (userIds.length === 0) {
+        return this.getEmptyMetrics();
+      }
+
+      // Buscar entradas de diário reais
+      const { data: diaryEntries, error: entriesError } = await supabase
+        .from('diary' as any)
+        .select('user_id, emotion')
+        .in('user_id', userIds);
+
+      if (entriesError) {
+        console.error('❌ Erro ao buscar entradas de diário:', entriesError);
+        return this.getEmptyMetrics();
+      }
+
+      const safeDiaryEntries = diaryEntries as any[];
+      const totalEntries = safeDiaryEntries?.length || 0;
+      const activeUsersSet = new Set(safeDiaryEntries.map(e => e.user_id));
+      const activeUsers = activeUsersSet.size;
       const averageEntriesPerUser = activeUsers > 0 ? Math.round(totalEntries / activeUsers) : 0;
 
       // Buscar breakdown por departamento
@@ -169,7 +185,7 @@ export class DiaryService {
       departments?.forEach(dept => {
         const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)];
         const moodScore = this.calculateDepartmentMoodScore();
-        
+
         departmentMap.set(dept.id, {
           departmentId: dept.id,
           departmentName: dept.name,
@@ -200,7 +216,7 @@ export class DiaryService {
       users?.forEach(user => {
         const deptId = user.department_id || 'sem_departamento';
         const dept = departmentMap.get(deptId);
-        
+
         if (dept) {
           dept.totalUsers++;
           // Simular dados de atividade baseados em distribuição realista
@@ -260,7 +276,7 @@ export class DiaryService {
       const result: EmotionalData[] = Object.entries(emotionCounts).map(([emotion, count]) => {
         const emotionData = this.EMOTIONS_MAP[emotion as keyof typeof this.EMOTIONS_MAP];
         const users = Math.floor(count * 0.7); // Aproximadamente 70% de usuários únicos
-        
+
         return {
           emotion,
           count,
@@ -310,21 +326,21 @@ export class DiaryService {
   static generateRealisticEvolution(baseTotalEntries: number, baseActiveUsers: number): DiaryEvolution[] {
     const now = new Date();
     const result: DiaryEvolution[] = [];
-    
+
     // Dados dos últimos 6 meses com crescimento gradual
     const growthFactors = [0.35, 0.48, 0.61, 0.74, 0.87, 1.0];
     const moodScores = [6.2, 6.4, 6.7, 6.9, 7.1, 7.3]; // Melhoria gradual do humor
-    
+
     for (let i = 5; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const monthLabel = date.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' });
-      
+
       const growthFactor = growthFactors[5 - i];
       const monthlyActiveUsers = Math.round(baseActiveUsers * growthFactor);
       const monthlyEntries = Math.round(baseTotalEntries * growthFactor * 0.18); // 18% do total por mês
       const avgEntriesPerUser = monthlyActiveUsers > 0 ? Math.round(monthlyEntries / monthlyActiveUsers) : 0;
       const moodScore = moodScores[5 - i];
-      
+
       result.push({
         month: monthLabel,
         totalEntries: monthlyEntries,
@@ -333,7 +349,7 @@ export class DiaryService {
         moodScore: Math.round(moodScore * 10) / 10
       });
     }
-    
+
     return result;
   }
 
@@ -347,21 +363,21 @@ export class DiaryService {
       // Últimas 8 semanas com distribuição realista
       const weeks: MoodTrendData[] = [];
       const now = new Date();
-      
+
       for (let i = 7; i >= 0; i--) {
         const weekDate = new Date(now.getTime() - (i * 7 * 24 * 60 * 60 * 1000));
         const weekLabel = `Sem ${Math.ceil(weekDate.getDate() / 7)}`;
-        
+
         // Distribuição realista: mais emoções positivas/neutras que negativas
         const positiveEmotions = Math.floor(Math.random() * 40) + 45; // 45-85
         const neutralEmotions = Math.floor(Math.random() * 30) + 25; // 25-55
         const negativeEmotions = Math.floor(Math.random() * 25) + 15; // 15-40
-        
+
         const total = positiveEmotions + neutralEmotions + negativeEmotions;
         const overallMood = Math.round(
           ((positiveEmotions * 8) + (neutralEmotions * 5) + (negativeEmotions * 2)) / total * 10
         ) / 10;
-        
+
         weeks.push({
           week: weekLabel,
           positiveEmotions,
